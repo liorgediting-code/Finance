@@ -37,7 +37,7 @@ function buildData(
       const md = months[monthIndex];
       value = md ? getCategoryTotal(md.expenses, cat.id) : 0;
     } else {
-      value = months.reduce((sum, md) => sum + (md ? getCategoryTotal(md.expenses, cat.id) : 0), 0);
+      value = Object.values(months).reduce((sum, md) => sum + getCategoryTotal(md.expenses, cat.id), 0);
     }
     return { name: cat.nameHe, value, color: cat.color };
   }).filter((d) => d.value > 0);
@@ -161,7 +161,7 @@ export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true 
                 <LabelList
                   dataKey="value"
                   position="right"
-                  formatter={(v: number) => formatCurrency(v)}
+                  formatter={(v: unknown) => formatCurrency(Number(v))}
                   style={{ fontSize: 11, fill: '#4A4A60', fontFamily: 'Heebo, sans-serif' }}
                 />
               </Bar>

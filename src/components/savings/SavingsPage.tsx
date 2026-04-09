@@ -480,12 +480,3 @@ export default function SavingsPage() {
     </div>
   );
 }
-
-// ── Type alias used inside this file ─────────────────────────────────────────
-type FundFormData = {
-  name: string;
-  targetAmount: string;
-  savedAmount: string;
-  color: string;
-  notes: string;
-};
