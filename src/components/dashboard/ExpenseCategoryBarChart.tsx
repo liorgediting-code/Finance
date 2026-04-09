@@ -16,6 +16,7 @@ import { formatCurrency } from '../../utils/formatters';
 
 interface Props {
   monthIndex: number;
+  showToggle?: boolean;
 }
 
 interface ChartItem {
@@ -62,7 +63,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payl
   );
 }
 
-export default function ExpenseCategoryBarChart({ monthIndex }: Props) {
+export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true }: Props) {
   const [view, setView] = useState<'month' | 'year'>('month');
   const months = useFinanceStore((s) => s.months);
 
@@ -99,29 +100,31 @@ export default function ExpenseCategoryBarChart({ monthIndex }: Props) {
             </p>
           </div>
 
-          {/* Month / Year toggle */}
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-            <button
-              onClick={() => setView('month')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 cursor-pointer ${
-                view === 'month'
-                  ? 'bg-white text-[#1E1E2E] shadow-sm'
-                  : 'text-[#9090A8] hover:text-[#4A4A60]'
-              }`}
-            >
-              חודש
-            </button>
-            <button
-              onClick={() => setView('year')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 cursor-pointer ${
-                view === 'year'
-                  ? 'bg-white text-[#1E1E2E] shadow-sm'
-                  : 'text-[#9090A8] hover:text-[#4A4A60]'
-              }`}
-            >
-              שנה
-            </button>
-          </div>
+          {/* Month / Year toggle — hidden when showToggle=false */}
+          {showToggle && (
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+              <button
+                onClick={() => setView('month')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 cursor-pointer ${
+                  view === 'month'
+                    ? 'bg-white text-[#1E1E2E] shadow-sm'
+                    : 'text-[#9090A8] hover:text-[#4A4A60]'
+                }`}
+              >
+                חודש
+              </button>
+              <button
+                onClick={() => setView('year')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 cursor-pointer ${
+                  view === 'year'
+                    ? 'bg-white text-[#1E1E2E] shadow-sm'
+                    : 'text-[#9090A8] hover:text-[#4A4A60]'
+                }`}
+              >
+                שנה
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Chart — rendered LTR so bars grow left→right */}

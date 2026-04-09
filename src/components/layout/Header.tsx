@@ -1,27 +1,18 @@
-import { useLocation, useParams } from 'react-router-dom';
-import { HEBREW_MONTHS } from '../../config/months';
+import { useLocation } from 'react-router-dom';
 
 interface Props {
   onMenuToggle: () => void;
 }
 
+function getPageTitle(pathname: string): string {
+  if (pathname === '/') return 'לוח חודשי';
+  if (pathname === '/savings') return 'חסכונות';
+  if (pathname === '/settings') return 'הגדרות';
+  return 'ניהול פיננסי';
+}
+
 export default function Header({ onMenuToggle }: Props) {
-  const location = useLocation();
-  const params = useParams<{ monthIndex: string }>();
-
-  function getPageTitle(): string {
-    if (location.pathname === '/') return 'לוח בקרה';
-    if (location.pathname === '/settings') return 'הגדרות';
-
-    if (params.monthIndex !== undefined) {
-      const idx = Number(params.monthIndex);
-      if (idx >= 0 && idx < HEBREW_MONTHS.length) {
-        return HEBREW_MONTHS[idx];
-      }
-    }
-
-    return 'לוח בקרה';
-  }
+  const { pathname } = useLocation();
 
   return (
     <header className="flex items-center gap-3 border-b border-gray-200 bg-white/90 backdrop-blur-sm px-4 py-3 md:px-6 shadow-sm">
@@ -48,8 +39,8 @@ export default function Header({ onMenuToggle }: Props) {
         </svg>
       </button>
 
-      <h2 className="text-lg font-semibold text-[#1E1E2E] tracking-tight">
-        {getPageTitle()}
+      <h2 className="text-base font-semibold text-[#1E1E2E] tracking-tight md:hidden">
+        {getPageTitle(pathname)}
       </h2>
     </header>
   );

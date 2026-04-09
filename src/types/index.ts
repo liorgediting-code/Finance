@@ -35,6 +35,15 @@ export interface SavingsGoal {
   vacationSaved: number;
 }
 
+export interface SavingsFund {
+  id: string;
+  name: string;
+  targetAmount: number;
+  savedAmount: number;
+  color: string;
+  notes: string;
+}
+
 export interface SpouseNames {
   spouse1: string;
   spouse2: string;

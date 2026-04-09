@@ -1,5 +1,4 @@
 import { NavLink } from 'react-router-dom';
-import { HEBREW_MONTHS } from '../../config/months';
 
 interface Props {
   isOpen: boolean;
@@ -16,24 +15,22 @@ function BarChartIcon() {
   );
 }
 
-function GridIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="14" width="7" height="7" rx="1" />
-      <rect x="3" y="14" width="7" height="7" rx="1" />
-    </svg>
-  );
-}
-
 function CalendarIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
       <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function FlagIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+      <line x1="4" y1="22" x2="4" y2="15" />
     </svg>
   );
 }
@@ -47,13 +44,16 @@ function GearIcon() {
   );
 }
 
+const NAV = [
+  { to: '/', label: 'לוח חודשי', icon: <CalendarIcon />, end: true },
+  { to: '/savings', label: 'חסכונות', icon: <FlagIcon />, end: false },
+];
+
 export default function Sidebar({ isOpen, onClose }: Props) {
   const base =
-    'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150 cursor-pointer';
-  const activeClass =
-    'bg-lavender text-[#5B52A0] font-semibold shadow-sm';
-  const inactiveClass =
-    'text-[#4A4A60] hover:bg-lavender-light hover:text-[#2D2D2D]';
+    'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer';
+  const activeClass = 'bg-lavender text-[#5B52A0] font-semibold shadow-sm';
+  const inactiveClass = 'text-[#4A4A60] hover:bg-lavender-light hover:text-[#2D2D2D]';
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `${base} ${isActive ? activeClass : inactiveClass}`;
@@ -70,7 +70,7 @@ export default function Sidebar({ isOpen, onClose }: Props) {
 
       {/* Sidebar panel */}
       <aside
-        className={`fixed top-0 right-0 z-50 flex h-full w-64 flex-col bg-white border-l border-gray-100 shadow-xl transition-transform duration-300 md:static md:translate-x-0 ${
+        className={`fixed top-0 right-0 z-50 flex h-full w-60 flex-col bg-white border-l border-gray-100 shadow-xl transition-transform duration-300 md:static md:translate-x-0 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -86,47 +86,22 @@ export default function Sidebar({ isOpen, onClose }: Props) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-3">
-          {/* Dashboard link */}
-          <NavLink to="/" end className={navLinkClass} onClick={onClose}>
-            <GridIcon />
-            לוח בקרה
-          </NavLink>
-
-          {/* Months section label */}
-          <div className="flex items-center gap-1.5 px-3 pt-4 pb-1.5">
-            <CalendarIcon />
-            <span className="text-[10px] font-semibold text-[#9090A8] uppercase tracking-wider">
-              חודשים
-            </span>
-          </div>
-
-          {/* Month links */}
-          {HEBREW_MONTHS.map((month, index) => (
-            <NavLink
-              key={index}
-              to={`/month/${index}`}
-              className={navLinkClass}
-              onClick={onClose}
-            >
-              <span className="text-[11px] text-[#B0B0C8] font-mono w-5 flex-shrink-0 text-left">
-                {(index + 1).toString().padStart(2, '0')}
-              </span>
-              {month}
+        <nav className="flex flex-1 flex-col gap-0.5 px-3 py-4">
+          {NAV.map(({ to, label, icon, end }) => (
+            <NavLink key={to} to={to} end={end} className={navLinkClass} onClick={onClose}>
+              {icon}
+              {label}
             </NavLink>
           ))}
 
-          {/* Spacer */}
+          {/* Settings pinned to bottom */}
           <div className="flex-1" />
-
-          {/* Settings at bottom */}
-          <div className="border-t border-gray-100 pt-2 mt-2">
+          <div className="border-t border-gray-100 pt-2">
             <NavLink to="/settings" className={navLinkClass} onClick={onClose}>
               <GearIcon />
               הגדרות
             </NavLink>
           </div>
-
           <div className="h-3" />
         </nav>
       </aside>

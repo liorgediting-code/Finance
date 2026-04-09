@@ -6,11 +6,13 @@ import {
   MonthData,
   IncomeEntry,
   ExpenseEntry,
+  SavingsFund,
 } from '../types';
 
 interface FinanceStore {
   settings: AppSettings;
   months: Record<number, MonthData>;
+  savingsFunds: SavingsFund[];
 
   // Income actions
   addIncome: (monthIndex: number, entry: Omit<IncomeEntry, 'id'>) => void;
@@ -24,6 +26,12 @@ interface FinanceStore {
 
   // Budget actions
   setBudget: (monthIndex: number, categoryId: string, amount: number) => void;
+
+  // Savings funds actions
+  addSavingsFund: (fund: Omit<SavingsFund, 'id'>) => void;
+  updateSavingsFund: (id: string, updates: Partial<Omit<SavingsFund, 'id'>>) => void;
+  deleteSavingsFund: (id: string) => void;
+  depositToFund: (id: string, amount: number) => void;
 
   // Settings actions
   updateSettings: (partial: Partial<AppSettings>) => void;
@@ -56,6 +64,7 @@ export const useFinanceStore = create<FinanceStore>()(
       },
 
       months: {},
+      savingsFunds: [],
 
       addIncome: (monthIndex, entry) =>
         set((state) => {
@@ -64,10 +73,7 @@ export const useFinanceStore = create<FinanceStore>()(
           return {
             months: {
               ...state.months,
-              [monthIndex]: {
-                ...monthData,
-                income: [...monthData.income, newEntry],
-              },
+              [monthIndex]: { ...monthData, income: [...monthData.income, newEntry] },
             },
           };
         }),
@@ -80,9 +86,7 @@ export const useFinanceStore = create<FinanceStore>()(
               ...state.months,
               [monthIndex]: {
                 ...monthData,
-                income: monthData.income.map((entry) =>
-                  entry.id === id ? { ...entry, ...partial } : entry
-                ),
+                income: monthData.income.map((e) => (e.id === id ? { ...e, ...partial } : e)),
               },
             },
           };
@@ -96,7 +100,7 @@ export const useFinanceStore = create<FinanceStore>()(
               ...state.months,
               [monthIndex]: {
                 ...monthData,
-                income: monthData.income.filter((entry) => entry.id !== id),
+                income: monthData.income.filter((e) => e.id !== id),
               },
             },
           };
@@ -109,10 +113,7 @@ export const useFinanceStore = create<FinanceStore>()(
           return {
             months: {
               ...state.months,
-              [monthIndex]: {
-                ...monthData,
-                expenses: [...monthData.expenses, newEntry],
-              },
+              [monthIndex]: { ...monthData, expenses: [...monthData.expenses, newEntry] },
             },
           };
         }),
@@ -125,9 +126,7 @@ export const useFinanceStore = create<FinanceStore>()(
               ...state.months,
               [monthIndex]: {
                 ...monthData,
-                expenses: monthData.expenses.map((entry) =>
-                  entry.id === id ? { ...entry, ...partial } : entry
-                ),
+                expenses: monthData.expenses.map((e) => (e.id === id ? { ...e, ...partial } : e)),
               },
             },
           };
@@ -141,7 +140,7 @@ export const useFinanceStore = create<FinanceStore>()(
               ...state.months,
               [monthIndex]: {
                 ...monthData,
-                expenses: monthData.expenses.filter((entry) => entry.id !== id),
+                expenses: monthData.expenses.filter((e) => e.id !== id),
               },
             },
           };
@@ -155,203 +154,108 @@ export const useFinanceStore = create<FinanceStore>()(
               ...state.months,
               [monthIndex]: {
                 ...monthData,
-                budget: {
-                  ...monthData.budget,
-                  [categoryId]: amount,
-                },
+                budget: { ...monthData.budget, [categoryId]: amount },
               },
             },
           };
         }),
+
+      addSavingsFund: (fund) =>
+        set((state) => ({
+          savingsFunds: [...state.savingsFunds, { ...fund, id: uuidv4() }],
+        })),
+
+      updateSavingsFund: (id, updates) =>
+        set((state) => ({
+          savingsFunds: state.savingsFunds.map((f) =>
+            f.id === id ? { ...f, ...updates } : f
+          ),
+        })),
+
+      deleteSavingsFund: (id) =>
+        set((state) => ({
+          savingsFunds: state.savingsFunds.filter((f) => f.id !== id),
+        })),
+
+      depositToFund: (id, amount) =>
+        set((state) => ({
+          savingsFunds: state.savingsFunds.map((f) =>
+            f.id === id ? { ...f, savedAmount: f.savedAmount + amount } : f
+          ),
+        })),
 
       updateSettings: (partial) =>
         set((state) => ({
           settings: {
             ...state.settings,
             ...partial,
-            spouseNames: {
-              ...state.settings.spouseNames,
-              ...(partial.spouseNames || {}),
-            },
-            savingsGoal: {
-              ...state.settings.savingsGoal,
-              ...(partial.savingsGoal || {}),
-            },
+            spouseNames: { ...state.settings.spouseNames, ...(partial.spouseNames || {}) },
+            savingsGoal: { ...state.settings.savingsGoal, ...(partial.savingsGoal || {}) },
           },
         })),
 
       loadDemoData: () =>
-        set(() => {
-          const demoMonths: Record<number, MonthData> = {
+        set(() => ({
+          months: {
             0: {
               income: [
-                {
-                  id: uuidv4(),
-                  date: '2026-01-01',
-                  source: 'משכורת',
-                  spouse: 'spouse1',
-                  amount: 15000,
-                  notes: 'משכורת חודשית',
-                },
-                {
-                  id: uuidv4(),
-                  date: '2026-01-01',
-                  source: 'משכורת',
-                  spouse: 'spouse2',
-                  amount: 12000,
-                  notes: 'משכורת חודשית',
-                },
+                { id: uuidv4(), date: '2026-01-01', source: 'משכורת', spouse: 'spouse1', amount: 15000, notes: '' },
+                { id: uuidv4(), date: '2026-01-01', source: 'משכורת', spouse: 'spouse2', amount: 12000, notes: '' },
               ],
               expenses: [
-                {
-                  id: uuidv4(),
-                  date: '2026-01-05',
-                  categoryId: 'home',
-                  subcategoryId: 'home-rent',
-                  description: 'שכירות חודשית',
-                  amount: 5500,
-                  paymentMethod: 'transfer',
-                  notes: '',
-                },
-                {
-                  id: uuidv4(),
-                  date: '2026-01-08',
-                  categoryId: 'food',
-                  subcategoryId: 'food-grocery',
-                  description: 'קניות שבועיות',
-                  amount: 1200,
-                  paymentMethod: 'credit',
-                  notes: '',
-                },
-                {
-                  id: uuidv4(),
-                  date: '2026-01-12',
-                  categoryId: 'transport',
-                  subcategoryId: 'transport-fuel',
-                  description: 'דלק',
-                  amount: 400,
-                  paymentMethod: 'credit',
-                  notes: '',
-                },
+                { id: uuidv4(), date: '2026-01-05', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
+                { id: uuidv4(), date: '2026-01-08', categoryId: 'food', subcategoryId: 'food-grocery', description: 'קניות', amount: 1200, paymentMethod: 'credit', notes: '' },
+                { id: uuidv4(), date: '2026-01-12', categoryId: 'transport', subcategoryId: 'transport-fuel', description: 'דלק', amount: 400, paymentMethod: 'credit', notes: '' },
               ],
-              budget: {
-                home: 7000,
-                food: 3000,
-                transport: 1500,
-                children: 2000,
-                health: 500,
-                entertainment: 1000,
-                shopping: 800,
-                financial: 2000,
-              },
+              budget: { home: 7000, food: 3000, transport: 1500, children: 2000, health: 500, entertainment: 1000 },
             },
             1: {
               income: [
-                {
-                  id: uuidv4(),
-                  date: '2026-02-01',
-                  source: 'משכורת',
-                  spouse: 'spouse1',
-                  amount: 15000,
-                  notes: 'משכורת חודשית',
-                },
-                {
-                  id: uuidv4(),
-                  date: '2026-02-01',
-                  source: 'משכורת',
-                  spouse: 'spouse2',
-                  amount: 12000,
-                  notes: 'משכורת חודשית',
-                },
+                { id: uuidv4(), date: '2026-02-01', source: 'משכורת', spouse: 'spouse1', amount: 15000, notes: '' },
+                { id: uuidv4(), date: '2026-02-01', source: 'משכורת', spouse: 'spouse2', amount: 12000, notes: '' },
               ],
               expenses: [
-                {
-                  id: uuidv4(),
-                  date: '2026-02-05',
-                  categoryId: 'home',
-                  subcategoryId: 'home-rent',
-                  description: 'שכירות חודשית',
-                  amount: 5500,
-                  paymentMethod: 'transfer',
-                  notes: '',
-                },
-                {
-                  id: uuidv4(),
-                  date: '2026-02-10',
-                  categoryId: 'children',
-                  subcategoryId: 'children-activities',
-                  description: 'חוג כדורגל',
-                  amount: 350,
-                  paymentMethod: 'credit',
-                  notes: '',
-                },
+                { id: uuidv4(), date: '2026-02-05', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
+                { id: uuidv4(), date: '2026-02-10', categoryId: 'children', subcategoryId: 'children-activities', description: 'חוג', amount: 350, paymentMethod: 'credit', notes: '' },
               ],
-              budget: {
-                home: 7000,
-                food: 3000,
-                transport: 1500,
-                children: 2000,
-                health: 500,
-                entertainment: 1000,
-                shopping: 800,
-                financial: 2000,
-              },
+              budget: { home: 7000, food: 3000, transport: 1500, children: 2000 },
             },
             2: {
               income: [
-                {
-                  id: uuidv4(),
-                  date: '2026-03-01',
-                  source: 'משכורת',
-                  spouse: 'spouse1',
-                  amount: 15000,
-                  notes: 'משכורת חודשית',
-                },
+                { id: uuidv4(), date: '2026-03-01', source: 'משכורת', spouse: 'spouse1', amount: 15000, notes: '' },
               ],
               expenses: [
-                {
-                  id: uuidv4(),
-                  date: '2026-03-03',
-                  categoryId: 'health',
-                  subcategoryId: 'health-private',
-                  description: 'רופא שיניים',
-                  amount: 800,
-                  paymentMethod: 'credit',
-                  notes: '',
-                },
+                { id: uuidv4(), date: '2026-03-03', categoryId: 'health', subcategoryId: 'health-private', description: 'רופא שיניים', amount: 800, paymentMethod: 'credit', notes: '' },
               ],
-              budget: {
-                home: 7000,
-                food: 3000,
-                transport: 1500,
-                children: 2000,
-                health: 500,
-                entertainment: 1000,
-                shopping: 800,
-                financial: 2000,
-              },
+              budget: { home: 7000, food: 3000, health: 500 },
             },
-          };
-
-          return {
-            months: demoMonths,
-            settings: {
-              year: 2026,
-              spouseNames: {
-                spouse1: 'יוסי',
-                spouse2: 'רונית',
-              },
-              savingsGoal: {
-                monthlyTarget: 3000,
-                vacationGoal: 15000,
-                vacationSaved: 4500,
-              },
+            3: {
+              income: [
+                { id: uuidv4(), date: '2026-04-01', source: 'משכורת', spouse: 'spouse1', amount: 15000, notes: '' },
+                { id: uuidv4(), date: '2026-04-01', source: 'משכורת', spouse: 'spouse2', amount: 12000, notes: '' },
+              ],
+              expenses: [
+                { id: uuidv4(), date: '2026-04-02', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
+                { id: uuidv4(), date: '2026-04-05', categoryId: 'food', subcategoryId: 'food-grocery', description: 'קניות שבועיות', amount: 1400, paymentMethod: 'credit', notes: '' },
+                { id: uuidv4(), date: '2026-04-07', categoryId: 'transport', subcategoryId: 'transport-fuel', description: 'דלק', amount: 380, paymentMethod: 'credit', notes: '' },
+                { id: uuidv4(), date: '2026-04-10', categoryId: 'entertainment', subcategoryId: 'entertainment-restaurants', description: 'ארוחת ערב', amount: 280, paymentMethod: 'credit', notes: '' },
+                { id: uuidv4(), date: '2026-04-12', categoryId: 'children', subcategoryId: 'children-education', description: 'ספרי לימוד', amount: 220, paymentMethod: 'cash', notes: '' },
+              ],
+              budget: { home: 7000, food: 3000, transport: 1500, children: 2000, entertainment: 1000 },
             },
-          };
-        }),
+          },
+          settings: {
+            year: 2026,
+            spouseNames: { spouse1: 'יוסי', spouse2: 'רונית' },
+            savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 },
+          },
+          savingsFunds: [
+            { id: uuidv4(), name: 'חופשה לאירופה', targetAmount: 15000, savedAmount: 4500, color: '#B8CCE0', notes: 'קיץ 2027' },
+            { id: uuidv4(), name: 'קרן חירום', targetAmount: 30000, savedAmount: 12000, color: '#C5CDB6', notes: '3 משכורות' },
+            { id: uuidv4(), name: 'רכב חדש', targetAmount: 80000, savedAmount: 8000, color: '#E8CFA8', notes: '' },
+          ],
+        })),
     }),
-    {
-      name: 'finance-israel-store',
-    }
+    { name: 'finance-israel-store' }
   )
 );
