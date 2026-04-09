@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --color-blush: #F2C4C4;
+  --color-blush-light: #F9E2E2;
+  --color-blush-dark: #D4A0A0;
+  --color-sage: #C5CDB6;
+  --color-sage-light: #E2E8D8;
+  --color-sage-dark: #A0B890;
+  --color-lavender: #D4D0E8;
+  --color-lavender-light: #EAE8F4;
+  --color-lavender-dark: #B0A8C8;
+  --color-almond: #E8CFA8;
+  --color-almond-light: #F4E8D0;
+  --color-almond-dark: #C8A878;
+  --color-powder: #B8CCE0;
+  --color-powder-light: #D8E4F0;
+  --color-powder-dark: #90A8C0;
+  --color-honey: #E8D890;
+  --color-honey-light: #F4ECC0;
+  --color-honey-dark: #C8B060;
+  --font-family-sans: 'Heebo', sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: #F2F3F7;
+  color: #1E1E2E;
+  font-family: 'Heebo', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input[type="number"] {
+  direction: ltr;
+  text-align: right;
+}
+
+/* Thin custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4D0E8;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B0A8C8;
+}
+
+/* Visible focus ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #B0A8C8;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
