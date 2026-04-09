@@ -5,6 +5,7 @@ import ExpensePieChart from './ExpensePieChart';
 import IncomeExpenseChart from './IncomeExpenseChart';
 import SavingsChart from './SavingsChart';
 import SavingsGoal from './SavingsGoal';
+import ExpenseCategoryBarChart from './ExpenseCategoryBarChart';
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
@@ -50,10 +51,11 @@ export default function DashboardPage() {
       {/* Charts row */}
       <section>
         <SectionHeading>ניתוח הוצאות</SectionHeading>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <ExpensePieChart monthIndex={monthIndex} />
           <IncomeExpenseChart />
         </div>
+        <ExpenseCategoryBarChart monthIndex={monthIndex} />
       </section>
 
       {/* Savings chart */}
