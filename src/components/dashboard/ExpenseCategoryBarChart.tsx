@@ -32,7 +32,10 @@ function buildData(
   monthIndex: number,
   recurringExpenses: ReturnType<typeof useFinanceStore.getState>['recurringExpenses']
 ): ChartItem[] {
-  const raw = CATEGORIES.map((cat) => {
+  const raw: { name: string; value: number; color: string }[] = [];
+
+  // All non-"other" categories
+  CATEGORIES.filter((cat) => cat.id !== 'other').forEach((cat) => {
     let value = 0;
     if (view === 'month') {
       const md = months[monthIndex];
@@ -42,8 +45,26 @@ function buildData(
       value = Object.values(months).reduce((sum, md) => sum + getCategoryTotal(md.expenses, cat.id), 0)
         + getCategoryTotal(recurringExpenses, cat.id) * 12;
     }
-    return { name: cat.nameHe, value, color: cat.color };
-  }).filter((d) => d.value > 0);
+    if (value > 0) raw.push({ name: cat.nameHe, value, color: cat.color });
+  });
+
+  // "other" category — split by customCategory so each custom name gets its own bar
+  const otherColor = '#E0E0E0';
+  const otherMap = new Map<string, number>();
+  const addOther = (expenses: typeof recurringExpenses, multiplier = 1) => {
+    expenses.filter((e) => e.categoryId === 'other').forEach((e) => {
+      const key = e.customCategory?.trim() || 'אחר';
+      otherMap.set(key, (otherMap.get(key) ?? 0) + e.amount * multiplier);
+    });
+  };
+  if (view === 'month') {
+    addOther(months[monthIndex]?.expenses ?? []);
+    addOther(recurringExpenses);
+  } else {
+    Object.values(months).forEach((md) => addOther(md.expenses));
+    addOther(recurringExpenses, 12);
+  }
+  otherMap.forEach((value, name) => raw.push({ name, value, color: otherColor }));
 
   const total = raw.reduce((s, d) => s + d.value, 0);
   return raw

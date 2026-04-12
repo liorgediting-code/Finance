@@ -22,6 +22,7 @@ const emptyForm = (): Omit<ExpenseEntry, 'id'> => ({
 });
 
 function getSubName(entry: ExpenseEntry): string {
+  if (entry.categoryId === 'other' && entry.customCategory?.trim()) return entry.customCategory.trim();
   const cat = CATEGORIES.find((c) => c.id === entry.categoryId);
   return cat?.subcategories.find((s) => s.id === entry.subcategoryId)?.nameHe ?? entry.subcategoryId;
 }
