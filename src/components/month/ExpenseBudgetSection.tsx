@@ -106,7 +106,7 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
       ? (CATEGORIES.find((c) => c.id === initialCategoryId)?.subcategories[0]?.id ?? '')
       : '',
   });
-  const [isRecurring, setIsRecurring] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(initialCategoryId === 'subscriptions');
   const [errors, setErrors] = useState<string[]>([]);
 
   const selectedCat = CATEGORIES.find((c) => c.id === form.categoryId);
