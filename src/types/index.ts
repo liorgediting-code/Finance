@@ -1,8 +1,13 @@
+export interface FamilyMember {
+  id: string;
+  name: string;
+}
+
 export interface IncomeEntry {
   id: string;
   date: string;
   source: string;
-  spouse: 'spouse1' | 'spouse2';
+  memberId: string;
   amount: number;
   notes: string;
   isRecurring?: boolean;
@@ -45,14 +50,8 @@ export interface SavingsFund {
   notes: string;
 }
 
-export interface SpouseNames {
-  spouse1: string;
-  spouse2: string;
-}
-
 export interface AppSettings {
   year: number;
-  spouseNames: SpouseNames;
   savingsGoal: SavingsGoal;
 }
 

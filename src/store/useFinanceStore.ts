@@ -7,6 +7,7 @@ import {
   IncomeEntry,
   ExpenseEntry,
   SavingsFund,
+  FamilyMember,
 } from '../types';
 
 interface FinanceStore {
@@ -14,6 +15,12 @@ interface FinanceStore {
   months: Record<number, MonthData>;
   savingsFunds: SavingsFund[];
   recurringIncomes: IncomeEntry[];
+  familyMembers: FamilyMember[];
+
+  // Family member actions
+  addFamilyMember: (name: string) => void;
+  updateFamilyMember: (id: string, name: string) => void;
+  deleteFamilyMember: (id: string) => void;
 
   // Income actions
   addIncome: (monthIndex: number, entry: Omit<IncomeEntry, 'id'>) => void;
@@ -57,10 +64,6 @@ export const useFinanceStore = create<FinanceStore>()(
     (set) => ({
       settings: {
         year: 2026,
-        spouseNames: {
-          spouse1: 'בן/בת זוג 1',
-          spouse2: 'בן/בת זוג 2',
-        },
         savingsGoal: {
           monthlyTarget: 0,
           vacationGoal: 0,
@@ -71,6 +74,10 @@ export const useFinanceStore = create<FinanceStore>()(
       months: {},
       savingsFunds: [],
       recurringIncomes: [],
+      familyMembers: [
+        { id: 'member-1', name: 'בן/בת זוג 1' },
+        { id: 'member-2', name: 'בן/בת זוג 2' },
+      ],
 
       addIncome: (monthIndex, entry) =>
         set((state) => {
@@ -123,6 +130,21 @@ export const useFinanceStore = create<FinanceStore>()(
       deleteRecurringIncome: (id) =>
         set((state) => ({
           recurringIncomes: state.recurringIncomes.filter((e) => e.id !== id),
+        })),
+
+      addFamilyMember: (name) =>
+        set((state) => ({
+          familyMembers: [...state.familyMembers, { id: uuidv4(), name }],
+        })),
+
+      updateFamilyMember: (id, name) =>
+        set((state) => ({
+          familyMembers: state.familyMembers.map((m) => (m.id === id ? { ...m, name } : m)),
+        })),
+
+      deleteFamilyMember: (id) =>
+        set((state) => ({
+          familyMembers: state.familyMembers.filter((m) => m.id !== id),
         })),
 
       addExpense: (monthIndex, entry) =>
@@ -229,18 +251,23 @@ export const useFinanceStore = create<FinanceStore>()(
           settings: {
             ...state.settings,
             ...partial,
-            spouseNames: { ...state.settings.spouseNames, ...(partial.spouseNames || {}) },
             savingsGoal: { ...state.settings.savingsGoal, ...(partial.savingsGoal || {}) },
           },
         })),
 
-      loadDemoData: () =>
-        set(() => ({
+      loadDemoData: () => {
+        const m1 = uuidv4();
+        const m2 = uuidv4();
+        return set(() => ({
+          familyMembers: [
+            { id: m1, name: 'יוסי' },
+            { id: m2, name: 'רונית' },
+          ],
           months: {
             0: {
               income: [
-                { id: uuidv4(), date: '2026-01-01', source: 'משכורת', spouse: 'spouse1', amount: 15000, notes: '' },
-                { id: uuidv4(), date: '2026-01-01', source: 'משכורת', spouse: 'spouse2', amount: 12000, notes: '' },
+                { id: uuidv4(), date: '2026-01-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
+                { id: uuidv4(), date: '2026-01-01', source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
               ],
               expenses: [
                 { id: uuidv4(), date: '2026-01-05', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
@@ -251,8 +278,8 @@ export const useFinanceStore = create<FinanceStore>()(
             },
             1: {
               income: [
-                { id: uuidv4(), date: '2026-02-01', source: 'משכורת', spouse: 'spouse1', amount: 15000, notes: '' },
-                { id: uuidv4(), date: '2026-02-01', source: 'משכורת', spouse: 'spouse2', amount: 12000, notes: '' },
+                { id: uuidv4(), date: '2026-02-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
+                { id: uuidv4(), date: '2026-02-01', source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
               ],
               expenses: [
                 { id: uuidv4(), date: '2026-02-05', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
@@ -262,7 +289,7 @@ export const useFinanceStore = create<FinanceStore>()(
             },
             2: {
               income: [
-                { id: uuidv4(), date: '2026-03-01', source: 'משכורת', spouse: 'spouse1', amount: 15000, notes: '' },
+                { id: uuidv4(), date: '2026-03-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
               ],
               expenses: [
                 { id: uuidv4(), date: '2026-03-03', categoryId: 'health', subcategoryId: 'health-private', description: 'רופא שיניים', amount: 800, paymentMethod: 'credit', notes: '' },
@@ -271,8 +298,8 @@ export const useFinanceStore = create<FinanceStore>()(
             },
             3: {
               income: [
-                { id: uuidv4(), date: '2026-04-01', source: 'משכורת', spouse: 'spouse1', amount: 15000, notes: '' },
-                { id: uuidv4(), date: '2026-04-01', source: 'משכורת', spouse: 'spouse2', amount: 12000, notes: '' },
+                { id: uuidv4(), date: '2026-04-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
+                { id: uuidv4(), date: '2026-04-01', source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
               ],
               expenses: [
                 { id: uuidv4(), date: '2026-04-02', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
@@ -286,7 +313,6 @@ export const useFinanceStore = create<FinanceStore>()(
           },
           settings: {
             year: 2026,
-            spouseNames: { spouse1: 'יוסי', spouse2: 'רונית' },
             savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 },
           },
           savingsFunds: [
@@ -294,7 +320,9 @@ export const useFinanceStore = create<FinanceStore>()(
             { id: uuidv4(), name: 'קרן חירום', targetAmount: 30000, savedAmount: 12000, color: '#C5CDB6', notes: '3 משכורות' },
             { id: uuidv4(), name: 'רכב חדש', targetAmount: 80000, savedAmount: 8000, color: '#E8CFA8', notes: '' },
           ],
-        })),
+          recurringIncomes: [],
+        }));
+      },
     }),
     { name: 'finance-israel-store' }
   )
