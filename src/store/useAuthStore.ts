@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { User } from '@supabase/supabase-js';
 import { supabase, type Profile } from '../lib/supabase';
+import { useFinanceStore } from './useFinanceStore';
 
 interface AuthStore {
   user: User | null;
@@ -24,6 +25,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (session?.user) {
       const profile = await get().fetchProfile(session.user.id);
       set({ user: session.user, profile, loading: false });
+      if (profile?.is_approved) {
+        await useFinanceStore.getState().loadFromCloud(session.user.id);
+      }
     } else {
       set({ loading: false });
     }
@@ -32,6 +36,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       if (session?.user) {
         const profile = await get().fetchProfile(session.user.id);
         set({ user: session.user, profile });
+        if (profile?.is_approved) {
+          await useFinanceStore.getState().loadFromCloud(session.user.id);
+        }
       } else {
         set({ user: null, profile: null });
       }
