@@ -3,15 +3,28 @@ import AppShell from './components/layout/AppShell'
 import MonthDashboard from './components/dashboard/MonthDashboard'
 import SavingsPage from './components/savings/SavingsPage'
 import SettingsPage from './components/settings/SettingsPage'
+import AuthGuard from './components/auth/AuthGuard'
+import LoginPage from './components/auth/LoginPage'
+import SignupPage from './components/auth/SignupPage'
+import AdminPage from './components/admin/AdminPage'
 
 export default function App() {
   return (
-    <AppShell>
-      <Routes>
-        <Route path="/" element={<MonthDashboard />} />
-        <Route path="/savings" element={<SavingsPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-      </Routes>
-    </AppShell>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/*" element={
+        <AuthGuard>
+          <AppShell>
+            <Routes>
+              <Route path="/" element={<MonthDashboard />} />
+              <Route path="/savings" element={<SavingsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+            </Routes>
+          </AppShell>
+        </AuthGuard>
+      } />
+    </Routes>
   )
 }

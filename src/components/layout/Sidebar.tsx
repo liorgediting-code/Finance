@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
 
 interface Props {
   isOpen: boolean;
@@ -44,12 +45,23 @@ function GearIcon() {
   );
 }
 
+function ShieldIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
 const NAV = [
   { to: '/', label: 'לוח חודשי', icon: <CalendarIcon />, end: true },
   { to: '/savings', label: 'חסכונות', icon: <FlagIcon />, end: false },
 ];
 
 export default function Sidebar({ isOpen, onClose }: Props) {
+  const profile = useAuthStore((s) => s.profile);
+  const signOut = useAuthStore((s) => s.signOut);
+  const user = useAuthStore((s) => s.user);
   const base =
     'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer';
   const activeClass = 'bg-lavender text-[#5B52A0] font-semibold shadow-sm';
@@ -96,11 +108,28 @@ export default function Sidebar({ isOpen, onClose }: Props) {
 
           {/* Settings pinned to bottom */}
           <div className="flex-1" />
-          <div className="border-t border-gray-100 pt-2">
+          <div className="border-t border-gray-100 pt-2 flex flex-col gap-0.5">
+            {profile?.role === 'admin' && (
+              <NavLink to="/admin" className={navLinkClass} onClick={onClose}>
+                <ShieldIcon />
+                פאנל ניהול
+              </NavLink>
+            )}
             <NavLink to="/settings" className={navLinkClass} onClick={onClose}>
               <GearIcon />
               הגדרות
             </NavLink>
+            {user && (
+              <div className="px-3 py-2 mt-1 border-t border-gray-100">
+                <p className="text-xs text-[#9090A8] truncate mb-1.5" dir="ltr">{user.email}</p>
+                <button
+                  onClick={() => { signOut(); onClose(); }}
+                  className="text-xs text-[#9090A8] hover:text-red-500 transition-colors cursor-pointer"
+                >
+                  התנתקות
+                </button>
+              </div>
+            )}
           </div>
           <div className="h-3" />
         </nav>

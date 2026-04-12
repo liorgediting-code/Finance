@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
-import {
+import { supabase } from '../lib/supabase';
+import type {
   AppSettings,
   MonthData,
   IncomeEntry,
@@ -10,13 +10,51 @@ import {
   FamilyMember,
 } from '../types';
 
-interface FinanceStore {
+// ── Cloud-synced fields ───────────────────────────────────────────────────────
+interface CloudData {
   settings: AppSettings;
   months: Record<number, MonthData>;
   savingsFunds: SavingsFund[];
   recurringIncomes: IncomeEntry[];
   recurringExpenses: ExpenseEntry[];
   familyMembers: FamilyMember[];
+}
+
+const DEFAULT_DATA: CloudData = {
+  settings: {
+    year: 2026,
+    savingsGoal: { monthlyTarget: 0, vacationGoal: 0, vacationSaved: 0 },
+  },
+  months: {},
+  savingsFunds: [],
+  recurringIncomes: [],
+  recurringExpenses: [],
+  familyMembers: [
+    { id: 'member-1', name: 'בן/בת זוג 1' },
+    { id: 'member-2', name: 'בן/בת זוג 2' },
+  ],
+};
+
+// ── Debounced save ────────────────────────────────────────────────────────────
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleSync(getUserId: () => string | null, getState: () => CloudData) {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const userId = getUserId();
+    if (!userId) return;
+    const data = getState();
+    await supabase.from('user_data').upsert({ user_id: userId, data, updated_at: new Date().toISOString() });
+  }, 1000);
+}
+
+// ── Store interface ───────────────────────────────────────────────────────────
+interface FinanceStore extends CloudData {
+  _userId: string | null;
+
+  // Cloud sync
+  loadFromCloud: (userId: string) => Promise<void>;
+  saveToCloud: () => Promise<void>;
 
   // Family member actions
   addFamilyMember: (name: string) => void;
@@ -58,292 +96,188 @@ interface FinanceStore {
 }
 
 function ensureMonth(months: Record<number, MonthData>, monthIndex: number): MonthData {
-  if (!months[monthIndex]) {
-    return { income: [], expenses: [], budget: {} };
-  }
-  return months[monthIndex];
+  return months[monthIndex] ?? { income: [], expenses: [], budget: {} };
 }
 
-export const useFinanceStore = create<FinanceStore>()(
-  persist(
-    (set) => ({
-      settings: {
-        year: 2026,
-        savingsGoal: {
-          monthlyTarget: 0,
-          vacationGoal: 0,
-          vacationSaved: 0,
+// ── Store ─────────────────────────────────────────────────────────────────────
+export const useFinanceStore = create<FinanceStore>()((set, get) => {
+  const sync = () => scheduleSync(
+    () => get()._userId,
+    () => {
+      const s = get();
+      return { settings: s.settings, months: s.months, savingsFunds: s.savingsFunds, recurringIncomes: s.recurringIncomes, recurringExpenses: s.recurringExpenses, familyMembers: s.familyMembers };
+    }
+  );
+
+  return {
+    ...DEFAULT_DATA,
+    _userId: null,
+
+    loadFromCloud: async (userId) => {
+      set({ _userId: userId });
+      const { data } = await supabase.from('user_data').select('data').eq('user_id', userId).single();
+      if (data?.data) {
+        const d = data.data as Partial<CloudData>;
+        set({
+          settings: d.settings ?? DEFAULT_DATA.settings,
+          months: d.months ?? {},
+          savingsFunds: d.savingsFunds ?? [],
+          recurringIncomes: d.recurringIncomes ?? [],
+          recurringExpenses: d.recurringExpenses ?? [],
+          familyMembers: d.familyMembers ?? DEFAULT_DATA.familyMembers,
+        });
+      }
+    },
+
+    saveToCloud: async () => {
+      const s = get();
+      if (!s._userId) return;
+      const data: CloudData = { settings: s.settings, months: s.months, savingsFunds: s.savingsFunds, recurringIncomes: s.recurringIncomes, recurringExpenses: s.recurringExpenses, familyMembers: s.familyMembers };
+      await supabase.from('user_data').upsert({ user_id: s._userId, data, updated_at: new Date().toISOString() });
+    },
+
+    // ── Family members ──────────────────────────────────────────────────────
+    addFamilyMember: (name) => { set((s) => ({ familyMembers: [...s.familyMembers, { id: uuidv4(), name }] })); sync(); },
+    updateFamilyMember: (id, name) => { set((s) => ({ familyMembers: s.familyMembers.map((m) => m.id === id ? { ...m, name } : m) })); sync(); },
+    deleteFamilyMember: (id) => { set((s) => ({ familyMembers: s.familyMembers.filter((m) => m.id !== id) })); sync(); },
+
+    // ── Income ─────────────────────────────────────────────────────────────
+    addIncome: (monthIndex, entry) => {
+      set((s) => {
+        const md = ensureMonth(s.months, monthIndex);
+        return { months: { ...s.months, [monthIndex]: { ...md, income: [...md.income, { ...entry, id: uuidv4() }] } } };
+      });
+      sync();
+    },
+
+    updateIncome: (monthIndex, id, partial) => {
+      set((s) => {
+        const md = ensureMonth(s.months, monthIndex);
+        return { months: { ...s.months, [monthIndex]: { ...md, income: md.income.map((e) => e.id === id ? { ...e, ...partial } : e) } } };
+      });
+      sync();
+    },
+
+    deleteIncome: (monthIndex, id) => {
+      set((s) => {
+        const md = ensureMonth(s.months, monthIndex);
+        return { months: { ...s.months, [monthIndex]: { ...md, income: md.income.filter((e) => e.id !== id) } } };
+      });
+      sync();
+    },
+
+    addRecurringIncome: (entry) => { set((s) => ({ recurringIncomes: [...s.recurringIncomes, { ...entry, id: uuidv4(), isRecurring: true }] })); sync(); },
+    deleteRecurringIncome: (id) => { set((s) => ({ recurringIncomes: s.recurringIncomes.filter((e) => e.id !== id) })); sync(); },
+
+    // ── Recurring expenses ──────────────────────────────────────────────────
+    addRecurringExpense: (entry) => { set((s) => ({ recurringExpenses: [...s.recurringExpenses, { ...entry, id: uuidv4(), isRecurring: true }] })); sync(); },
+    deleteRecurringExpense: (id) => { set((s) => ({ recurringExpenses: s.recurringExpenses.filter((e) => e.id !== id) })); sync(); },
+
+    // ── Expenses ────────────────────────────────────────────────────────────
+    addExpense: (monthIndex, entry) => {
+      set((s) => {
+        const md = ensureMonth(s.months, monthIndex);
+        return { months: { ...s.months, [monthIndex]: { ...md, expenses: [...md.expenses, { ...entry, id: uuidv4() }] } } };
+      });
+      sync();
+    },
+
+    updateExpense: (monthIndex, id, partial) => {
+      set((s) => {
+        const md = ensureMonth(s.months, monthIndex);
+        return { months: { ...s.months, [monthIndex]: { ...md, expenses: md.expenses.map((e) => e.id === id ? { ...e, ...partial } : e) } } };
+      });
+      sync();
+    },
+
+    deleteExpense: (monthIndex, id) => {
+      set((s) => {
+        const md = ensureMonth(s.months, monthIndex);
+        return { months: { ...s.months, [monthIndex]: { ...md, expenses: md.expenses.filter((e) => e.id !== id) } } };
+      });
+      sync();
+    },
+
+    setBudget: (monthIndex, categoryId, amount) => {
+      set((s) => {
+        const md = ensureMonth(s.months, monthIndex);
+        return { months: { ...s.months, [monthIndex]: { ...md, budget: { ...md.budget, [categoryId]: amount } } } };
+      });
+      sync();
+    },
+
+    // ── Savings ─────────────────────────────────────────────────────────────
+    addSavingsFund: (fund) => { set((s) => ({ savingsFunds: [...s.savingsFunds, { ...fund, id: uuidv4() }] })); sync(); },
+    updateSavingsFund: (id, updates) => { set((s) => ({ savingsFunds: s.savingsFunds.map((f) => f.id === id ? { ...f, ...updates } : f) })); sync(); },
+    deleteSavingsFund: (id) => { set((s) => ({ savingsFunds: s.savingsFunds.filter((f) => f.id !== id) })); sync(); },
+
+    depositToFund: (id, amount, monthIndex) => {
+      set((s) => {
+        const fund = s.savingsFunds.find((f) => f.id === id);
+        const md = ensureMonth(s.months, monthIndex);
+        const expense: ExpenseEntry = {
+          id: uuidv4(),
+          date: new Date().toISOString().split('T')[0],
+          categoryId: 'savings',
+          subcategoryId: 'savings-monthly',
+          description: fund ? `חיסכון: ${fund.name}` : 'הפקדה לחיסכון',
+          amount,
+          paymentMethod: 'transfer',
+          notes: '',
+        };
+        return {
+          savingsFunds: s.savingsFunds.map((f) => f.id === id ? { ...f, savedAmount: f.savedAmount + amount } : f),
+          months: { ...s.months, [monthIndex]: { ...md, expenses: [...md.expenses, expense] } },
+        };
+      });
+      sync();
+    },
+
+    updateSettings: (partial) => {
+      set((s) => ({
+        settings: { ...s.settings, ...partial, savingsGoal: { ...s.settings.savingsGoal, ...(partial.savingsGoal ?? {}) } },
+      }));
+      sync();
+    },
+
+    loadDemoData: () => {
+      const m1 = uuidv4();
+      const m2 = uuidv4();
+      set({
+        familyMembers: [{ id: m1, name: 'יוסי' }, { id: m2, name: 'רונית' }],
+        months: {
+          0: {
+            income: [
+              { id: uuidv4(), date: '2026-01-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
+              { id: uuidv4(), date: '2026-01-01', source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
+            ],
+            expenses: [
+              { id: uuidv4(), date: '2026-01-05', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
+              { id: uuidv4(), date: '2026-01-08', categoryId: 'food', subcategoryId: 'food-grocery', description: 'קניות', amount: 1200, paymentMethod: 'credit', notes: '' },
+            ],
+            budget: { home: 7000, food: 3000, transport: 1500 },
+          },
+          3: {
+            income: [
+              { id: uuidv4(), date: '2026-04-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
+              { id: uuidv4(), date: '2026-04-01', source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
+            ],
+            expenses: [
+              { id: uuidv4(), date: '2026-04-02', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
+              { id: uuidv4(), date: '2026-04-05', categoryId: 'food', subcategoryId: 'food-grocery', description: 'קניות', amount: 1400, paymentMethod: 'credit', notes: '' },
+            ],
+            budget: { home: 7000, food: 3000 },
+          },
         },
-      },
-
-      months: {},
-      savingsFunds: [],
-      recurringIncomes: [],
-      recurringExpenses: [],
-      familyMembers: [
-        { id: 'member-1', name: 'בן/בת זוג 1' },
-        { id: 'member-2', name: 'בן/בת זוג 2' },
-      ],
-
-      addIncome: (monthIndex, entry) =>
-        set((state) => {
-          const monthData = ensureMonth(state.months, monthIndex);
-          const newEntry: IncomeEntry = { ...entry, id: uuidv4() };
-          return {
-            months: {
-              ...state.months,
-              [monthIndex]: { ...monthData, income: [...monthData.income, newEntry] },
-            },
-          };
-        }),
-
-      updateIncome: (monthIndex, id, partial) =>
-        set((state) => {
-          const monthData = ensureMonth(state.months, monthIndex);
-          return {
-            months: {
-              ...state.months,
-              [monthIndex]: {
-                ...monthData,
-                income: monthData.income.map((e) => (e.id === id ? { ...e, ...partial } : e)),
-              },
-            },
-          };
-        }),
-
-      deleteIncome: (monthIndex, id) =>
-        set((state) => {
-          const monthData = ensureMonth(state.months, monthIndex);
-          return {
-            months: {
-              ...state.months,
-              [monthIndex]: {
-                ...monthData,
-                income: monthData.income.filter((e) => e.id !== id),
-              },
-            },
-          };
-        }),
-
-      addRecurringIncome: (entry) =>
-        set((state) => ({
-          recurringIncomes: [
-            ...state.recurringIncomes,
-            { ...entry, id: uuidv4(), isRecurring: true },
-          ],
-        })),
-
-      deleteRecurringIncome: (id) =>
-        set((state) => ({
-          recurringIncomes: state.recurringIncomes.filter((e) => e.id !== id),
-        })),
-
-      addRecurringExpense: (entry) =>
-        set((state) => ({
-          recurringExpenses: [
-            ...state.recurringExpenses,
-            { ...entry, id: uuidv4(), isRecurring: true },
-          ],
-        })),
-
-      deleteRecurringExpense: (id) =>
-        set((state) => ({
-          recurringExpenses: state.recurringExpenses.filter((e) => e.id !== id),
-        })),
-
-      addFamilyMember: (name) =>
-        set((state) => ({
-          familyMembers: [...state.familyMembers, { id: uuidv4(), name }],
-        })),
-
-      updateFamilyMember: (id, name) =>
-        set((state) => ({
-          familyMembers: state.familyMembers.map((m) => (m.id === id ? { ...m, name } : m)),
-        })),
-
-      deleteFamilyMember: (id) =>
-        set((state) => ({
-          familyMembers: state.familyMembers.filter((m) => m.id !== id),
-        })),
-
-      addExpense: (monthIndex, entry) =>
-        set((state) => {
-          const monthData = ensureMonth(state.months, monthIndex);
-          const newEntry: ExpenseEntry = { ...entry, id: uuidv4() };
-          return {
-            months: {
-              ...state.months,
-              [monthIndex]: { ...monthData, expenses: [...monthData.expenses, newEntry] },
-            },
-          };
-        }),
-
-      updateExpense: (monthIndex, id, partial) =>
-        set((state) => {
-          const monthData = ensureMonth(state.months, monthIndex);
-          return {
-            months: {
-              ...state.months,
-              [monthIndex]: {
-                ...monthData,
-                expenses: monthData.expenses.map((e) => (e.id === id ? { ...e, ...partial } : e)),
-              },
-            },
-          };
-        }),
-
-      deleteExpense: (monthIndex, id) =>
-        set((state) => {
-          const monthData = ensureMonth(state.months, monthIndex);
-          return {
-            months: {
-              ...state.months,
-              [monthIndex]: {
-                ...monthData,
-                expenses: monthData.expenses.filter((e) => e.id !== id),
-              },
-            },
-          };
-        }),
-
-      setBudget: (monthIndex, categoryId, amount) =>
-        set((state) => {
-          const monthData = ensureMonth(state.months, monthIndex);
-          return {
-            months: {
-              ...state.months,
-              [monthIndex]: {
-                ...monthData,
-                budget: { ...monthData.budget, [categoryId]: amount },
-              },
-            },
-          };
-        }),
-
-      addSavingsFund: (fund) =>
-        set((state) => ({
-          savingsFunds: [...state.savingsFunds, { ...fund, id: uuidv4() }],
-        })),
-
-      updateSavingsFund: (id, updates) =>
-        set((state) => ({
-          savingsFunds: state.savingsFunds.map((f) =>
-            f.id === id ? { ...f, ...updates } : f
-          ),
-        })),
-
-      deleteSavingsFund: (id) =>
-        set((state) => ({
-          savingsFunds: state.savingsFunds.filter((f) => f.id !== id),
-        })),
-
-      depositToFund: (id, amount, monthIndex) =>
-        set((state) => {
-          const fund = state.savingsFunds.find((f) => f.id === id);
-          const monthData = ensureMonth(state.months, monthIndex);
-          const expenseEntry: ExpenseEntry = {
-            id: uuidv4(),
-            date: new Date().toISOString().split('T')[0],
-            categoryId: 'savings',
-            subcategoryId: 'savings-monthly',
-            description: fund ? `חיסכון: ${fund.name}` : 'הפקדה לחיסכון',
-            amount,
-            paymentMethod: 'transfer',
-            notes: '',
-          };
-          return {
-            savingsFunds: state.savingsFunds.map((f) =>
-              f.id === id ? { ...f, savedAmount: f.savedAmount + amount } : f
-            ),
-            months: {
-              ...state.months,
-              [monthIndex]: {
-                ...monthData,
-                expenses: [...monthData.expenses, expenseEntry],
-              },
-            },
-          };
-        }),
-
-      updateSettings: (partial) =>
-        set((state) => ({
-          settings: {
-            ...state.settings,
-            ...partial,
-            savingsGoal: { ...state.settings.savingsGoal, ...(partial.savingsGoal || {}) },
-          },
-        })),
-
-      loadDemoData: () => {
-        const m1 = uuidv4();
-        const m2 = uuidv4();
-        return set(() => ({
-          familyMembers: [
-            { id: m1, name: 'יוסי' },
-            { id: m2, name: 'רונית' },
-          ],
-          months: {
-            0: {
-              income: [
-                { id: uuidv4(), date: '2026-01-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
-                { id: uuidv4(), date: '2026-01-01', source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
-              ],
-              expenses: [
-                { id: uuidv4(), date: '2026-01-05', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
-                { id: uuidv4(), date: '2026-01-08', categoryId: 'food', subcategoryId: 'food-grocery', description: 'קניות', amount: 1200, paymentMethod: 'credit', notes: '' },
-                { id: uuidv4(), date: '2026-01-12', categoryId: 'transport', subcategoryId: 'transport-fuel', description: 'דלק', amount: 400, paymentMethod: 'credit', notes: '' },
-              ],
-              budget: { home: 7000, food: 3000, transport: 1500, children: 2000, health: 500, entertainment: 1000 },
-            },
-            1: {
-              income: [
-                { id: uuidv4(), date: '2026-02-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
-                { id: uuidv4(), date: '2026-02-01', source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
-              ],
-              expenses: [
-                { id: uuidv4(), date: '2026-02-05', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
-                { id: uuidv4(), date: '2026-02-10', categoryId: 'children', subcategoryId: 'children-activities', description: 'חוג', amount: 350, paymentMethod: 'credit', notes: '' },
-              ],
-              budget: { home: 7000, food: 3000, transport: 1500, children: 2000 },
-            },
-            2: {
-              income: [
-                { id: uuidv4(), date: '2026-03-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
-              ],
-              expenses: [
-                { id: uuidv4(), date: '2026-03-03', categoryId: 'health', subcategoryId: 'health-private', description: 'רופא שיניים', amount: 800, paymentMethod: 'credit', notes: '' },
-              ],
-              budget: { home: 7000, food: 3000, health: 500 },
-            },
-            3: {
-              income: [
-                { id: uuidv4(), date: '2026-04-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
-                { id: uuidv4(), date: '2026-04-01', source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
-              ],
-              expenses: [
-                { id: uuidv4(), date: '2026-04-02', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
-                { id: uuidv4(), date: '2026-04-05', categoryId: 'food', subcategoryId: 'food-grocery', description: 'קניות שבועיות', amount: 1400, paymentMethod: 'credit', notes: '' },
-                { id: uuidv4(), date: '2026-04-07', categoryId: 'transport', subcategoryId: 'transport-fuel', description: 'דלק', amount: 380, paymentMethod: 'credit', notes: '' },
-                { id: uuidv4(), date: '2026-04-10', categoryId: 'entertainment', subcategoryId: 'entertainment-restaurants', description: 'ארוחת ערב', amount: 280, paymentMethod: 'credit', notes: '' },
-                { id: uuidv4(), date: '2026-04-12', categoryId: 'children', subcategoryId: 'children-education', description: 'ספרי לימוד', amount: 220, paymentMethod: 'cash', notes: '' },
-              ],
-              budget: { home: 7000, food: 3000, transport: 1500, children: 2000, entertainment: 1000 },
-            },
-          },
-          settings: {
-            year: 2026,
-            savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 },
-          },
-          savingsFunds: [
-            { id: uuidv4(), name: 'חופשה לאירופה', targetAmount: 15000, savedAmount: 4500, color: '#B8CCE0', notes: 'קיץ 2027' },
-            { id: uuidv4(), name: 'קרן חירום', targetAmount: 30000, savedAmount: 12000, color: '#C5CDB6', notes: '3 משכורות' },
-            { id: uuidv4(), name: 'רכב חדש', targetAmount: 80000, savedAmount: 8000, color: '#E8CFA8', notes: '' },
-          ],
-          recurringIncomes: [],
-          recurringExpenses: [],
-        }));
-      },
-    }),
-    { name: 'finance-israel-store' }
-  )
-);
+        settings: { year: 2026, savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 } },
+        savingsFunds: [
+          { id: uuidv4(), name: 'חופשה לאירופה', targetAmount: 15000, savedAmount: 4500, color: '#B8CCE0', notes: 'קיץ 2027' },
+          { id: uuidv4(), name: 'קרן חירום', targetAmount: 30000, savedAmount: 12000, color: '#C5CDB6', notes: '3 משכורות' },
+        ],
+        recurringIncomes: [],
+        recurringExpenses: [],
+      });
+      sync();
+    },
+  };
+});
