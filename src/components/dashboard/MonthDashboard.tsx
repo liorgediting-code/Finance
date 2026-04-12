@@ -114,16 +114,16 @@ export default function MonthDashboard() {
       {/* ── Summary Cards ── */}
       <MonthSummary monthIndex={monthIndex} />
 
-      {/* ── Income ── */}
-      <SectionDivider label="הכנסות" />
-      <IncomeTable monthIndex={monthIndex} />
-
       {/* ── Expenses ── */}
       <SectionDivider label="הוצאות" />
       <div className="mb-6">
         <ExpenseCategoryBarChart monthIndex={monthIndex} showToggle={false} />
       </div>
       <ExpenseBudgetSection monthIndex={monthIndex} />
+
+      {/* ── Income ── */}
+      <SectionDivider label="הכנסות" />
+      <IncomeTable monthIndex={monthIndex} />
     </div>
   );
 }

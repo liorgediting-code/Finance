@@ -13,11 +13,16 @@ interface FinanceStore {
   settings: AppSettings;
   months: Record<number, MonthData>;
   savingsFunds: SavingsFund[];
+  recurringIncomes: IncomeEntry[];
 
   // Income actions
   addIncome: (monthIndex: number, entry: Omit<IncomeEntry, 'id'>) => void;
   updateIncome: (monthIndex: number, id: string, partial: Partial<IncomeEntry>) => void;
   deleteIncome: (monthIndex: number, id: string) => void;
+
+  // Recurring income actions
+  addRecurringIncome: (entry: Omit<IncomeEntry, 'id'>) => void;
+  deleteRecurringIncome: (id: string) => void;
 
   // Expense actions
   addExpense: (monthIndex: number, entry: Omit<ExpenseEntry, 'id'>) => void;
@@ -31,7 +36,7 @@ interface FinanceStore {
   addSavingsFund: (fund: Omit<SavingsFund, 'id'>) => void;
   updateSavingsFund: (id: string, updates: Partial<Omit<SavingsFund, 'id'>>) => void;
   deleteSavingsFund: (id: string) => void;
-  depositToFund: (id: string, amount: number) => void;
+  depositToFund: (id: string, amount: number, monthIndex: number) => void;
 
   // Settings actions
   updateSettings: (partial: Partial<AppSettings>) => void;
@@ -65,6 +70,7 @@ export const useFinanceStore = create<FinanceStore>()(
 
       months: {},
       savingsFunds: [],
+      recurringIncomes: [],
 
       addIncome: (monthIndex, entry) =>
         set((state) => {
@@ -105,6 +111,19 @@ export const useFinanceStore = create<FinanceStore>()(
             },
           };
         }),
+
+      addRecurringIncome: (entry) =>
+        set((state) => ({
+          recurringIncomes: [
+            ...state.recurringIncomes,
+            { ...entry, id: uuidv4(), isRecurring: true },
+          ],
+        })),
+
+      deleteRecurringIncome: (id) =>
+        set((state) => ({
+          recurringIncomes: state.recurringIncomes.filter((e) => e.id !== id),
+        })),
 
       addExpense: (monthIndex, entry) =>
         set((state) => {
@@ -177,12 +196,33 @@ export const useFinanceStore = create<FinanceStore>()(
           savingsFunds: state.savingsFunds.filter((f) => f.id !== id),
         })),
 
-      depositToFund: (id, amount) =>
-        set((state) => ({
-          savingsFunds: state.savingsFunds.map((f) =>
-            f.id === id ? { ...f, savedAmount: f.savedAmount + amount } : f
-          ),
-        })),
+      depositToFund: (id, amount, monthIndex) =>
+        set((state) => {
+          const fund = state.savingsFunds.find((f) => f.id === id);
+          const monthData = ensureMonth(state.months, monthIndex);
+          const expenseEntry: ExpenseEntry = {
+            id: uuidv4(),
+            date: new Date().toISOString().split('T')[0],
+            categoryId: 'savings',
+            subcategoryId: 'savings-monthly',
+            description: fund ? `חיסכון: ${fund.name}` : 'הפקדה לחיסכון',
+            amount,
+            paymentMethod: 'transfer',
+            notes: '',
+          };
+          return {
+            savingsFunds: state.savingsFunds.map((f) =>
+              f.id === id ? { ...f, savedAmount: f.savedAmount + amount } : f
+            ),
+            months: {
+              ...state.months,
+              [monthIndex]: {
+                ...monthData,
+                expenses: [...monthData.expenses, expenseEntry],
+              },
+            },
+          };
+        }),
 
       updateSettings: (partial) =>
         set((state) => ({

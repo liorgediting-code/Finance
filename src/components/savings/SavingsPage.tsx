@@ -471,7 +471,7 @@ export default function SavingsPage() {
                 fund={fund}
                 onEdit={() => { setEditingId(fund.id); setShowAddForm(false); }}
                 onDelete={() => deleteSavingsFund(fund.id)}
-                onDeposit={(amt) => depositToFund(fund.id, amt)}
+                onDeposit={(amt) => depositToFund(fund.id, amt, new Date().getMonth())}
               />
             )
           ))}

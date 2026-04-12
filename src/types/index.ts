@@ -5,6 +5,7 @@ export interface IncomeEntry {
   spouse: 'spouse1' | 'spouse2';
   amount: number;
   notes: string;
+  isRecurring?: boolean;
 }
 
 export interface ExpenseEntry {

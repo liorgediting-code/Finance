@@ -10,12 +10,17 @@ interface IncomeTableProps {
 
 const today = () => new Date().toISOString().split('T')[0];
 
-const emptyForm = (): Omit<IncomeEntry, 'id'> => ({
+interface FormData extends Omit<IncomeEntry, 'id'> {
+  isRecurring: boolean;
+}
+
+const emptyForm = (): FormData => ({
   date: today(),
   source: '',
   spouse: 'spouse1',
   amount: 0,
   notes: '',
+  isRecurring: false,
 });
 
 function PlusIcon() {
@@ -47,18 +52,34 @@ function TrashIcon() {
   );
 }
 
+function RepeatIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="17 1 21 5 17 9" />
+      <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+      <polyline points="7 23 3 19 7 15" />
+      <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+    </svg>
+  );
+}
+
 export default function IncomeTable({ monthIndex }: IncomeTableProps) {
   const monthData = useFinanceStore((s) => s.months[monthIndex]);
+  const recurringIncomes = useFinanceStore((s) => s.recurringIncomes);
   const spouseNames = useFinanceStore((s) => s.settings.spouseNames);
   const addIncome = useFinanceStore((s) => s.addIncome);
   const updateIncome = useFinanceStore((s) => s.updateIncome);
   const deleteIncome = useFinanceStore((s) => s.deleteIncome);
+  const addRecurringIncome = useFinanceStore((s) => s.addRecurringIncome);
+  const deleteRecurringIncome = useFinanceStore((s) => s.deleteRecurringIncome);
 
-  const incomeEntries = monthData?.income ?? [];
-  const totalIncome = sumAmounts(incomeEntries);
+  const monthlyEntries = monthData?.income ?? [];
+  // Combine: recurring shown for every month, monthly entries are month-specific
+  const allEntries = [...recurringIncomes, ...monthlyEntries];
+  const totalIncome = sumAmounts(allEntries);
 
   const [showForm, setShowForm] = useState(false);
-  const [newEntry, setNewEntry] = useState<Omit<IncomeEntry, 'id'>>(emptyForm());
+  const [newEntry, setNewEntry] = useState<FormData>(emptyForm());
   const [errors, setErrors] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Omit<IncomeEntry, 'id'>>(emptyForm());
@@ -67,11 +88,13 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
     const errs: string[] = [];
     if (!newEntry.source.trim()) errs.push('מקור הכנסה');
     if (newEntry.amount <= 0) errs.push('סכום');
-    if (errs.length > 0) {
-      setErrors(errs);
-      return;
+    if (errs.length > 0) { setErrors(errs); return; }
+
+    if (newEntry.isRecurring) {
+      addRecurringIncome({ ...newEntry, date: newEntry.date || today() });
+    } else {
+      addIncome(monthIndex, { ...newEntry, date: newEntry.date || today() });
     }
-    addIncome(monthIndex, { ...newEntry, date: newEntry.date || today() });
     setNewEntry(emptyForm());
     setErrors([]);
     setShowForm(false);
@@ -82,8 +105,12 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
     setEditForm({ date: entry.date, source: entry.source, spouse: entry.spouse, amount: entry.amount, notes: entry.notes });
   };
 
-  const saveEdit = (id: string) => {
-    updateIncome(monthIndex, id, editForm);
+  const saveEdit = (id: string, isRecurring: boolean) => {
+    if (isRecurring) {
+      // Recurring entries can't be edited inline (would affect all months) — skip for now
+    } else {
+      updateIncome(monthIndex, id, editForm);
+    }
     setEditingId(null);
   };
 
@@ -135,6 +162,21 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
               <input type="text" placeholder="אופציונלי" value={newEntry.notes} onChange={(e) => setNewEntry({ ...newEntry, notes: e.target.value })} className={inputCls} />
             </div>
           </div>
+
+          {/* Recurring toggle */}
+          <label className="flex items-center gap-2 mt-3 cursor-pointer w-fit">
+            <div
+              onClick={() => setNewEntry({ ...newEntry, isRecurring: !newEntry.isRecurring })}
+              className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${newEntry.isRecurring ? 'bg-sage-dark' : 'bg-gray-200'}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${newEntry.isRecurring ? 'translate-x-4' : 'translate-x-0'}`} />
+            </div>
+            <span className="text-sm text-[#4A4A60] flex items-center gap-1.5">
+              <RepeatIcon />
+              הכנסה קבועה (תופיע בכל חודש)
+            </span>
+          </label>
+
           <div className="flex gap-2 mt-4 justify-end">
             <button onClick={() => { setShowForm(false); setErrors([]); setNewEntry(emptyForm()); }} className="text-sm text-[#6B6B8A] hover:text-[#1E1E2E] px-4 py-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
               ביטול
@@ -160,69 +202,93 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
             </tr>
           </thead>
           <tbody>
-            {incomeEntries.length === 0 && (
+            {allEntries.length === 0 && (
               <tr>
                 <td colSpan={6} className="text-center text-[#9090A8] py-10 bg-white text-sm">
                   אין הכנסות — לחץ על &quot;הוסף הכנסה&quot; כדי להתחיל
                 </td>
               </tr>
             )}
-            {incomeEntries.map((entry, idx) => (
-              <tr key={entry.id} className={`border-b border-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-lavender-light/30`}>
-                {editingId === entry.id ? (
-                  <>
-                    <td className="px-4 py-2"><input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} className={inputCls} /></td>
-                    <td className="px-4 py-2"><input type="text" value={editForm.source} onChange={(e) => setEditForm({ ...editForm, source: e.target.value })} className={inputCls} /></td>
-                    <td className="px-4 py-2">
-                      <select value={editForm.spouse} onChange={(e) => setEditForm({ ...editForm, spouse: e.target.value as 'spouse1' | 'spouse2' })} className={`${inputCls} cursor-pointer`}>
-                        <option value="spouse1">{spouseNames.spouse1}</option>
-                        <option value="spouse2">{spouseNames.spouse2}</option>
-                      </select>
-                    </td>
-                    <td className="px-4 py-2"><input type="number" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: Number(e.target.value) })} className={inputCls} min={0} /></td>
-                    <td className="px-4 py-2"><input type="text" value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} className={inputCls} /></td>
-                    <td className="px-4 py-2 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => saveEdit(entry.id)} className="flex items-center gap-1 text-xs text-white bg-sage-dark hover:bg-[#8AAA7A] px-2.5 py-1 rounded-md transition-colors cursor-pointer font-medium">
-                          שמור
-                        </button>
-                        <button onClick={() => setEditingId(null)} className="flex items-center gap-1 text-xs text-[#6B6B8A] hover:text-[#1E1E2E] px-2 py-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer">
-                          ביטול
-                        </button>
-                      </div>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td className="px-4 py-2.5 text-[#4A4A60]">{entry.date}</td>
-                    <td className="px-4 py-2.5 font-medium text-[#1E1E2E]">{entry.source}</td>
-                    <td className="px-4 py-2.5 text-[#4A4A60]">{entry.spouse === 'spouse1' ? spouseNames.spouse1 : spouseNames.spouse2}</td>
-                    <td className="px-4 py-2.5 font-semibold text-[#1E1E2E]">{formatCurrency(entry.amount)}</td>
-                    <td className="px-4 py-2.5 text-[#9090A8] text-xs">{entry.notes}</td>
-                    <td className="px-4 py-2.5 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => startEdit(entry)}
-                          className="flex items-center gap-1 text-xs text-lavender-dark hover:text-[#5B52A0] hover:bg-lavender-light px-2 py-1 rounded-md transition-colors cursor-pointer"
-                          title="ערוך"
-                        >
-                          <EditIcon />
-                          עריכה
-                        </button>
-                        <button
-                          onClick={() => deleteIncome(monthIndex, entry.id)}
-                          className="flex items-center gap-1 text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-2 py-1 rounded-md transition-colors cursor-pointer"
-                          title="מחק"
-                        >
-                          <TrashIcon />
-                          מחיקה
-                        </button>
-                      </div>
-                    </td>
-                  </>
-                )}
-              </tr>
-            ))}
+            {allEntries.map((entry, idx) => {
+              const isRecurring = !!entry.isRecurring;
+              return (
+                <tr key={entry.id} className={`border-b border-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-lavender-light/30`}>
+                  {editingId === entry.id && !isRecurring ? (
+                    <>
+                      <td className="px-4 py-2"><input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} className={inputCls} /></td>
+                      <td className="px-4 py-2"><input type="text" value={editForm.source} onChange={(e) => setEditForm({ ...editForm, source: e.target.value })} className={inputCls} /></td>
+                      <td className="px-4 py-2">
+                        <select value={editForm.spouse} onChange={(e) => setEditForm({ ...editForm, spouse: e.target.value as 'spouse1' | 'spouse2' })} className={`${inputCls} cursor-pointer`}>
+                          <option value="spouse1">{spouseNames.spouse1}</option>
+                          <option value="spouse2">{spouseNames.spouse2}</option>
+                        </select>
+                      </td>
+                      <td className="px-4 py-2"><input type="number" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: Number(e.target.value) })} className={inputCls} min={0} /></td>
+                      <td className="px-4 py-2"><input type="text" value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} className={inputCls} /></td>
+                      <td className="px-4 py-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => saveEdit(entry.id, isRecurring)} className="flex items-center gap-1 text-xs text-white bg-sage-dark hover:bg-[#8AAA7A] px-2.5 py-1 rounded-md transition-colors cursor-pointer font-medium">
+                            שמור
+                          </button>
+                          <button onClick={() => setEditingId(null)} className="flex items-center gap-1 text-xs text-[#6B6B8A] hover:text-[#1E1E2E] px-2 py-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer">
+                            ביטול
+                          </button>
+                        </div>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-4 py-2.5 text-[#4A4A60]">{entry.date}</td>
+                      <td className="px-4 py-2.5 font-medium text-[#1E1E2E]">
+                        <div className="flex items-center gap-2">
+                          {entry.source}
+                          {isRecurring && (
+                            <span className="inline-flex items-center gap-1 bg-sage-light text-[#5A7A4A] text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                              <RepeatIcon />
+                              קבוע
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-2.5 text-[#4A4A60]">{entry.spouse === 'spouse1' ? spouseNames.spouse1 : spouseNames.spouse2}</td>
+                      <td className="px-4 py-2.5 font-semibold text-[#1E1E2E]">{formatCurrency(entry.amount)}</td>
+                      <td className="px-4 py-2.5 text-[#9090A8] text-xs">{entry.notes}</td>
+                      <td className="px-4 py-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {!isRecurring && (
+                            <button
+                              onClick={() => startEdit(entry)}
+                              className="flex items-center gap-1 text-xs text-lavender-dark hover:text-[#5B52A0] hover:bg-lavender-light px-2 py-1 rounded-md transition-colors cursor-pointer"
+                              title="ערוך"
+                            >
+                              <EditIcon />
+                              עריכה
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              const msg = isRecurring
+                                ? `למחוק את "${entry.source}" מכל החודשים?`
+                                : `למחוק הכנסה זו?`;
+                              if (window.confirm(msg)) {
+                                isRecurring
+                                  ? deleteRecurringIncome(entry.id)
+                                  : deleteIncome(monthIndex, entry.id);
+                              }
+                            }}
+                            className="flex items-center gap-1 text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-2 py-1 rounded-md transition-colors cursor-pointer"
+                            title="מחק"
+                          >
+                            <TrashIcon />
+                            {isRecurring ? 'בטל קבוע' : 'מחיקה'}
+                          </button>
+                        </div>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
           <tfoot>
             <tr className="bg-sage-light/50 font-semibold border-t border-gray-200">
