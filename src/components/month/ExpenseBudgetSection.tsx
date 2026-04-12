@@ -19,6 +19,7 @@ const emptyForm = (): Omit<ExpenseEntry, 'id'> => ({
   amount: 0,
   paymentMethod: 'credit',
   notes: '',
+  cancelUrl: '',
 });
 
 function getSubName(entry: ExpenseEntry): string {
@@ -111,10 +112,12 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
   const selectedCat = CATEGORIES.find((c) => c.id === form.categoryId);
   const subcategories = selectedCat?.subcategories ?? [];
   const isOther = form.categoryId === 'other';
+  const isSubscription = form.categoryId === 'subscriptions';
 
   const handleCatChange = (catId: string) => {
     const cat = CATEGORIES.find((c) => c.id === catId);
     setForm({ ...form, categoryId: catId, subcategoryId: cat?.subcategories[0]?.id ?? '', customCategory: '' });
+    if (catId === 'subscriptions') setIsRecurring(true);
   };
 
   const handleSubmit = () => {
@@ -194,6 +197,20 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
           <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הערות</label>
           <input type="text" placeholder="אופציונלי" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={inputCls} />
         </div>
+
+        {isSubscription && (
+          <div className="col-span-2 sm:col-span-3 lg:col-span-4">
+            <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">קישור לביטול (אופציונלי)</label>
+            <input
+              type="url"
+              placeholder="https://..."
+              value={form.cancelUrl ?? ''}
+              onChange={(e) => setForm({ ...form, cancelUrl: e.target.value })}
+              className={inputCls}
+              dir="ltr"
+            />
+          </div>
+        )}
       </div>
 
       {/* Recurring toggle */}
@@ -256,7 +273,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
 
   const startEdit = (entry: ExpenseEntry) => {
     setEditingId(entry.id);
-    setEditForm({ date: entry.date, categoryId: entry.categoryId, subcategoryId: entry.subcategoryId, customCategory: entry.customCategory ?? '', description: entry.description, amount: entry.amount, paymentMethod: entry.paymentMethod, notes: entry.notes });
+    setEditForm({ date: entry.date, categoryId: entry.categoryId, subcategoryId: entry.subcategoryId, customCategory: entry.customCategory ?? '', description: entry.description, amount: entry.amount, paymentMethod: entry.paymentMethod, notes: entry.notes, cancelUrl: entry.cancelUrl ?? '' });
   };
 
   const saveEdit = (id: string) => {
@@ -469,6 +486,22 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                                     <TrashIcon />
                                     {entry.isRecurring ? 'בטל קבוע' : 'מחיקה'}
                                   </button>
+                                  {entry.cancelUrl && (
+                                    <a
+                                      href={entry.cancelUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-0.5 text-xs text-[#9090A8] hover:text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded-md transition-colors"
+                                      title="עבור לאתר לביטול המנוי"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                        <polyline points="15 3 21 3 21 9" />
+                                        <line x1="10" y1="14" x2="21" y2="3" />
+                                      </svg>
+                                      בטל מנוי
+                                    </a>
+                                  )}
                                 </div>
                               </td>
                             </tr>

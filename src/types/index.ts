@@ -24,6 +24,7 @@ export interface ExpenseEntry {
   paymentMethod: 'credit' | 'cash' | 'transfer' | 'check' | 'direct_debit';
   notes: string;
   isRecurring?: boolean;
+  cancelUrl?: string;
 }
 
 export interface MonthBudget {
