@@ -15,6 +15,7 @@ interface FinanceStore {
   months: Record<number, MonthData>;
   savingsFunds: SavingsFund[];
   recurringIncomes: IncomeEntry[];
+  recurringExpenses: ExpenseEntry[];
   familyMembers: FamilyMember[];
 
   // Family member actions
@@ -30,6 +31,10 @@ interface FinanceStore {
   // Recurring income actions
   addRecurringIncome: (entry: Omit<IncomeEntry, 'id'>) => void;
   deleteRecurringIncome: (id: string) => void;
+
+  // Recurring expense actions
+  addRecurringExpense: (entry: Omit<ExpenseEntry, 'id'>) => void;
+  deleteRecurringExpense: (id: string) => void;
 
   // Expense actions
   addExpense: (monthIndex: number, entry: Omit<ExpenseEntry, 'id'>) => void;
@@ -74,6 +79,7 @@ export const useFinanceStore = create<FinanceStore>()(
       months: {},
       savingsFunds: [],
       recurringIncomes: [],
+      recurringExpenses: [],
       familyMembers: [
         { id: 'member-1', name: 'בן/בת זוג 1' },
         { id: 'member-2', name: 'בן/בת זוג 2' },
@@ -130,6 +136,19 @@ export const useFinanceStore = create<FinanceStore>()(
       deleteRecurringIncome: (id) =>
         set((state) => ({
           recurringIncomes: state.recurringIncomes.filter((e) => e.id !== id),
+        })),
+
+      addRecurringExpense: (entry) =>
+        set((state) => ({
+          recurringExpenses: [
+            ...state.recurringExpenses,
+            { ...entry, id: uuidv4(), isRecurring: true },
+          ],
+        })),
+
+      deleteRecurringExpense: (id) =>
+        set((state) => ({
+          recurringExpenses: state.recurringExpenses.filter((e) => e.id !== id),
         })),
 
       addFamilyMember: (name) =>
@@ -321,6 +340,7 @@ export const useFinanceStore = create<FinanceStore>()(
             { id: uuidv4(), name: 'רכב חדש', targetAmount: 80000, savedAmount: 8000, color: '#E8CFA8', notes: '' },
           ],
           recurringIncomes: [],
+          recurringExpenses: [],
         }));
       },
     }),

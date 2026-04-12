@@ -10,12 +10,13 @@ interface MonthSummaryProps {
 export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
   const monthData = useFinanceStore((s) => s.months[monthIndex]);
   const recurringIncomes = useFinanceStore((s) => s.recurringIncomes);
+  const recurringExpenses = useFinanceStore((s) => s.recurringExpenses);
 
   const incomeEntries = monthData?.income ?? [];
   const expenseEntries = monthData?.expenses ?? [];
 
   const totalIncome = sumAmounts(incomeEntries) + sumAmounts(recurringIncomes);
-  const totalExpenses = sumAmounts(expenseEntries);
+  const totalExpenses = sumAmounts(expenseEntries) + sumAmounts(recurringExpenses);
   const remaining = calcRemaining(totalIncome, totalExpenses);
 
   return (

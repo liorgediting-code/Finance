@@ -29,15 +29,18 @@ interface ChartItem {
 function buildData(
   view: 'month' | 'year',
   months: ReturnType<typeof useFinanceStore.getState>['months'],
-  monthIndex: number
+  monthIndex: number,
+  recurringExpenses: ReturnType<typeof useFinanceStore.getState>['recurringExpenses']
 ): ChartItem[] {
   const raw = CATEGORIES.map((cat) => {
     let value = 0;
     if (view === 'month') {
       const md = months[monthIndex];
-      value = md ? getCategoryTotal(md.expenses, cat.id) : 0;
+      value = (md ? getCategoryTotal(md.expenses, cat.id) : 0)
+        + getCategoryTotal(recurringExpenses, cat.id);
     } else {
-      value = Object.values(months).reduce((sum, md) => sum + getCategoryTotal(md.expenses, cat.id), 0);
+      value = Object.values(months).reduce((sum, md) => sum + getCategoryTotal(md.expenses, cat.id), 0)
+        + getCategoryTotal(recurringExpenses, cat.id) * 12;
     }
     return { name: cat.nameHe, value, color: cat.color };
   }).filter((d) => d.value > 0);
@@ -66,8 +69,9 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payl
 export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true }: Props) {
   const [view, setView] = useState<'month' | 'year'>('month');
   const months = useFinanceStore((s) => s.months);
+  const recurringExpenses = useFinanceStore((s) => s.recurringExpenses);
 
-  const data = buildData(view, months, monthIndex);
+  const data = buildData(view, months, monthIndex, recurringExpenses);
   const total = data.reduce((s, d) => s + d.value, 0);
 
   const chartHeight = Math.max(240, data.length * 46);

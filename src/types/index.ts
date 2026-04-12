@@ -23,6 +23,7 @@ export interface ExpenseEntry {
   amount: number;
   paymentMethod: 'credit' | 'cash' | 'transfer' | 'check' | 'direct_debit';
   notes: string;
+  isRecurring?: boolean;
 }
 
 export interface MonthBudget {

@@ -76,6 +76,17 @@ function TrashIcon() {
   );
 }
 
+function RepeatIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="17 1 21 5 17 9" />
+      <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+      <polyline points="7 23 3 19 7 15" />
+      <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+    </svg>
+  );
+}
+
 interface AddFormProps {
   initialCategoryId?: string;
   monthIndex: number;
@@ -84,6 +95,8 @@ interface AddFormProps {
 
 function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps) {
   const addExpense = useFinanceStore((s) => s.addExpense);
+  const addRecurringExpense = useFinanceStore((s) => s.addRecurringExpense);
+
   const [form, setForm] = useState<Omit<ExpenseEntry, 'id'>>({
     ...emptyForm(),
     categoryId: initialCategoryId ?? '',
@@ -91,6 +104,7 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
       ? (CATEGORIES.find((c) => c.id === initialCategoryId)?.subcategories[0]?.id ?? '')
       : '',
   });
+  const [isRecurring, setIsRecurring] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
   const selectedCat = CATEGORIES.find((c) => c.id === form.categoryId);
@@ -109,7 +123,12 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
     if (isOther && !submitForm.customCategory?.trim()) errs.push('שם הקטגוריה');
     if (submitForm.amount <= 0) errs.push('סכום');
     if (errs.length > 0) { setErrors(errs); return; }
-    addExpense(monthIndex, submitForm);
+
+    if (isRecurring) {
+      addRecurringExpense(submitForm);
+    } else {
+      addExpense(monthIndex, submitForm);
+    }
     onClose();
   };
 
@@ -176,6 +195,17 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
         </div>
       </div>
 
+      {/* Recurring toggle */}
+      <label className="flex items-center gap-2 mt-3 cursor-pointer w-fit" onClick={() => setIsRecurring((v) => !v)}>
+        <div className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${isRecurring ? 'bg-blush-dark' : 'bg-gray-200'}`}>
+          <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${isRecurring ? 'translate-x-4' : 'translate-x-0'}`} />
+        </div>
+        <span className="text-sm text-[#4A4A60] flex items-center gap-1.5">
+          <RepeatIcon />
+          הוצאה קבועה (תופיע בכל חודש)
+        </span>
+      </label>
+
       <div className="flex gap-2 mt-4 justify-end">
         <button onClick={onClose} className="text-sm text-[#6B6B8A] hover:text-[#1E1E2E] px-4 py-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
           ביטול
@@ -190,12 +220,16 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
 
 export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const monthData = useFinanceStore((s) => s.months[monthIndex]);
+  const recurringExpenses = useFinanceStore((s) => s.recurringExpenses);
+  const deleteRecurringExpense = useFinanceStore((s) => s.deleteRecurringExpense);
   const setBudget = useFinanceStore((s) => s.setBudget);
   const updateExpense = useFinanceStore((s) => s.updateExpense);
   const deleteExpense = useFinanceStore((s) => s.deleteExpense);
 
   const budget = monthData?.budget ?? {};
-  const expenses = monthData?.expenses ?? [];
+  const monthExpenses = monthData?.expenses ?? [];
+  // Merge month-specific + recurring for display
+  const expenses = [...recurringExpenses, ...monthExpenses];
 
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [showAddForm, setShowAddForm] = useState(false);
@@ -295,19 +329,20 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
               <div
                 className={`grid grid-cols-[1fr_120px_120px_120px_40px] items-center px-4 py-2.5 border-b border-gray-100 transition-colors ${rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-lavender-light/20`}
               >
-                {/* Category name + expand toggle */}
                 <button
                   className="flex items-center gap-2 text-right font-medium text-[#1E1E2E] hover:text-[#5B52A0] transition-colors cursor-pointer"
                   onClick={() => toggleCat(cat.id)}
                 >
-                  <span
-                    className="inline-block w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: cat.color }}
-                  />
+                  <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
                   <span className="text-sm">{cat.nameHe}</span>
                   {catExpenses.length > 0 && (
                     <span className="text-xs text-[#9090A8] bg-gray-100 px-1.5 py-0.5 rounded-full font-normal">
                       {catExpenses.length}
+                    </span>
+                  )}
+                  {catExpenses.some((e) => e.isRecurring) && (
+                    <span className="inline-flex items-center gap-0.5 text-[#C08888] text-[10px]">
+                      <RepeatIcon />
                     </span>
                   )}
                   <span className="mr-auto">
@@ -327,12 +362,10 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                   />
                 </div>
 
-                {/* Actual */}
                 <div className="text-right text-sm font-medium text-[#1E1E2E]">
                   {actual > 0 ? formatCurrency(actual) : <span className="text-gray-300">—</span>}
                 </div>
 
-                {/* Diff */}
                 <div className={`text-right text-sm font-semibold ${overBudget ? 'text-red-500' : diff > 0 ? 'text-green-600' : 'text-[#9090A8]'}`}>
                   {budgetAmt > 0 ? (
                     <>{diff >= 0 ? '+' : ''}{formatCurrency(diff)}</>
@@ -341,7 +374,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                   )}
                 </div>
 
-                {/* Add to this category */}
                 <button
                   onClick={() => openAddForm(cat.id)}
                   title="הוסף הוצאה לקטגוריה זו"
@@ -370,7 +402,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                       </thead>
                       <tbody>
                         {catExpenses.map((entry) => (
-                          editingId === entry.id ? (
+                          editingId === entry.id && !entry.isRecurring ? (
                             <tr key={entry.id} className="bg-white border-b border-gray-200">
                               <td className="px-10 py-2"><input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} className={inputCls} /></td>
                               <td className="px-3 py-2">
@@ -396,26 +428,45 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                             <tr key={entry.id} className="border-b border-gray-100 hover:bg-white transition-colors">
                               <td className="px-10 py-2 text-[#6B6B8A]">{entry.date}</td>
                               <td className="px-3 py-2 text-[#6B6B8A]">{getSubName(entry)}</td>
-                              <td className="px-3 py-2 text-[#1E1E2E]">{entry.description || <span className="text-gray-300">—</span>}</td>
+                              <td className="px-3 py-2 text-[#1E1E2E]">
+                                <div className="flex items-center gap-1.5">
+                                  {entry.description || <span className="text-gray-300">—</span>}
+                                  {entry.isRecurring && (
+                                    <span className="inline-flex items-center gap-0.5 bg-blush-light text-[#C08888] text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                                      <RepeatIcon />
+                                      קבוע
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
                               <td className="px-3 py-2 font-semibold text-[#1E1E2E]">{formatCurrency(entry.amount)}</td>
                               <td className="px-3 py-2 text-[#9090A8]">{getPaymentName(entry.paymentMethod)}</td>
                               <td className="px-3 py-2 text-center">
                                 <div className="flex items-center justify-center gap-1">
+                                  {!entry.isRecurring && (
+                                    <button
+                                      onClick={() => startEdit(entry)}
+                                      className="flex items-center gap-0.5 text-lavender-dark hover:text-[#5B52A0] hover:bg-lavender-light px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
+                                    >
+                                      <EditIcon />
+                                      עריכה
+                                    </button>
+                                  )}
                                   <button
-                                    onClick={() => startEdit(entry)}
-                                    className="flex items-center gap-0.5 text-lavender-dark hover:text-[#5B52A0] hover:bg-lavender-light px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
-                                    title="ערוך"
-                                  >
-                                    <EditIcon />
-                                    עריכה
-                                  </button>
-                                  <button
-                                    onClick={() => deleteExpense(monthIndex, entry.id)}
+                                    onClick={() => {
+                                      const msg = entry.isRecurring
+                                        ? `למחוק את "${entry.description || getSubName(entry)}" מכל החודשים?`
+                                        : 'למחוק הוצאה זו?';
+                                      if (window.confirm(msg)) {
+                                        entry.isRecurring
+                                          ? deleteRecurringExpense(entry.id)
+                                          : deleteExpense(monthIndex, entry.id);
+                                      }
+                                    }}
                                     className="flex items-center gap-0.5 text-blush-dark hover:text-red-600 hover:bg-blush-light px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
-                                    title="מחק"
                                   >
                                     <TrashIcon />
-                                    מחיקה
+                                    {entry.isRecurring ? 'בטל קבוע' : 'מחיקה'}
                                   </button>
                                 </div>
                               </td>
