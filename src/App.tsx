@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import AppShell from './components/layout/AppShell'
 import MonthDashboard from './components/dashboard/MonthDashboard'
-import SavingsPage from './components/savings/SavingsPage'
 import SettingsPage from './components/settings/SettingsPage'
 import AuthGuard from './components/auth/AuthGuard'
 import LoginPage from './components/auth/LoginPage'
@@ -18,7 +17,6 @@ export default function App() {
           <AppShell>
             <Routes>
               <Route path="/" element={<MonthDashboard />} />
-              <Route path="/savings" element={<SavingsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/admin" element={<AdminPage />} />
             </Routes>
