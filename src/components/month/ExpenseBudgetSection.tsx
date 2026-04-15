@@ -251,6 +251,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const [addFormCatId, setAddFormCatId] = useState<string | undefined>();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Omit<ExpenseEntry, 'id'>>(emptyForm());
+  const [searchQuery, setSearchQuery] = useState('');
 
   const toggleCat = (catId: string) => {
     setExpandedCats((prev) => {
@@ -280,10 +281,24 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
 
   const inputCls = 'border border-gray-200 rounded-lg px-2 py-1.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark transition-colors bg-white';
 
+  const q = searchQuery.trim().toLowerCase();
+  const filteredExpenses = q
+    ? expenses.filter((e) => {
+        const catName = CATEGORIES.find((c) => c.id === e.categoryId)?.nameHe ?? '';
+        const subName = getSubName(e);
+        return (
+          e.description.toLowerCase().includes(q) ||
+          catName.toLowerCase().includes(q) ||
+          subName.toLowerCase().includes(q) ||
+          String(e.amount).includes(q)
+        );
+      })
+    : expenses;
+
   let totalActual = 0;
 
   const rows = CATEGORIES.map((cat) => {
-    const catExpenses = expenses.filter((e) => e.categoryId === cat.id);
+    const catExpenses = filteredExpenses.filter((e) => e.categoryId === cat.id);
     const actual = catExpenses.reduce((s, e) => s + e.amount, 0);
     totalActual += actual;
     return { cat, catExpenses, actual };
@@ -302,6 +317,32 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
           <PlusIcon />
           הוסף הוצאה
         </button>
+      </div>
+
+      {/* Search bar */}
+      <div className="mb-3">
+        <div className="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9090A8] pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="חיפוש הוצאה..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full border border-gray-200 rounded-lg pr-9 pl-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark transition-colors bg-white"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9090A8] hover:text-[#4A4A60] cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Add form */}
