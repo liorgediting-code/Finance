@@ -243,6 +243,9 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const updateExpense = useFinanceStore((s) => s.updateExpense);
   const deleteExpense = useFinanceStore((s) => s.deleteExpense);
 
+  const setBudget = useFinanceStore((s) => s.setBudget);
+
+  const budget = monthData?.budget ?? {};
   const monthExpenses = monthData?.expenses ?? [];
   const expenses = [...recurringExpenses, ...monthExpenses];
 
@@ -252,6 +255,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Omit<ExpenseEntry, 'id'>>(emptyForm());
   const [searchQuery, setSearchQuery] = useState('');
+  const [showBudgetSettings, setShowBudgetSettings] = useState(false);
 
   const toggleCat = (catId: string) => {
     setExpandedCats((prev) => {
@@ -300,16 +304,32 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const rows = CATEGORIES.map((cat) => {
     const catExpenses = filteredExpenses.filter((e) => e.categoryId === cat.id);
     const actual = catExpenses.reduce((s, e) => s + e.amount, 0);
+    const budgetAmt = budget[cat.id] ?? 0;
+    const overBudget = budgetAmt > 0 && actual > budgetAmt;
     totalActual += actual;
-    return { cat, catExpenses, actual };
+    return { cat, catExpenses, actual, budgetAmt, overBudget };
   });
 
   const visibleRows = rows.filter((r) => r.actual > 0);
+  const overBudgetCount = rows.filter((r) => r.overBudget).length;
 
   return (
     <section className="mb-8">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-[#1E1E2E]">הוצאות</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-base font-semibold text-[#1E1E2E]">הוצאות</h3>
+          <button
+            onClick={() => setShowBudgetSettings((v) => !v)}
+            className={`flex items-center gap-1 text-xs px-2 py-1 rounded-md transition-colors cursor-pointer ${showBudgetSettings ? 'bg-lavender text-[#5B52A0]' : 'text-[#9090A8] hover:bg-gray-100'}`}
+            title="הגדרת תקציב לקטגוריות"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            תקציב
+          </button>
+        </div>
         <button
           onClick={() => openAddForm(undefined)}
           className="flex items-center gap-1.5 bg-blush-dark text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#7B5AA0] transition-colors cursor-pointer shadow-sm"
@@ -318,6 +338,45 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
           הוסף הוצאה
         </button>
       </div>
+
+      {/* Budget alerts */}
+      {overBudgetCount > 0 && !showBudgetSettings && (
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3 text-xs text-red-700">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <span>חריגה מהתקציב ב-{overBudgetCount} קטגוריות</span>
+        </div>
+      )}
+
+      {/* Budget settings panel */}
+      {showBudgetSettings && (
+        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
+          <p className="text-xs font-medium text-[#6B6B8A] mb-3">הגדר תקציב חודשי לכל קטגוריה (₪)</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            {CATEGORIES.filter((c) => c.id !== 'other').map((cat) => {
+              const bAmt = budget[cat.id] ?? 0;
+              const catActual = expenses.filter((e) => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0);
+              const isOver = bAmt > 0 && catActual > bAmt;
+              return (
+                <div key={cat.id} className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                  <label className="text-xs text-[#4A4A60] flex-1 truncate">{cat.nameHe}</label>
+                  <input
+                    type="number"
+                    value={bAmt || ''}
+                    onChange={(e) => setBudget(monthIndex, cat.id, Number(e.target.value))}
+                    className={`border rounded-md px-2 py-1 w-20 text-xs text-right focus:outline-none focus:ring-1 focus:ring-lavender-dark ${isOver ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'}`}
+                    placeholder="0"
+                    min={0}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Search bar */}
       <div className="mb-3">
@@ -369,7 +428,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
           </div>
         )}
 
-        {visibleRows.map(({ cat, catExpenses, actual }, rowIdx) => {
+        {visibleRows.map(({ cat, catExpenses, actual, budgetAmt, overBudget }, rowIdx) => {
           const isExpanded = expandedCats.has(cat.id);
 
           return (
@@ -399,8 +458,13 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                   </span>
                 </button>
 
-                <div className="text-right text-sm font-medium text-[#1E1E2E]">
-                  {formatCurrency(actual)}
+                <div className="text-right text-sm font-medium">
+                  <span className={overBudget ? 'text-red-600' : 'text-[#1E1E2E]'}>{formatCurrency(actual)}</span>
+                  {overBudget && (
+                    <span className="text-[10px] text-red-500 block" title={`תקציב: ${formatCurrency(budgetAmt)}`}>
+                      חריגה {formatCurrency(actual - budgetAmt)}
+                    </span>
+                  )}
                 </div>
 
                 <button
