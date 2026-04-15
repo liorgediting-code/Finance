@@ -145,7 +145,7 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
           נא למלא: {errors.join(', ')}
         </p>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <div>
           <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תאריך</label>
           <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={inputCls} />
@@ -240,13 +240,10 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const monthData = useFinanceStore((s) => s.months[monthIndex]);
   const recurringExpenses = useFinanceStore((s) => s.recurringExpenses);
   const deleteRecurringExpense = useFinanceStore((s) => s.deleteRecurringExpense);
-  const setBudget = useFinanceStore((s) => s.setBudget);
   const updateExpense = useFinanceStore((s) => s.updateExpense);
   const deleteExpense = useFinanceStore((s) => s.deleteExpense);
 
-  const budget = monthData?.budget ?? {};
   const monthExpenses = monthData?.expenses ?? [];
-  // Merge month-specific + recurring for display
   const expenses = [...recurringExpenses, ...monthExpenses];
 
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
@@ -283,25 +280,21 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
 
   const inputCls = 'border border-gray-200 rounded-lg px-2 py-1.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark transition-colors bg-white';
 
-  let totalBudget = 0;
   let totalActual = 0;
 
   const rows = CATEGORIES.map((cat) => {
     const catExpenses = expenses.filter((e) => e.categoryId === cat.id);
     const actual = catExpenses.reduce((s, e) => s + e.amount, 0);
-    const budgetAmt = budget[cat.id] ?? 0;
-    const diff = budgetAmt - actual;
-    totalBudget += budgetAmt;
     totalActual += actual;
-    return { cat, catExpenses, actual, budgetAmt, diff };
+    return { cat, catExpenses, actual };
   });
 
-  const visibleRows = rows.filter((r) => r.actual > 0 || r.budgetAmt > 0);
+  const visibleRows = rows.filter((r) => r.actual > 0);
 
   return (
     <section className="mb-8">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-[#1E1E2E]">הוצאות ותקציב</h3>
+        <h3 className="text-base font-semibold text-[#1E1E2E]">הוצאות</h3>
         <button
           onClick={() => openAddForm(undefined)}
           className="flex items-center gap-1.5 bg-blush-dark text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#7B5AA0] transition-colors cursor-pointer shadow-sm"
@@ -310,30 +303,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
           הוסף הוצאה
         </button>
       </div>
-
-      {/* Budget summary bar */}
-      {totalBudget > 0 && (
-        <div className="bg-white border border-gray-100 rounded-xl p-4 mb-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-[#4A4A60]">תקציב חודשי</span>
-            <span className="text-sm font-bold text-[#1E1E2E]">
-              {formatCurrency(totalActual)} / {formatCurrency(totalBudget)}
-            </span>
-          </div>
-          <div className="w-full bg-gray-100 rounded-full h-2.5">
-            <div
-              className={`h-2.5 rounded-full transition-all duration-500 ${totalActual > totalBudget ? 'bg-red-400' : 'bg-lavender-dark'}`}
-              style={{ width: `${Math.min((totalActual / totalBudget) * 100, 100)}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between mt-1.5 text-xs text-[#9090A8]">
-            <span>{((totalActual / totalBudget) * 100).toFixed(0)}% נוצל</span>
-            <span className={totalBudget - totalActual >= 0 ? 'text-green-600' : 'text-red-500'}>
-              {totalBudget - totalActual >= 0 ? `נותר ${formatCurrency(totalBudget - totalActual)}` : `חריגה של ${formatCurrency(totalActual - totalBudget)}`}
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* Add form */}
       {showAddForm && (
@@ -347,11 +316,9 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
       {/* Main table */}
       <div className="rounded-xl shadow-sm overflow-hidden border border-gray-100">
         {/* Header */}
-        <div className="grid grid-cols-[1fr_120px_120px_120px_40px] bg-lavender-light text-[#4A4A60] text-xs font-semibold px-4 py-2.5">
+        <div className="grid grid-cols-[1fr_100px_40px] bg-lavender-light text-[#4A4A60] text-xs font-semibold px-4 py-2.5">
           <span>קטגוריה</span>
-          <span className="text-right">תקציב (₪)</span>
-          <span className="text-right">ביצוע</span>
-          <span className="text-right">הפרש</span>
+          <span className="text-right">סכום</span>
           <span />
         </div>
 
@@ -361,15 +328,14 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
           </div>
         )}
 
-        {visibleRows.map(({ cat, catExpenses, actual, budgetAmt, diff }, rowIdx) => {
+        {visibleRows.map(({ cat, catExpenses, actual }, rowIdx) => {
           const isExpanded = expandedCats.has(cat.id);
-          const overBudget = budgetAmt > 0 && diff < 0;
 
           return (
             <div key={cat.id}>
               {/* Category row */}
               <div
-                className={`grid grid-cols-[1fr_120px_120px_120px_40px] items-center px-4 py-2.5 border-b border-gray-100 transition-colors ${rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-lavender-light/20`}
+                className={`grid grid-cols-[1fr_100px_40px] items-center px-4 py-2.5 border-b border-gray-100 transition-colors ${rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-lavender-light/20`}
               >
                 <button
                   className="flex items-center gap-2 text-right font-medium text-[#1E1E2E] hover:text-[#5B52A0] transition-colors cursor-pointer"
@@ -392,28 +358,8 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                   </span>
                 </button>
 
-                {/* Budget input */}
-                <div className="text-right">
-                  <input
-                    type="number"
-                    value={budgetAmt || ''}
-                    onChange={(e) => setBudget(monthIndex, cat.id, Number(e.target.value))}
-                    className="border border-gray-200 rounded-lg px-2 py-1 w-24 text-sm text-right focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white transition-colors"
-                    placeholder="0"
-                    min={0}
-                  />
-                </div>
-
                 <div className="text-right text-sm font-medium text-[#1E1E2E]">
-                  {actual > 0 ? formatCurrency(actual) : <span className="text-gray-300">—</span>}
-                </div>
-
-                <div className={`text-right text-sm font-semibold ${overBudget ? 'text-red-500' : diff > 0 ? 'text-green-600' : 'text-[#9090A8]'}`}>
-                  {budgetAmt > 0 ? (
-                    <>{diff >= 0 ? '+' : ''}{formatCurrency(diff)}</>
-                  ) : (
-                    <span className="text-gray-300">—</span>
-                  )}
+                  {formatCurrency(actual)}
                 </div>
 
                 <button
@@ -431,108 +377,110 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                   {catExpenses.length === 0 ? (
                     <p className="text-xs text-[#9090A8] px-10 py-3">אין הוצאות בקטגוריה זו</p>
                   ) : (
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="text-[#9090A8] border-b border-gray-200">
-                          <th className="px-10 py-2 text-right font-medium">תאריך</th>
-                          <th className="px-3 py-2 text-right font-medium">תת-קטגוריה</th>
-                          <th className="px-3 py-2 text-right font-medium">תיאור</th>
-                          <th className="px-3 py-2 text-right font-medium">סכום</th>
-                          <th className="px-3 py-2 text-right font-medium">תשלום</th>
-                          <th className="px-3 py-2 text-center font-medium w-24">פעולות</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {catExpenses.map((entry) => (
-                          editingId === entry.id && !entry.isRecurring ? (
-                            <tr key={entry.id} className="bg-white border-b border-gray-200">
-                              <td className="px-10 py-2"><input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} className={inputCls} /></td>
-                              <td className="px-3 py-2">
-                                <select value={editForm.subcategoryId} onChange={(e) => setEditForm({ ...editForm, subcategoryId: e.target.value })} className={`${inputCls} cursor-pointer`}>
-                                  {CATEGORIES.find((c) => c.id === cat.id)?.subcategories.map((s) => <option key={s.id} value={s.id}>{s.nameHe}</option>)}
-                                </select>
-                              </td>
-                              <td className="px-3 py-2"><input type="text" value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className={inputCls} /></td>
-                              <td className="px-3 py-2"><input type="number" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: Number(e.target.value) })} className={inputCls} min={0} /></td>
-                              <td className="px-3 py-2">
-                                <select value={editForm.paymentMethod} onChange={(e) => setEditForm({ ...editForm, paymentMethod: e.target.value as ExpenseEntry['paymentMethod'] })} className={`${inputCls} cursor-pointer`}>
-                                  {PAYMENT_METHODS.map((pm) => <option key={pm.id} value={pm.id}>{pm.nameHe}</option>)}
-                                </select>
-                              </td>
-                              <td className="px-3 py-2 text-center">
-                                <div className="flex items-center justify-center gap-1">
-                                  <button onClick={() => saveEdit(entry.id)} className="text-white bg-sage-dark hover:bg-[#8AAA7A] px-2 py-0.5 rounded-md transition-colors cursor-pointer font-medium">שמור</button>
-                                  <button onClick={() => setEditingId(null)} className="text-[#6B6B8A] hover:text-[#1E1E2E] px-2 py-0.5 rounded-md hover:bg-gray-100 transition-colors cursor-pointer">ביטול</button>
-                                </div>
-                              </td>
-                            </tr>
-                          ) : (
-                            <tr key={entry.id} className="border-b border-gray-100 hover:bg-white transition-colors">
-                              <td className="px-10 py-2 text-[#6B6B8A]">{entry.date}</td>
-                              <td className="px-3 py-2 text-[#6B6B8A]">{getSubName(entry)}</td>
-                              <td className="px-3 py-2 text-[#1E1E2E]">
-                                <div className="flex items-center gap-1.5">
-                                  {entry.description || <span className="text-gray-300">—</span>}
-                                  {entry.isRecurring && (
-                                    <span className="inline-flex items-center gap-0.5 bg-blush-light text-[#7B5AA0] text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-                                      <RepeatIcon />
-                                      קבוע
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-3 py-2 font-semibold text-[#1E1E2E]">{formatCurrency(entry.amount)}</td>
-                              <td className="px-3 py-2 text-[#9090A8]">{getPaymentName(entry.paymentMethod)}</td>
-                              <td className="px-3 py-2 text-center">
-                                <div className="flex items-center justify-center gap-1">
-                                  {!entry.isRecurring && (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-[#9090A8] border-b border-gray-200">
+                            <th className="px-10 py-2 text-right font-medium">תאריך</th>
+                            <th className="px-3 py-2 text-right font-medium">תת-קטגוריה</th>
+                            <th className="px-3 py-2 text-right font-medium">תיאור</th>
+                            <th className="px-3 py-2 text-right font-medium">סכום</th>
+                            <th className="px-3 py-2 text-right font-medium">תשלום</th>
+                            <th className="px-3 py-2 text-center font-medium w-24">פעולות</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {catExpenses.map((entry) => (
+                            editingId === entry.id && !entry.isRecurring ? (
+                              <tr key={entry.id} className="bg-white border-b border-gray-200">
+                                <td className="px-10 py-2"><input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} className={inputCls} /></td>
+                                <td className="px-3 py-2">
+                                  <select value={editForm.subcategoryId} onChange={(e) => setEditForm({ ...editForm, subcategoryId: e.target.value })} className={`${inputCls} cursor-pointer`}>
+                                    {CATEGORIES.find((c) => c.id === cat.id)?.subcategories.map((s) => <option key={s.id} value={s.id}>{s.nameHe}</option>)}
+                                  </select>
+                                </td>
+                                <td className="px-3 py-2"><input type="text" value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className={inputCls} /></td>
+                                <td className="px-3 py-2"><input type="number" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: Number(e.target.value) })} className={inputCls} min={0} /></td>
+                                <td className="px-3 py-2">
+                                  <select value={editForm.paymentMethod} onChange={(e) => setEditForm({ ...editForm, paymentMethod: e.target.value as ExpenseEntry['paymentMethod'] })} className={`${inputCls} cursor-pointer`}>
+                                    {PAYMENT_METHODS.map((pm) => <option key={pm.id} value={pm.id}>{pm.nameHe}</option>)}
+                                  </select>
+                                </td>
+                                <td className="px-3 py-2 text-center">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <button onClick={() => saveEdit(entry.id)} className="text-white bg-sage-dark hover:bg-[#8AAA7A] px-2 py-0.5 rounded-md transition-colors cursor-pointer font-medium">שמור</button>
+                                    <button onClick={() => setEditingId(null)} className="text-[#6B6B8A] hover:text-[#1E1E2E] px-2 py-0.5 rounded-md hover:bg-gray-100 transition-colors cursor-pointer">ביטול</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ) : (
+                              <tr key={entry.id} className="border-b border-gray-100 hover:bg-white transition-colors">
+                                <td className="px-10 py-2 text-[#6B6B8A]">{entry.date}</td>
+                                <td className="px-3 py-2 text-[#6B6B8A]">{getSubName(entry)}</td>
+                                <td className="px-3 py-2 text-[#1E1E2E]">
+                                  <div className="flex items-center gap-1.5">
+                                    {entry.description || <span className="text-gray-300">—</span>}
+                                    {entry.isRecurring && (
+                                      <span className="inline-flex items-center gap-0.5 bg-blush-light text-[#7B5AA0] text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                                        <RepeatIcon />
+                                        קבוע
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2 font-semibold text-[#1E1E2E]">{formatCurrency(entry.amount)}</td>
+                                <td className="px-3 py-2 text-[#9090A8]">{getPaymentName(entry.paymentMethod)}</td>
+                                <td className="px-3 py-2 text-center">
+                                  <div className="flex items-center justify-center gap-1">
+                                    {!entry.isRecurring && (
+                                      <button
+                                        onClick={() => startEdit(entry)}
+                                        className="flex items-center gap-0.5 text-lavender-dark hover:text-[#5B52A0] hover:bg-lavender-light px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
+                                      >
+                                        <EditIcon />
+                                        עריכה
+                                      </button>
+                                    )}
                                     <button
-                                      onClick={() => startEdit(entry)}
-                                      className="flex items-center gap-0.5 text-lavender-dark hover:text-[#5B52A0] hover:bg-lavender-light px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
+                                      onClick={() => {
+                                        const msg = entry.isRecurring
+                                          ? `למחוק את "${entry.description || getSubName(entry)}" מכל החודשים?`
+                                          : 'למחוק הוצאה זו?';
+                                        if (window.confirm(msg)) {
+                                          entry.isRecurring
+                                            ? deleteRecurringExpense(entry.id)
+                                            : deleteExpense(monthIndex, entry.id);
+                                        }
+                                      }}
+                                      className="flex items-center gap-0.5 text-blush-dark hover:text-red-600 hover:bg-blush-light px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
                                     >
-                                      <EditIcon />
-                                      עריכה
+                                      <TrashIcon />
+                                      {entry.isRecurring ? 'בטל קבוע' : 'מחיקה'}
                                     </button>
-                                  )}
-                                  <button
-                                    onClick={() => {
-                                      const msg = entry.isRecurring
-                                        ? `למחוק את "${entry.description || getSubName(entry)}" מכל החודשים?`
-                                        : 'למחוק הוצאה זו?';
-                                      if (window.confirm(msg)) {
-                                        entry.isRecurring
-                                          ? deleteRecurringExpense(entry.id)
-                                          : deleteExpense(monthIndex, entry.id);
-                                      }
-                                    }}
-                                    className="flex items-center gap-0.5 text-blush-dark hover:text-red-600 hover:bg-blush-light px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
-                                  >
-                                    <TrashIcon />
-                                    {entry.isRecurring ? 'בטל קבוע' : 'מחיקה'}
-                                  </button>
-                                  {entry.cancelUrl && (
-                                    <a
-                                      href={entry.cancelUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-0.5 text-xs text-[#9090A8] hover:text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded-md transition-colors"
-                                      title="עבור לאתר לביטול המנוי"
-                                    >
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                                        <polyline points="15 3 21 3 21 9" />
-                                        <line x1="10" y1="14" x2="21" y2="3" />
-                                      </svg>
-                                      בטל מנוי
-                                    </a>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        ))}
-                      </tbody>
-                    </table>
+                                    {entry.cancelUrl && (
+                                      <a
+                                        href={entry.cancelUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-0.5 text-xs text-[#9090A8] hover:text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded-md transition-colors"
+                                        title="עבור לאתר לביטול המנוי"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                          <polyline points="15 3 21 3 21 9" />
+                                          <line x1="10" y1="14" x2="21" y2="3" />
+                                        </svg>
+                                        בטל מנוי
+                                      </a>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
               )}
@@ -541,13 +489,9 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
         })}
 
         {/* Totals footer */}
-        <div className="grid grid-cols-[1fr_120px_120px_120px_40px] bg-lavender-light/50 font-bold text-sm px-4 py-3 border-t border-gray-200">
+        <div className="grid grid-cols-[1fr_100px_40px] bg-lavender-light/50 font-bold text-sm px-4 py-3 border-t border-gray-200">
           <span className="text-[#1E1E2E]">סה&quot;כ</span>
-          <span className="text-right text-[#1E1E2E]">{formatCurrency(totalBudget)}</span>
           <span className="text-right text-[#1E1E2E]">{formatCurrency(totalActual)}</span>
-          <span className={`text-right font-bold ${totalBudget - totalActual < 0 ? 'text-red-500' : 'text-green-600'}`}>
-            {totalBudget > 0 ? `${totalBudget - totalActual >= 0 ? '+' : ''}${formatCurrency(totalBudget - totalActual)}` : '—'}
-          </span>
           <span />
         </div>
       </div>

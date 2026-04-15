@@ -22,16 +22,16 @@ export default function StatCard({
       {accentColor && (
         <div className="h-1 w-full" style={{ backgroundColor: accentColor }} />
       )}
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-[#6B6B8A]">{title}</span>
+      <div className="p-3 sm:p-5">
+        <div className="flex items-center justify-between mb-1 sm:mb-2">
+          <span className="text-[10px] sm:text-xs font-medium text-[#6B6B8A]">{title}</span>
           {icon && (
             <span className="text-[#9090A8] opacity-70">{icon}</span>
           )}
         </div>
-        <div className="text-2xl font-bold text-[#1E1E2E] tracking-tight">{value}</div>
+        <div className="text-base sm:text-2xl font-bold text-[#1E1E2E] tracking-tight">{value}</div>
         {subtitle && (
-          <div className="text-xs text-[#9090A8] mt-1">{subtitle}</div>
+          <div className="text-[10px] sm:text-xs text-[#9090A8] mt-1">{subtitle}</div>
         )}
       </div>
     </div>

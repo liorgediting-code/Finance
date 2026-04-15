@@ -144,7 +144,7 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
               נא למלא: {errors.join(', ')}
             </p>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <div>
               <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תאריך</label>
               <input type="date" value={newEntry.date} onChange={(e) => setNewEntry({ ...newEntry, date: e.target.value })} className={inputCls} />
