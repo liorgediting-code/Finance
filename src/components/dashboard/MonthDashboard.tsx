@@ -6,6 +6,7 @@ import IncomeTable from '../month/IncomeTable';
 import ExpenseBudgetSection from '../month/ExpenseBudgetSection';
 import ExpenseCategoryBarChart from './ExpenseCategoryBarChart';
 import SavingsPage from '../savings/SavingsPage';
+import AnnualSummary from './AnnualSummary';
 
 function ChevronLeftIcon() {
   return (
@@ -125,6 +126,12 @@ export default function MonthDashboard() {
       {/* ── Income ── */}
       <SectionDivider label="הכנסות" />
       <IncomeTable monthIndex={monthIndex} />
+
+      {/* ── Annual Summary ── */}
+      <SectionDivider label="סיכום שנתי" />
+      <div className="mb-6">
+        <AnnualSummary />
+      </div>
 
       {/* ── Savings ── */}
       <SectionDivider label="חסכונות" />
