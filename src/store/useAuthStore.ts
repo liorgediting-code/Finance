@@ -9,7 +9,7 @@ interface AuthStore {
   loading: boolean;
   init: () => Promise<() => void>;
   signIn: (email: string, password: string) => Promise<string | null>;
-  signUp: (email: string, password: string) => Promise<string | null>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   fetchProfile: (userId: string) => Promise<Profile | null>;
   approveUser: (userId: string, approve: boolean) => Promise<void>;
@@ -53,8 +53,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     return null;
   },
 
-  signUp: async (email, password) => {
-    const { error } = await supabase.auth.signUp({ email, password });
+  signUp: async (email, password, fullName) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: fullName ? { data: { full_name: fullName } } : undefined,
+    });
     if (error) return error.message;
     return null;
   },

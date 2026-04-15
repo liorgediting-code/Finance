@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { HEBREW_MONTHS } from '../../config/months';
 import { useFinanceStore } from '../../store/useFinanceStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
 import { sumAmounts } from '../../utils/calculations';
 import MonthSummary from '../month/MonthSummary';
@@ -101,11 +102,21 @@ export default function MonthDashboard() {
       }).format(today)
     : null;
 
+  const user = useAuthStore((s) => s.user);
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
+
   const prevMonth = () => setMonthIndex((i) => Math.max(0, i - 1));
   const nextMonth = () => setMonthIndex((i) => Math.min(11, i + 1));
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto" dir="rtl">
+
+      {/* ── Greeting ── */}
+      {displayName && (
+        <p className="text-lg font-semibold text-[#1E1E2E] mb-4">
+          היי {displayName} 👋
+        </p>
+      )}
 
       {/* ── Month Navigator ── */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">

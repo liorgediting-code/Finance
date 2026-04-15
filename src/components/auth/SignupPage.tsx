@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 
 export default function SignupPage() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -14,10 +15,11 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!fullName.trim()) { setError('נא להזין שם מלא'); return; }
     if (password.length < 6) { setError('הסיסמה חייבת להכיל לפחות 6 תווים'); return; }
     if (password !== confirm) { setError('הסיסמאות אינן תואמות'); return; }
     setLoading(true);
-    const err = await signUp(email, password);
+    const err = await signUp(email, password, fullName.trim());
     setLoading(false);
     if (err) {
       if (err.includes('already registered')) setError('אימייל זה כבר רשום במערכת');
@@ -77,6 +79,18 @@ export default function SignupPage() {
                 {error}
               </div>
             )}
+
+            <div>
+              <label className="block text-xs font-medium text-[#6B6B8A] mb-1.5">שם מלא</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                placeholder="למשל: ישראל ישראלי"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white placeholder:text-[#C0C0D0]"
+              />
+            </div>
 
             <div>
               <label className="block text-xs font-medium text-[#6B6B8A] mb-1.5">אימייל</label>
