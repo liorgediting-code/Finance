@@ -22,10 +22,36 @@
   --font-family-sans: 'Heebo', sans-serif;
 }
 
+:root {
+  --bg-page: #F2F3F7;
+  --bg-card: #FFFFFF;
+  --bg-card-alt: #F9FAFB;
+  --bg-input: #FFFFFF;
+  --border-color: #E5E7EB;
+  --border-light: #F3F4F6;
+  --text-primary: #1E1E2E;
+  --text-secondary: #4A4A60;
+  --text-muted: #6B6B8A;
+  --text-faint: #9090A8;
+}
+
+.dark {
+  --bg-page: #0F1117;
+  --bg-card: #1A1C2A;
+  --bg-card-alt: #222436;
+  --bg-input: #222436;
+  --border-color: #2E3044;
+  --border-light: #252738;
+  --text-primary: #E4E4F0;
+  --text-secondary: #B8B8D0;
+  --text-muted: #8888A8;
+  --text-faint: #686888;
+}
+
 body {
   margin: 0;
-  background-color: #F2F3F7;
-  color: #1E1E2E;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
   font-family: 'Heebo', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -39,6 +65,22 @@ input[type="number"] {
   direction: ltr;
   text-align: right;
 }
+
+/* Dark mode overrides */
+.dark .bg-white { background-color: var(--bg-card) !important; }
+.dark .bg-gray-50, .dark .bg-gray-50\/50, .dark .bg-gray-50\/80 { background-color: var(--bg-card-alt) !important; }
+.dark .bg-gray-100 { background-color: #2E3044 !important; }
+.dark .border-gray-100, .dark .border-gray-200 { border-color: var(--border-color) !important; }
+.dark .border-gray-50 { border-color: var(--border-light) !important; }
+.dark .text-\[\#1E1E2E\] { color: var(--text-primary) !important; }
+.dark .text-\[\#4A4A60\] { color: var(--text-secondary) !important; }
+.dark .text-\[\#6B6B8A\] { color: var(--text-muted) !important; }
+.dark .text-\[\#9090A8\] { color: var(--text-faint) !important; }
+.dark .text-gray-300 { color: #4A4A60 !important; }
+.dark input, .dark select, .dark textarea { background-color: var(--bg-input) !important; color: var(--text-primary) !important; border-color: var(--border-color) !important; }
+.dark .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important; }
+.dark .shadow-xl { box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important; }
+.dark option { background-color: var(--bg-card); color: var(--text-primary); }
 
 /* Thin custom scrollbar */
 ::-webkit-scrollbar {
