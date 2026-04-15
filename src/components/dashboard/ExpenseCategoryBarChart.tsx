@@ -22,6 +22,8 @@ interface Props {
 interface ChartItem {
   name: string;
   value: number;
+  oneTime: number;
+  fixed: number;
   color: string;
   pct: number;
 }
@@ -32,43 +34,48 @@ function buildData(
   monthIndex: number,
   recurringExpenses: ReturnType<typeof useFinanceStore.getState>['recurringExpenses']
 ): ChartItem[] {
-  const raw: { name: string; value: number; color: string }[] = [];
+  const raw: { name: string; oneTime: number; fixed: number; color: string }[] = [];
 
-  // All non-"other" categories
   CATEGORIES.filter((cat) => cat.id !== 'other').forEach((cat) => {
-    let value = 0;
+    let oneTime = 0;
+    let fixed = getCategoryTotal(recurringExpenses, cat.id);
     if (view === 'month') {
       const md = months[monthIndex];
-      value = (md ? getCategoryTotal(md.expenses, cat.id) : 0)
-        + getCategoryTotal(recurringExpenses, cat.id);
+      oneTime = md ? getCategoryTotal(md.expenses, cat.id) : 0;
     } else {
-      value = Object.values(months).reduce((sum, md) => sum + getCategoryTotal(md.expenses, cat.id), 0)
-        + getCategoryTotal(recurringExpenses, cat.id) * 12;
+      oneTime = Object.values(months).reduce((sum, md) => sum + getCategoryTotal(md.expenses, cat.id), 0);
+      fixed = fixed * 12;
     }
-    if (value > 0) raw.push({ name: cat.nameHe, value, color: cat.color });
+    const value = oneTime + fixed;
+    if (value > 0) raw.push({ name: cat.nameHe, oneTime, fixed, color: cat.color });
   });
 
-  // "other" category — split by customCategory so each custom name gets its own bar
-  const otherColor = '#E0E0E0';
-  const otherMap = new Map<string, number>();
-  const addOther = (expenses: typeof recurringExpenses, multiplier = 1) => {
+  // "other" category — split by customCategory
+  const otherColor = '#A0A0B0';
+  const otherMap = new Map<string, { oneTime: number; fixed: number }>();
+  const addOther = (expenses: typeof recurringExpenses, isFixed: boolean, multiplier = 1) => {
     expenses.filter((e) => e.categoryId === 'other').forEach((e) => {
       const key = e.customCategory?.trim() || 'אחר';
-      otherMap.set(key, (otherMap.get(key) ?? 0) + e.amount * multiplier);
+      const prev = otherMap.get(key) ?? { oneTime: 0, fixed: 0 };
+      if (isFixed) prev.fixed += e.amount * multiplier;
+      else prev.oneTime += e.amount * multiplier;
+      otherMap.set(key, prev);
     });
   };
   if (view === 'month') {
-    addOther(months[monthIndex]?.expenses ?? []);
-    addOther(recurringExpenses);
+    addOther(months[monthIndex]?.expenses ?? [], false);
+    addOther(recurringExpenses, true);
   } else {
-    Object.values(months).forEach((md) => addOther(md.expenses));
-    addOther(recurringExpenses, 12);
+    Object.values(months).forEach((md) => addOther(md.expenses, false));
+    addOther(recurringExpenses, true, 12);
   }
-  otherMap.forEach((value, name) => raw.push({ name, value, color: otherColor }));
+  otherMap.forEach(({ oneTime, fixed }, name) => {
+    if (oneTime + fixed > 0) raw.push({ name, oneTime, fixed, color: otherColor });
+  });
 
-  const total = raw.reduce((s, d) => s + d.value, 0);
+  const total = raw.reduce((s, d) => s + d.oneTime + d.fixed, 0);
   return raw
-    .map((d) => ({ ...d, pct: total > 0 ? (d.value / total) * 100 : 0 }))
+    .map((d) => ({ ...d, value: d.oneTime + d.fixed, pct: total > 0 ? ((d.oneTime + d.fixed) / total) * 100 : 0 }))
     .sort((a, b) => b.value - a.value);
 }
 
@@ -81,8 +88,14 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payl
         <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
         <span className="font-semibold text-[#1E1E2E]">{item.name}</span>
       </div>
-      <p className="text-[#4A4A60]">{formatCurrency(item.value)}</p>
-      <p className="text-[#9090A8] text-xs">{item.pct.toFixed(1)}% מסה״כ הוצאות</p>
+      <p className="text-[#4A4A60] font-medium">{formatCurrency(item.value)}</p>
+      {item.fixed > 0 && item.oneTime > 0 && (
+        <div className="text-xs text-[#6B6B8A] mt-1 space-y-0.5">
+          <p>חד פעמי: {formatCurrency(item.oneTime)}</p>
+          <p>קבוע: {formatCurrency(item.fixed)}</p>
+        </div>
+      )}
+      <p className="text-[#9090A8] text-xs mt-1">{item.pct.toFixed(1)}% מסה״כ</p>
     </div>
   );
 }
@@ -95,7 +108,7 @@ export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true 
   const data = buildData(view, months, monthIndex, recurringExpenses);
   const total = data.reduce((s, d) => s + d.value, 0);
 
-  const chartHeight = Math.max(240, data.length * 46);
+  const chartHeight = Math.max(160, data.length * 32);
 
   if (data.length === 0) {
     return (
@@ -113,12 +126,12 @@ export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true 
       {/* accent bar */}
       <div className="h-1 w-full" style={{ backgroundColor: '#9B72C0' }} />
 
-      <div className="p-6">
+      <div className="p-4">
         {/* Header row */}
-        <div className="flex items-center justify-between mb-5" dir="rtl">
+        <div className="flex items-center justify-between mb-3" dir="rtl">
           <div>
             <h3 className="text-sm font-semibold text-[#6B6B8A] uppercase tracking-wider">
-              הוצאות לפי קטגוריה
+              הוצאות לפי קטגוריה (חד פעמי + קבוע)
             </h3>
             <p className="text-xs text-[#9090A8] mt-0.5">
               סה״כ: <span className="font-semibold text-[#1E1E2E]">{formatCurrency(total)}</span>
@@ -179,7 +192,7 @@ export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true 
                 width={80}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F2F3F7' }} />
-              <Bar dataKey="value" radius={[0, 6, 6, 0]} maxBarSize={28}>
+              <Bar dataKey="value" radius={[0, 6, 6, 0]} maxBarSize={20}>
                 {data.map((entry, idx) => (
                   <Cell key={idx} fill={entry.color} />
                 ))}
