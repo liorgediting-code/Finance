@@ -145,7 +145,7 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
           נא למלא: {errors.join(', ')}
         </p>
       )}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <div>
           <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תאריך</label>
           <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={inputCls} />
