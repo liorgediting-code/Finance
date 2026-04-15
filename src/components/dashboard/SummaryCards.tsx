@@ -29,13 +29,13 @@ export default function SummaryCards({ monthIndex }: SummaryCardsProps) {
       title: 'סה״כ הכנסות',
       value: formatCurrency(totalIncome),
       bgClass: 'bg-sage-light',
-      accentColor: '#A0B890',
+      accentColor: '#5A9A42',
     },
     {
       title: 'סה״כ הוצאות',
       value: formatCurrency(totalExpenses),
       bgClass: 'bg-blush-light',
-      accentColor: '#D4A0A0',
+      accentColor: '#9B72C0',
     },
     {
       title: 'נשאר בסוף החודש',
@@ -48,13 +48,13 @@ export default function SummaryCards({ monthIndex }: SummaryCardsProps) {
       title: 'נכנס לחיסכון',
       value: formatCurrency(savings),
       bgClass: 'bg-powder-light',
-      accentColor: '#90A8C0',
+      accentColor: '#4A90C0',
     },
     {
       title: 'אחוז חיסכון',
       value: formatPercent(savingsPercent),
       bgClass: 'bg-honey-light',
-      accentColor: '#C8B060',
+      accentColor: '#C8A830',
     },
   ];
 

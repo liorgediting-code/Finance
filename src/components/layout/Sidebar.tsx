@@ -121,7 +121,17 @@ export default function Sidebar({ isOpen, onClose }: Props) {
             </NavLink>
             {user && (
               <div className="px-3 py-2 mt-1 border-t border-gray-100">
-                <p className="text-xs text-[#9090A8] truncate mb-1.5" dir="ltr">{user.email}</p>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="flex items-center justify-center w-7 h-7 rounded-full bg-lavender text-[#5B52A0] text-xs font-bold flex-shrink-0">
+                    {(user.user_metadata?.full_name || user.email || '?')[0].toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[#1E1E2E] truncate">
+                      {user.user_metadata?.full_name || user.email?.split('@')[0] || 'משתמש'}
+                    </p>
+                    <p className="text-[10px] text-[#9090A8] truncate" dir="ltr">{user.email}</p>
+                  </div>
+                </div>
                 <button
                   onClick={() => { signOut(); onClose(); }}
                   className="text-xs text-[#9090A8] hover:text-red-500 transition-colors cursor-pointer"

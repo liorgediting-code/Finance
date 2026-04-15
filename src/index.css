@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  --color-blush: #F2C4C4;
-  --color-blush-light: #F9E2E2;
-  --color-blush-dark: #D4A0A0;
-  --color-sage: #C5CDB6;
-  --color-sage-light: #E2E8D8;
-  --color-sage-dark: #A0B890;
-  --color-lavender: #D4D0E8;
-  --color-lavender-light: #EAE8F4;
-  --color-lavender-dark: #B0A8C8;
-  --color-almond: #E8CFA8;
-  --color-almond-light: #F4E8D0;
-  --color-almond-dark: #C8A878;
-  --color-powder: #B8CCE0;
-  --color-powder-light: #D8E4F0;
-  --color-powder-dark: #90A8C0;
-  --color-honey: #E8D890;
-  --color-honey-light: #F4ECC0;
-  --color-honey-dark: #C8B060;
+  --color-blush: #D8C0E8;
+  --color-blush-light: #EDE4F5;
+  --color-blush-dark: #9B72C0;
+  --color-sage: #8DBF78;
+  --color-sage-light: #D6EBCE;
+  --color-sage-dark: #5A9A42;
+  --color-lavender: #C4BCF0;
+  --color-lavender-light: #E4E0F8;
+  --color-lavender-dark: #7B6DC8;
+  --color-almond: #E8C488;
+  --color-almond-light: #F4E2C0;
+  --color-almond-dark: #C89E50;
+  --color-powder: #7EB8E0;
+  --color-powder-light: #C8E0F4;
+  --color-powder-dark: #4A90C0;
+  --color-honey: #E8D060;
+  --color-honey-light: #F4ECA0;
+  --color-honey-dark: #C8A830;
   --font-family-sans: 'Heebo', sans-serif;
 }
 

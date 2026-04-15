@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { HEBREW_MONTHS } from '../../config/months';
 import { useFinanceStore } from '../../store/useFinanceStore';
+import { formatCurrency } from '../../utils/formatters';
 import MonthSummary from '../month/MonthSummary';
 import IncomeTable from '../month/IncomeTable';
 import ExpenseBudgetSection from '../month/ExpenseBudgetSection';
@@ -29,6 +31,68 @@ function SectionDivider({ label }: { label: string }) {
       <span className="text-xs font-semibold text-[#9090A8] uppercase tracking-wider px-2">{label}</span>
       <div className="flex-1 h-px bg-gray-200" />
     </div>
+  );
+}
+
+function SavingsSummary() {
+  const savingsFunds = useFinanceStore((s) => s.savingsFunds);
+  if (savingsFunds.length === 0) return null;
+
+  const totalSaved = savingsFunds.reduce((s, f) => s + f.savedAmount, 0);
+  const totalTarget = savingsFunds.reduce((s, f) => s + f.targetAmount, 0);
+  const pct = totalTarget > 0 ? Math.min((totalSaved / totalTarget) * 100, 100) : 0;
+
+  return (
+    <section className="mb-8">
+      <div className="flex items-center gap-3 my-6">
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-xs font-semibold text-[#9090A8] uppercase tracking-wider px-2">חסכונות</span>
+        <div className="flex-1 h-px bg-gray-200" />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="h-1 w-full bg-powder-dark" />
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-[#1E1E2E]">סיכום חסכונות</span>
+            <Link to="/savings" className="text-xs text-lavender-dark hover:text-[#5B52A0] transition-colors font-medium">
+              לכל החסכונות &larr;
+            </Link>
+          </div>
+
+          {/* Overall progress */}
+          <div className="flex items-baseline justify-between text-sm mb-2">
+            <span className="text-[#4A4A60]">{formatCurrency(totalSaved)} מתוך {formatCurrency(totalTarget)}</span>
+            <span className="font-bold text-[#1E1E2E]">{pct.toFixed(0)}%</span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-2.5 mb-4">
+            <div className="h-2.5 rounded-full bg-powder-dark transition-all duration-500" style={{ width: `${pct}%` }} />
+          </div>
+
+          {/* Individual funds */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {savingsFunds.map((fund) => {
+              const fundPct = fund.targetAmount > 0 ? Math.min((fund.savedAmount / fund.targetAmount) * 100, 100) : 0;
+              return (
+                <div key={fund.id} className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: fund.color }} />
+                    <span className="text-sm font-medium text-[#1E1E2E] truncate">{fund.name}</span>
+                  </div>
+                  <div className="flex items-baseline justify-between text-xs text-[#6B6B8A] mb-1">
+                    <span>{formatCurrency(fund.savedAmount)}</span>
+                    <span>{fundPct.toFixed(0)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                    <div className="h-1.5 rounded-full transition-all duration-500" style={{ width: `${fundPct}%`, backgroundColor: fund.color }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -124,6 +188,9 @@ export default function MonthDashboard() {
       {/* ── Income ── */}
       <SectionDivider label="הכנסות" />
       <IncomeTable monthIndex={monthIndex} />
+
+      {/* ── Savings Summary ── */}
+      <SavingsSummary />
     </div>
   );
 }

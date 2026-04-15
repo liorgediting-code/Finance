@@ -100,7 +100,7 @@ export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true 
   if (data.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="h-1 w-full" style={{ backgroundColor: '#D4A0A0' }} />
+        <div className="h-1 w-full" style={{ backgroundColor: '#9B72C0' }} />
         <div className="p-6 flex items-center justify-center h-64">
           <p className="text-[#9090A8] text-sm">אין נתוני הוצאות להצגה</p>
         </div>
@@ -111,7 +111,7 @@ export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
       {/* accent bar */}
-      <div className="h-1 w-full" style={{ backgroundColor: '#D4A0A0' }} />
+      <div className="h-1 w-full" style={{ backgroundColor: '#9B72C0' }} />
 
       <div className="p-6">
         {/* Header row */}

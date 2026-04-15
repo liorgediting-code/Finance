@@ -4,9 +4,10 @@ export const CATEGORIES: Category[] = [
   {
     id: 'home',
     nameHe: 'בית',
-    color: '#F2C4C4',
+    color: '#B088D0',
     subcategories: [
-      { id: 'home-rent', nameHe: 'שכירות / משכנתא' },
+      { id: 'home-rent', nameHe: 'שכירות' },
+      { id: 'home-mortgage', nameHe: 'משכנתא' },
       { id: 'home-arnona', nameHe: 'ארנונה' },
       { id: 'home-vaad', nameHe: 'ועד בית' },
       { id: 'home-electricity', nameHe: 'חשמל' },
@@ -25,7 +26,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'food',
     nameHe: 'אוכל וסופר',
-    color: '#C5CDB6',
+    color: '#6AAF58',
     subcategories: [
       { id: 'food-grocery', nameHe: 'סופר' },
       { id: 'food-vegetables', nameHe: 'ירקות ופירות' },
@@ -41,7 +42,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'transport',
     nameHe: 'רכב ותחבורה',
-    color: '#D4D0E8',
+    color: '#7B6DC8',
     subcategories: [
       { id: 'transport-fuel', nameHe: 'דלק' },
       { id: 'transport-insurance', nameHe: 'ביטוח רכב' },
@@ -58,7 +59,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'children',
     nameHe: 'ילדים',
-    color: '#E8CFA8',
+    color: '#E8A850',
     subcategories: [
       { id: 'children-daycare', nameHe: 'מעון / פעוטון' },
       { id: 'children-kindergarten', nameHe: 'גן ילדים' },
@@ -76,7 +77,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'health',
     nameHe: 'בריאות',
-    color: '#B8CCE0',
+    color: '#5AADE0',
     subcategories: [
       { id: 'health-kupat', nameHe: 'קופת חולים' },
       { id: 'health-supplement', nameHe: 'ביטוח משלים' },
@@ -93,7 +94,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'education',
     nameHe: 'השכלה',
-    color: '#E8D890',
+    color: '#E8C840',
     subcategories: [
       { id: 'education-university', nameHe: 'אוניברסיטה / מכללה' },
       { id: 'education-courses', nameHe: 'קורסים והכשרות' },
@@ -104,7 +105,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'personal',
     nameHe: 'טיפוח ואישי',
-    color: '#D4B8C4',
+    color: '#C87AAE',
     subcategories: [
       { id: 'personal-haircut', nameHe: 'תספורת / מספרה' },
       { id: 'personal-cosmetics', nameHe: 'קוסמטיקה ואיפור' },
@@ -118,7 +119,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'entertainment',
     nameHe: 'בילויים ופנאי',
-    color: '#E8D890',
+    color: '#E8B040',
     subcategories: [
       { id: 'entertainment-movies', nameHe: 'קולנוע / תיאטרון' },
       { id: 'entertainment-trips', nameHe: 'טיולים בארץ' },
@@ -131,7 +132,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'subscriptions',
     nameHe: 'מנויים ואפליקציות',
-    color: '#C8D0B8',
+    color: '#68B898',
     subcategories: [
       { id: 'sub-netflix', nameHe: 'נטפליקס / Disney+' },
       { id: 'sub-spotify', nameHe: 'ספוטיפיי / מוזיקה' },
@@ -144,7 +145,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'shopping',
     nameHe: 'קניות כלליות',
-    color: '#D4B8C4',
+    color: '#D07090',
     subcategories: [
       { id: 'shopping-pharmacy', nameHe: 'פארם / דראגסטור' },
       { id: 'shopping-gifts', nameHe: 'מתנות' },
@@ -157,7 +158,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'pets',
     nameHe: 'חיות מחמד',
-    color: '#E8CFA8',
+    color: '#D4A050',
     subcategories: [
       { id: 'pets-food', nameHe: 'מזון לחיות' },
       { id: 'pets-vet', nameHe: 'וטרינר' },
@@ -168,7 +169,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'financial',
     nameHe: 'ביטוחים והלוואות',
-    color: '#C8D0B8',
+    color: '#50A878',
     subcategories: [
       { id: 'financial-loans', nameHe: 'החזר הלוואה' },
       { id: 'financial-credit', nameHe: 'תשלומי אשראי' },
@@ -181,7 +182,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'savings',
     nameHe: 'חיסכון',
-    color: '#B8CCE0',
+    color: '#4A98D0',
     subcategories: [
       { id: 'savings-monthly', nameHe: 'חיסכון חודשי' },
       { id: 'savings-pension', nameHe: 'פנסיה / קרן פנסיה' },
@@ -190,12 +191,13 @@ export const CATEGORIES: Category[] = [
       { id: 'savings-education', nameHe: 'קרן השתלמות' },
       { id: 'savings-emergency', nameHe: 'קרן חירום' },
       { id: 'savings-vacation', nameHe: 'חיסכון לחופשה' },
+      { id: 'savings-car', nameHe: 'חיסכון לרכב' },
     ],
   },
   {
     id: 'investments',
     nameHe: 'השקעות',
-    color: '#C5CDB6',
+    color: '#58A850',
     subcategories: [
       { id: 'invest-stocks', nameHe: 'מניות / תעודות סל' },
       { id: 'invest-real-estate', nameHe: 'נדל"ן' },
@@ -208,7 +210,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'holidays',
     nameHe: 'חגים ואירועים',
-    color: '#F2C4C4',
+    color: '#C870D8',
     subcategories: [
       { id: 'holidays-rosh-hashana', nameHe: 'ראש השנה / יום כיפור' },
       { id: 'holidays-sukkot', nameHe: 'סוכות / שמחת תורה' },
@@ -222,7 +224,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'other',
     nameHe: 'אחר',
-    color: '#E0E0E0',
+    color: '#A0A0B0',
     subcategories: [
       { id: 'other-general', nameHe: 'כללי' },
     ],

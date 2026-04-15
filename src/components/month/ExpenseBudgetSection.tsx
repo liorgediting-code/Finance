@@ -145,7 +145,7 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
           נא למלא: {errors.join(', ')}
         </p>
       )}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <div>
           <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תאריך</label>
           <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={inputCls} />
@@ -228,7 +228,7 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
         <button onClick={onClose} className="text-sm text-[#6B6B8A] hover:text-[#1E1E2E] px-4 py-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
           ביטול
         </button>
-        <button onClick={handleSubmit} className="flex items-center gap-1.5 bg-blush-dark text-white rounded-lg px-5 py-1.5 text-sm font-medium hover:bg-[#C08888] transition-colors cursor-pointer shadow-sm">
+        <button onClick={handleSubmit} className="flex items-center gap-1.5 bg-blush-dark text-white rounded-lg px-5 py-1.5 text-sm font-medium hover:bg-[#7B5AA0] transition-colors cursor-pointer shadow-sm">
           שמור הוצאה
         </button>
       </div>
@@ -304,12 +304,36 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
         <h3 className="text-base font-semibold text-[#1E1E2E]">הוצאות ותקציב</h3>
         <button
           onClick={() => openAddForm(undefined)}
-          className="flex items-center gap-1.5 bg-blush-dark text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#C08888] transition-colors cursor-pointer shadow-sm"
+          className="flex items-center gap-1.5 bg-blush-dark text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#7B5AA0] transition-colors cursor-pointer shadow-sm"
         >
           <PlusIcon />
           הוסף הוצאה
         </button>
       </div>
+
+      {/* Budget summary bar */}
+      {totalBudget > 0 && (
+        <div className="bg-white border border-gray-100 rounded-xl p-4 mb-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-[#4A4A60]">תקציב חודשי</span>
+            <span className="text-sm font-bold text-[#1E1E2E]">
+              {formatCurrency(totalActual)} / {formatCurrency(totalBudget)}
+            </span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-2.5">
+            <div
+              className={`h-2.5 rounded-full transition-all duration-500 ${totalActual > totalBudget ? 'bg-red-400' : 'bg-lavender-dark'}`}
+              style={{ width: `${Math.min((totalActual / totalBudget) * 100, 100)}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between mt-1.5 text-xs text-[#9090A8]">
+            <span>{((totalActual / totalBudget) * 100).toFixed(0)}% נוצל</span>
+            <span className={totalBudget - totalActual >= 0 ? 'text-green-600' : 'text-red-500'}>
+              {totalBudget - totalActual >= 0 ? `נותר ${formatCurrency(totalBudget - totalActual)}` : `חריגה של ${formatCurrency(totalActual - totalBudget)}`}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Add form */}
       {showAddForm && (
@@ -359,7 +383,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                     </span>
                   )}
                   {catExpenses.some((e) => e.isRecurring) && (
-                    <span className="inline-flex items-center gap-0.5 text-[#C08888] text-[10px]">
+                    <span className="inline-flex items-center gap-0.5 text-[#7B5AA0] text-[10px]">
                       <RepeatIcon />
                     </span>
                   )}
@@ -450,7 +474,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                                 <div className="flex items-center gap-1.5">
                                   {entry.description || <span className="text-gray-300">—</span>}
                                   {entry.isRecurring && (
-                                    <span className="inline-flex items-center gap-0.5 bg-blush-light text-[#C08888] text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                                    <span className="inline-flex items-center gap-0.5 bg-blush-light text-[#7B5AA0] text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
                                       <RepeatIcon />
                                       קבוע
                                     </span>
