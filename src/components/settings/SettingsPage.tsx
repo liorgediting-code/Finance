@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { formatCurrency } from '../../utils/formatters';
 
 function SettingsSection({
@@ -62,6 +63,10 @@ export default function SettingsPage() {
   const addFamilyMember = useFinanceStore((s) => s.addFamilyMember);
   const updateFamilyMember = useFinanceStore((s) => s.updateFamilyMember);
   const deleteFamilyMember = useFinanceStore((s) => s.deleteFamilyMember);
+
+  const signOut = useAuthStore((s) => s.signOut);
+  const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
 
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -278,6 +283,39 @@ export default function SettingsPage() {
           </svg>
           מחק הכל והתחל מחדש
         </button>
+      </SettingsSection>
+
+      {/* Account */}
+      <SettingsSection title="חשבון" accentColor="#5B52A0">
+        <div className="flex flex-col gap-3">
+          {user && (
+            <div className="flex items-center gap-3 mb-1">
+              <div className="flex items-center justify-center w-9 h-9 rounded-full bg-lavender text-[#5B52A0] text-sm font-bold flex-shrink-0">
+                {(user.user_metadata?.full_name || user.email || '?')[0].toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-[#1E1E2E] truncate">
+                  {user.user_metadata?.full_name || user.email?.split('@')[0] || 'משתמש'}
+                </p>
+                <p className="text-xs text-[#9090A8] truncate" dir="ltr">{user.email}</p>
+              </div>
+            </div>
+          )}
+          {profile?.role === 'admin' && (
+            <a
+              href="/admin"
+              className="inline-flex items-center gap-2 text-sm text-[#5B52A0] font-medium hover:underline"
+            >
+              פאנל ניהול
+            </a>
+          )}
+          <button
+            onClick={signOut}
+            className="w-fit text-sm text-red-500 hover:text-red-700 font-medium transition-colors cursor-pointer"
+          >
+            התנתקות
+          </button>
+        </div>
       </SettingsSection>
     </div>
   );
