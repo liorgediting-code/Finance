@@ -32,6 +32,7 @@ export default function BottomNav() {
 
   return (
     <nav
+      aria-label="ניווט ראשי"
       className="md:hidden fixed bottom-0 inset-x-0 z-40 flex bg-white border-t border-gray-100 shadow-[0_-1px_4px_rgba(0,0,0,0.06)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
