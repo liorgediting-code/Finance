@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import BottomNav from './BottomNav';
 
 interface Props {
   children: React.ReactNode;
@@ -8,23 +9,21 @@ interface Props {
 
 export default function AppShell({ children }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleSidebar = useCallback(() => setSidebarOpen((o) => !o), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar — on the right in RTL (flex default in RTL starts from right) */}
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
-      {/* Main content area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header onMenuToggle={toggleSidebar} />
+        <Header />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-6 md:pb-6">
           {children}
         </main>
       </div>
+
+      <BottomNav />
     </div>
   );
 }
