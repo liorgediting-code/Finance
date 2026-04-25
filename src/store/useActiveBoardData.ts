@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from './useFinanceStore';
 import type { MonthData, IncomeEntry, ExpenseEntry } from '../types';
 
@@ -8,7 +9,7 @@ interface ActiveBoardData {
 }
 
 export function useActiveBoardData(): ActiveBoardData {
-  return useFinanceStore((s) => {
+  return useFinanceStore(useShallow((s) => {
     if (s.activeBoardId === 'personal' || s.activeBoardId === 'overall') {
       return {
         months: s.months,
@@ -22,5 +23,5 @@ export function useActiveBoardData(): ActiveBoardData {
       recurringIncomes: board?.recurringIncomes ?? [],
       recurringExpenses: board?.recurringExpenses ?? [],
     };
-  });
+  }));
 }
