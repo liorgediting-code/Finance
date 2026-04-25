@@ -8,6 +8,7 @@ import {
   Legend,
 } from 'recharts';
 import { useFinanceStore } from '../../store/useFinanceStore';
+import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { sumAmounts } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/formatters';
 import { HEBREW_MONTHS } from '../../config/months';
@@ -33,9 +34,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export default function AnnualSummary() {
-  const months = useFinanceStore((s) => s.months);
-  const recurringIncomes = useFinanceStore((s) => s.recurringIncomes);
-  const recurringExpenses = useFinanceStore((s) => s.recurringExpenses);
+  const { months, recurringIncomes, recurringExpenses } = useActiveBoardData();
   const year = useFinanceStore((s) => s.settings.year);
 
   const recurringIncomeTotal = sumAmounts(recurringIncomes);

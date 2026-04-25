@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
+import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { formatCurrency } from '../../utils/formatters';
 import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
 import type { ExpenseEntry } from '../../types';
@@ -237,8 +238,8 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
 }
 
 export default function ExpenseBudgetSection({ monthIndex }: Props) {
-  const monthData = useFinanceStore((s) => s.months[monthIndex]);
-  const recurringExpenses = useFinanceStore((s) => s.recurringExpenses);
+  const { months, recurringExpenses } = useActiveBoardData();
+  const monthData = months[monthIndex];
   const deleteRecurringExpense = useFinanceStore((s) => s.deleteRecurringExpense);
   const updateExpense = useFinanceStore((s) => s.updateExpense);
   const deleteExpense = useFinanceStore((s) => s.deleteExpense);

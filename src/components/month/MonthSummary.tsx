@@ -1,4 +1,4 @@
-import { useFinanceStore } from '../../store/useFinanceStore';
+import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { sumAmounts, calcRemaining } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/formatters';
 import StatCard from '../shared/StatCard';
@@ -8,9 +8,8 @@ interface MonthSummaryProps {
 }
 
 export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
-  const monthData = useFinanceStore((s) => s.months[monthIndex]);
-  const recurringIncomes = useFinanceStore((s) => s.recurringIncomes);
-  const recurringExpenses = useFinanceStore((s) => s.recurringExpenses);
+  const { months, recurringIncomes, recurringExpenses } = useActiveBoardData();
+  const monthData = months[monthIndex];
 
   const incomeEntries = monthData?.income ?? [];
   const expenseEntries = monthData?.expenses ?? [];

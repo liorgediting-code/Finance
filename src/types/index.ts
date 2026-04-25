@@ -68,3 +68,11 @@ export interface Category {
   color: string;
   subcategories: SubCategory[];
 }
+
+export interface Board {
+  id: string;
+  name: string;
+  months: Record<number, MonthData>;
+  recurringIncomes: IncomeEntry[];
+  recurringExpenses: ExpenseEntry[];
+}

@@ -10,6 +10,7 @@ import {
   LabelList,
 } from 'recharts';
 import { useFinanceStore } from '../../store/useFinanceStore';
+import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { CATEGORIES } from '../../config/categories';
 import { getCategoryTotal } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/formatters';
@@ -102,8 +103,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payl
 
 export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true }: Props) {
   const [view, setView] = useState<'month' | 'year'>('month');
-  const months = useFinanceStore((s) => s.months);
-  const recurringExpenses = useFinanceStore((s) => s.recurringExpenses);
+  const { months, recurringExpenses } = useActiveBoardData();
 
   const data = buildData(view, months, monthIndex, recurringExpenses);
   const total = data.reduce((s, d) => s + d.value, 0);

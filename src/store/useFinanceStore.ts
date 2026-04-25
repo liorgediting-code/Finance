@@ -8,6 +8,7 @@ import type {
   ExpenseEntry,
   SavingsFund,
   FamilyMember,
+  Board,
 } from '../types';
 
 // ── Cloud-synced fields ───────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ interface CloudData {
   recurringIncomes: IncomeEntry[];
   recurringExpenses: ExpenseEntry[];
   familyMembers: FamilyMember[];
+  extraBoards: Board[];
 }
 
 const DEFAULT_DATA: CloudData = {
@@ -33,6 +35,7 @@ const DEFAULT_DATA: CloudData = {
     { id: 'member-1', name: 'בן/בת זוג 1' },
     { id: 'member-2', name: 'בן/בת זוג 2' },
   ],
+  extraBoards: [],
 };
 
 // ── Debounced save ────────────────────────────────────────────────────────────
@@ -46,6 +49,18 @@ function scheduleSync(getUserId: () => string | null, getState: () => CloudData)
     const data = getState();
     await supabase.from('user_data').upsert({ user_id: userId, data, updated_at: new Date().toISOString() });
   }, 1000);
+}
+
+function updateExtraBoard(
+  extraBoards: Board[],
+  boardId: string,
+  updater: (board: Board) => Board
+): { extraBoards: Board[] } {
+  const idx = extraBoards.findIndex((b) => b.id === boardId);
+  if (idx === -1) return { extraBoards };
+  const next = [...extraBoards];
+  next[idx] = updater(next[idx]);
+  return { extraBoards: next };
 }
 
 // ── Store interface ───────────────────────────────────────────────────────────
@@ -91,6 +106,15 @@ interface FinanceStore extends CloudData {
   // Settings actions
   updateSettings: (partial: Partial<AppSettings>) => void;
 
+  // Board state (non-synced)
+  activeBoardId: string;
+  setActiveBoard: (id: string) => void;
+
+  // Board management
+  addBoard: (name: string) => void;
+  renameBoard: (id: string, name: string) => void;
+  deleteBoard: (id: string) => void;
+
   // Demo data
   loadDemoData: () => void;
 }
@@ -105,13 +129,44 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     () => get()._userId,
     () => {
       const s = get();
-      return { settings: s.settings, months: s.months, savingsFunds: s.savingsFunds, recurringIncomes: s.recurringIncomes, recurringExpenses: s.recurringExpenses, familyMembers: s.familyMembers };
+      return {
+        settings: s.settings,
+        months: s.months,
+        savingsFunds: s.savingsFunds,
+        recurringIncomes: s.recurringIncomes,
+        recurringExpenses: s.recurringExpenses,
+        familyMembers: s.familyMembers,
+        extraBoards: s.extraBoards,
+      };
     }
   );
 
   return {
     ...DEFAULT_DATA,
     _userId: null,
+    activeBoardId: 'personal',
+
+    setActiveBoard: (id) => { set({ activeBoardId: id }); },
+
+    addBoard: (name) => {
+      set((s) => ({
+        extraBoards: [
+          ...s.extraBoards,
+          { id: uuidv4(), name, months: {}, recurringIncomes: [], recurringExpenses: [] },
+        ],
+      }));
+      sync();
+    },
+
+    renameBoard: (id, name) => {
+      set((s) => updateExtraBoard(s.extraBoards, id, (b) => ({ ...b, name })));
+      sync();
+    },
+
+    deleteBoard: (id) => {
+      set((s) => ({ extraBoards: s.extraBoards.filter((b) => b.id !== id) }));
+      sync();
+    },
 
     loadFromCloud: async (userId) => {
       set({ _userId: userId });
@@ -125,6 +180,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           recurringIncomes: d.recurringIncomes ?? [],
           recurringExpenses: d.recurringExpenses ?? [],
           familyMembers: d.familyMembers ?? DEFAULT_DATA.familyMembers,
+          extraBoards: d.extraBoards ?? [],
         });
       }
     },
@@ -132,7 +188,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     saveToCloud: async () => {
       const s = get();
       if (!s._userId) return;
-      const data: CloudData = { settings: s.settings, months: s.months, savingsFunds: s.savingsFunds, recurringIncomes: s.recurringIncomes, recurringExpenses: s.recurringExpenses, familyMembers: s.familyMembers };
+      const data: CloudData = { settings: s.settings, months: s.months, savingsFunds: s.savingsFunds, recurringIncomes: s.recurringIncomes, recurringExpenses: s.recurringExpenses, familyMembers: s.familyMembers, extraBoards: s.extraBoards };
       await supabase.from('user_data').upsert({ user_id: s._userId, data, updated_at: new Date().toISOString() });
     },
 
@@ -143,66 +199,164 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
 
     // ── Income ─────────────────────────────────────────────────────────────
     addIncome: (monthIndex, entry) => {
-      set((s) => {
-        const md = ensureMonth(s.months, monthIndex);
-        return { months: { ...s.months, [monthIndex]: { ...md, income: [...md.income, { ...entry, id: uuidv4() }] } } };
-      });
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, income: [...md.income, { ...entry, id: uuidv4() }] } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, income: [...md.income, { ...entry, id: uuidv4() }] } } };
+        }));
+      }
       sync();
     },
 
     updateIncome: (monthIndex, id, partial) => {
-      set((s) => {
-        const md = ensureMonth(s.months, monthIndex);
-        return { months: { ...s.months, [monthIndex]: { ...md, income: md.income.map((e) => e.id === id ? { ...e, ...partial } : e) } } };
-      });
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, income: md.income.map((e) => e.id === id ? { ...e, ...partial } : e) } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, income: md.income.map((e) => e.id === id ? { ...e, ...partial } : e) } } };
+        }));
+      }
       sync();
     },
 
     deleteIncome: (monthIndex, id) => {
-      set((s) => {
-        const md = ensureMonth(s.months, monthIndex);
-        return { months: { ...s.months, [monthIndex]: { ...md, income: md.income.filter((e) => e.id !== id) } } };
-      });
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, income: md.income.filter((e) => e.id !== id) } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, income: md.income.filter((e) => e.id !== id) } } };
+        }));
+      }
       sync();
     },
 
-    addRecurringIncome: (entry) => { set((s) => ({ recurringIncomes: [...s.recurringIncomes, { ...entry, id: uuidv4(), isRecurring: true }] })); sync(); },
-    deleteRecurringIncome: (id) => { set((s) => ({ recurringIncomes: s.recurringIncomes.filter((e) => e.id !== id) })); sync(); },
+    addRecurringIncome: (entry) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => ({ recurringIncomes: [...s.recurringIncomes, { ...entry, id: uuidv4(), isRecurring: true }] }));
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => ({
+          ...b, recurringIncomes: [...b.recurringIncomes, { ...entry, id: uuidv4(), isRecurring: true }],
+        })));
+      }
+      sync();
+    },
+
+    deleteRecurringIncome: (id) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => ({ recurringIncomes: s.recurringIncomes.filter((e) => e.id !== id) }));
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => ({
+          ...b, recurringIncomes: b.recurringIncomes.filter((e) => e.id !== id),
+        })));
+      }
+      sync();
+    },
 
     // ── Recurring expenses ──────────────────────────────────────────────────
-    addRecurringExpense: (entry) => { set((s) => ({ recurringExpenses: [...s.recurringExpenses, { ...entry, id: uuidv4(), isRecurring: true }] })); sync(); },
-    deleteRecurringExpense: (id) => { set((s) => ({ recurringExpenses: s.recurringExpenses.filter((e) => e.id !== id) })); sync(); },
+    addRecurringExpense: (entry) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => ({ recurringExpenses: [...s.recurringExpenses, { ...entry, id: uuidv4(), isRecurring: true }] }));
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => ({
+          ...b, recurringExpenses: [...b.recurringExpenses, { ...entry, id: uuidv4(), isRecurring: true }],
+        })));
+      }
+      sync();
+    },
+
+    deleteRecurringExpense: (id) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => ({ recurringExpenses: s.recurringExpenses.filter((e) => e.id !== id) }));
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => ({
+          ...b, recurringExpenses: b.recurringExpenses.filter((e) => e.id !== id),
+        })));
+      }
+      sync();
+    },
 
     // ── Expenses ────────────────────────────────────────────────────────────
     addExpense: (monthIndex, entry) => {
-      set((s) => {
-        const md = ensureMonth(s.months, monthIndex);
-        return { months: { ...s.months, [monthIndex]: { ...md, expenses: [...md.expenses, { ...entry, id: uuidv4() }] } } };
-      });
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, expenses: [...md.expenses, { ...entry, id: uuidv4() }] } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, expenses: [...md.expenses, { ...entry, id: uuidv4() }] } } };
+        }));
+      }
       sync();
     },
 
     updateExpense: (monthIndex, id, partial) => {
-      set((s) => {
-        const md = ensureMonth(s.months, monthIndex);
-        return { months: { ...s.months, [monthIndex]: { ...md, expenses: md.expenses.map((e) => e.id === id ? { ...e, ...partial } : e) } } };
-      });
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, expenses: md.expenses.map((e) => e.id === id ? { ...e, ...partial } : e) } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, expenses: md.expenses.map((e) => e.id === id ? { ...e, ...partial } : e) } } };
+        }));
+      }
       sync();
     },
 
     deleteExpense: (monthIndex, id) => {
-      set((s) => {
-        const md = ensureMonth(s.months, monthIndex);
-        return { months: { ...s.months, [monthIndex]: { ...md, expenses: md.expenses.filter((e) => e.id !== id) } } };
-      });
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, expenses: md.expenses.filter((e) => e.id !== id) } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, expenses: md.expenses.filter((e) => e.id !== id) } } };
+        }));
+      }
       sync();
     },
 
     setBudget: (monthIndex, categoryId, amount) => {
-      set((s) => {
-        const md = ensureMonth(s.months, monthIndex);
-        return { months: { ...s.months, [monthIndex]: { ...md, budget: { ...md.budget, [categoryId]: amount } } } };
-      });
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, budget: { ...md.budget, [categoryId]: amount } } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, budget: { ...md.budget, [categoryId]: amount } } } };
+        }));
+      }
       sync();
     },
 
@@ -212,9 +366,9 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     deleteSavingsFund: (id) => { set((s) => ({ savingsFunds: s.savingsFunds.filter((f) => f.id !== id) })); sync(); },
 
     depositToFund: (id, amount, monthIndex) => {
+      const { activeBoardId } = get();
       set((s) => {
         const fund = s.savingsFunds.find((f) => f.id === id);
-        const md = ensureMonth(s.months, monthIndex);
         const expense: ExpenseEntry = {
           id: uuidv4(),
           date: new Date().toISOString().split('T')[0],
@@ -225,10 +379,23 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           paymentMethod: 'transfer',
           notes: '',
         };
-        return {
-          savingsFunds: s.savingsFunds.map((f) => f.id === id ? { ...f, savedAmount: f.savedAmount + amount } : f),
-          months: { ...s.months, [monthIndex]: { ...md, expenses: [...md.expenses, expense] } },
-        };
+        const updatedFunds = s.savingsFunds.map((f) => f.id === id ? { ...f, savedAmount: f.savedAmount + amount } : f);
+        if (activeBoardId === 'personal') {
+          const md = ensureMonth(s.months, monthIndex);
+          return {
+            savingsFunds: updatedFunds,
+            months: { ...s.months, [monthIndex]: { ...md, expenses: [...md.expenses, expense] } },
+          };
+        } else if (activeBoardId !== 'overall') {
+          return {
+            savingsFunds: updatedFunds,
+            ...updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+              const md = ensureMonth(b.months, monthIndex);
+              return { ...b, months: { ...b.months, [monthIndex]: { ...md, expenses: [...md.expenses, expense] } } };
+            }),
+          };
+        }
+        return { savingsFunds: updatedFunds };
       });
       sync();
     },

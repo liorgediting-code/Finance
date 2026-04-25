@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
+import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { sumAmounts } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/formatters';
 import type { IncomeEntry } from '../../types';
@@ -69,8 +70,8 @@ function RepeatIcon() {
 }
 
 export default function IncomeTable({ monthIndex }: IncomeTableProps) {
-  const monthData = useFinanceStore((s) => s.months[monthIndex]);
-  const recurringIncomes = useFinanceStore((s) => s.recurringIncomes);
+  const { months, recurringIncomes } = useActiveBoardData();
+  const monthData = months[monthIndex];
   const familyMembers = useFinanceStore((s) => s.familyMembers);
   const addIncome = useFinanceStore((s) => s.addIncome);
   const updateIncome = useFinanceStore((s) => s.updateIncome);

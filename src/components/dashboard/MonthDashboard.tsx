@@ -4,12 +4,15 @@ import { useFinanceStore } from '../../store/useFinanceStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
 import { sumAmounts } from '../../utils/calculations';
+import type { MonthData, IncomeEntry, ExpenseEntry } from '../../types';
+import { useActiveBoardData } from '../../store/useActiveBoardData';
 import MonthSummary from '../month/MonthSummary';
 import IncomeTable from '../month/IncomeTable';
 import ExpenseBudgetSection from '../month/ExpenseBudgetSection';
 import ExpenseCategoryBarChart from './ExpenseCategoryBarChart';
 import SavingsPage from '../savings/SavingsPage';
 import AnnualSummary from './AnnualSummary';
+import OverallDashboard from './OverallDashboard';
 
 function ChevronLeftIcon() {
   return (
@@ -37,14 +40,19 @@ function SectionDivider({ label }: { label: string }) {
   );
 }
 
-function exportMonthCSV(monthIndex: number) {
+function exportMonthCSV(
+  monthIndex: number,
+  boardMonths: Record<number, MonthData>,
+  boardRecurringIncomes: IncomeEntry[],
+  boardRecurringExpenses: ExpenseEntry[]
+) {
   const state = useFinanceStore.getState();
-  const md = state.months[monthIndex];
+  const md = boardMonths[monthIndex];
   const year = state.settings.year;
   const monthName = HEBREW_MONTHS[monthIndex];
 
-  const allExpenses = [...state.recurringExpenses, ...(md?.expenses ?? [])];
-  const allIncome = [...state.recurringIncomes, ...(md?.income ?? [])];
+  const allExpenses = [...boardRecurringExpenses, ...(md?.expenses ?? [])];
+  const allIncome = [...boardRecurringIncomes, ...(md?.income ?? [])];
 
   const BOM = '\uFEFF';
   const lines: string[] = [];
@@ -90,6 +98,8 @@ export default function MonthDashboard() {
   const currentMonthIndex = today.getMonth();
   const [monthIndex, setMonthIndex] = useState(currentMonthIndex);
   const year = useFinanceStore((s) => s.settings.year);
+  const activeBoardId = useFinanceStore((s) => s.activeBoardId);
+  const { months: boardMonths, recurringIncomes: boardRecurringIncomes, recurringExpenses: boardRecurringExpenses } = useActiveBoardData();
 
   const isCurrentMonth = monthIndex === currentMonthIndex && year === today.getFullYear();
 
@@ -157,7 +167,7 @@ export default function MonthDashboard() {
           {/* Export button */}
           <div className="flex justify-center mt-3">
             <button
-              onClick={() => exportMonthCSV(monthIndex)}
+              onClick={() => exportMonthCSV(monthIndex, boardMonths, boardRecurringIncomes, boardRecurringExpenses)}
               className="flex items-center gap-1.5 text-xs text-[#6B6B8A] hover:text-[#1E1E2E] hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
               title="ייצוא לאקסל"
             >
@@ -190,29 +200,35 @@ export default function MonthDashboard() {
         </div>
       </div>
 
-      {/* ── Summary Cards ── */}
-      <MonthSummary monthIndex={monthIndex} />
+      {activeBoardId === 'overall' ? (
+        <OverallDashboard monthIndex={monthIndex} />
+      ) : (
+        <>
+          {/* ── Summary Cards ── */}
+          <MonthSummary monthIndex={monthIndex} />
 
-      {/* ── Expenses ── */}
-      <SectionDivider label="הוצאות" />
-      <div className="mb-6">
-        <ExpenseCategoryBarChart monthIndex={monthIndex} showToggle={false} />
-      </div>
-      <ExpenseBudgetSection monthIndex={monthIndex} />
+          {/* ── Expenses ── */}
+          <SectionDivider label="הוצאות" />
+          <div className="mb-6">
+            <ExpenseCategoryBarChart monthIndex={monthIndex} showToggle={false} />
+          </div>
+          <ExpenseBudgetSection monthIndex={monthIndex} />
 
-      {/* ── Income ── */}
-      <SectionDivider label="הכנסות" />
-      <IncomeTable monthIndex={monthIndex} />
+          {/* ── Income ── */}
+          <SectionDivider label="הכנסות" />
+          <IncomeTable monthIndex={monthIndex} />
 
-      {/* ── Annual Summary ── */}
-      <SectionDivider label="סיכום שנתי" />
-      <div className="mb-6">
-        <AnnualSummary />
-      </div>
+          {/* ── Annual Summary ── */}
+          <SectionDivider label="סיכום שנתי" />
+          <div className="mb-6">
+            <AnnualSummary />
+          </div>
 
-      {/* ── Savings ── */}
-      <SectionDivider label="חסכונות" />
-      <SavingsPage />
+          {/* ── Savings ── */}
+          <SectionDivider label="חסכונות" />
+          <SavingsPage />
+        </>
+      )}
     </div>
   );
 }
