@@ -50,15 +50,31 @@ export default function AdminPage() {
 
   const loadUsers = async () => {
     setLoadingUsers(true);
-    const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-    setUsers((data as Profile[]) ?? []);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/admin/list-users', {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      const json = await res.json();
+      setUsers((json.users as Profile[]) ?? []);
+    } catch {
+      setUsers([]);
+    }
     setLoadingUsers(false);
   };
 
   useEffect(() => { loadUsers(); }, []);
 
   const setApproved = async (userId: string, approved: boolean) => {
-    await supabase.from('profiles').update({ is_approved: approved }).eq('id', userId);
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch('/api/admin/update-user', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({ userId, updates: { is_approved: approved } }),
+    });
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, is_approved: approved } : u));
   };
 
