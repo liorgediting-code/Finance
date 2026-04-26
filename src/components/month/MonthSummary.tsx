@@ -7,9 +7,24 @@ interface MonthSummaryProps {
   monthIndex: number;
 }
 
+function DeltaBadge({ current, previous, lowerIsBetter = false }: { current: number; previous: number; lowerIsBetter?: boolean }) {
+  if (previous === 0) return null;
+  const diff = current - previous;
+  if (diff === 0) return null;
+  const pct = Math.round(Math.abs(diff / previous) * 100);
+  const positive = lowerIsBetter ? diff < 0 : diff > 0;
+  const sign = diff > 0 ? '+' : '';
+  return (
+    <span className={`text-[10px] sm:text-xs font-medium ${positive ? 'text-green-600' : 'text-red-500'}`}>
+      {sign}{formatCurrency(diff)} ({pct}%) לעומת חודש שעבר
+    </span>
+  );
+}
+
 export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
   const { months, recurringIncomes, recurringExpenses } = useActiveBoardData();
   const monthData = months[monthIndex];
+  const prevMonthData = monthIndex > 0 ? months[monthIndex - 1] : undefined;
 
   const incomeEntries = monthData?.income ?? [];
   const expenseEntries = monthData?.expenses ?? [];
@@ -18,7 +33,21 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
   const totalExpenses = sumAmounts(expenseEntries) + sumAmounts(recurringExpenses);
   const remaining = calcRemaining(totalIncome, totalExpenses);
 
-  const overspending = totalExpenses > totalIncome && totalIncome > 0;
+  // Pending transactions
+  const pendingExpenses = expenseEntries.filter((e) => e.isPending);
+  const pendingTotal = sumAmounts(pendingExpenses);
+  const confirmedExpenses = expenseEntries.filter((e) => !e.isPending);
+  const confirmedTotal = sumAmounts(confirmedExpenses) + sumAmounts(recurringExpenses);
+
+  const overspending = confirmedTotal > totalIncome && totalIncome > 0;
+
+  // vs last month
+  const prevIncome = prevMonthData ? sumAmounts(prevMonthData.income) + sumAmounts(recurringIncomes) : 0;
+  const prevExpenses = prevMonthData ? sumAmounts(prevMonthData.expenses) + sumAmounts(recurringExpenses) : 0;
+
+  const savingsPercent = totalIncome > 0 && remaining > 0
+    ? Math.round((remaining / totalIncome) * 100)
+    : 0;
 
   return (
     <div className="mb-8">
@@ -30,23 +59,35 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
           <span className="font-medium">
-            חריגה מהתקציב! הוצאת {formatCurrency(totalExpenses - totalIncome)} יותר ממה שהכנסת החודש
+            חריגה מהתקציב! הוצאת {formatCurrency(confirmedTotal - totalIncome)} יותר ממה שהכנסת החודש
           </span>
         </div>
       )}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+
+      {pendingTotal > 0 && (
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-4 text-sm text-amber-700" dir="rtl">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span>{pendingExpenses.length} עסקאות ממתינות — סה&quot;כ {formatCurrency(pendingTotal)} — טרם נגבו</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
         <StatCard
           title='סה"כ הכנסות'
           value={formatCurrency(totalIncome)}
           colorClass="bg-sage-light"
           accentColor="#5A9A42"
+          subtitle={prevIncome > 0 ? <DeltaBadge current={totalIncome} previous={prevIncome} /> : undefined}
         />
         <StatCard
           title='סה"כ הוצאות'
-          value={formatCurrency(totalExpenses)}
+          value={formatCurrency(confirmedTotal)}
           colorClass="bg-blush-light"
           accentColor="#9B72C0"
-          subtitle={overspending ? `חריגה של ${formatCurrency(totalExpenses - totalIncome)}` : undefined}
+          subtitle={prevExpenses > 0 ? <DeltaBadge current={confirmedTotal} previous={prevExpenses} lowerIsBetter /> : undefined}
         />
         <StatCard
           title="יתרה"
@@ -55,6 +96,22 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
           accentColor={remaining >= 0 ? '#5A9A42' : '#9B72C0'}
           subtitle={remaining >= 0 ? 'במסגרת התקציב' : 'חריגה מהתקציב'}
         />
+        <StatCard
+          title="אחוז חיסכון"
+          value={savingsPercent > 0 ? `${savingsPercent}%` : '—'}
+          colorClass="bg-honey-light"
+          accentColor="#C8A830"
+          subtitle={savingsPercent > 0 ? (savingsPercent >= 20 ? 'מצוין! מעל 20%' : savingsPercent >= 10 ? 'טוב' : 'שאפו לחסוך יותר') : undefined}
+        />
+        {pendingTotal > 0 && (
+          <StatCard
+            title="ממתין לגבייה"
+            value={formatCurrency(pendingTotal)}
+            colorClass="bg-amber-50"
+            accentColor="#C8A830"
+            subtitle={`${pendingExpenses.length} עסקאות`}
+          />
+        )}
       </div>
     </div>
   );

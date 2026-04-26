@@ -13,6 +13,14 @@ export interface IncomeEntry {
   isRecurring?: boolean;
 }
 
+export interface ExpenseSplit {
+  id: string;
+  description: string;
+  amount: number;
+  categoryId: string;
+  subcategoryId?: string;
+}
+
 export interface ExpenseEntry {
   id: string;
   date: string;
@@ -25,6 +33,9 @@ export interface ExpenseEntry {
   notes: string;
   isRecurring?: boolean;
   cancelUrl?: string;
+  memberId?: string;
+  isPending?: boolean;
+  splits?: ExpenseSplit[];
 }
 
 export interface MonthBudget {
@@ -52,9 +63,19 @@ export interface SavingsFund {
   notes: string;
 }
 
+// ── Custom Category (#18) ──────────────────────────────────────────────────────
+export interface CustomCategory {
+  id: string;
+  nameHe: string;
+  color: string;
+}
+
 export interface AppSettings {
   year: number;
   savingsGoal: SavingsGoal;
+  hiddenDashboardSections?: string[];
+  customCategories?: CustomCategory[];
+  hasCompletedOnboarding?: boolean;
 }
 
 export interface SubCategory {
@@ -76,4 +97,114 @@ export interface Board {
   months: Record<number, MonthData>;
   recurringIncomes: IncomeEntry[];
   recurringExpenses: ExpenseEntry[];
+}
+
+// ── Installments (#10) ────────────────────────────────────────────────────────
+
+export interface Installment {
+  id: string;
+  description: string;
+  totalAmount: number;
+  numPayments: number;
+  paidPayments: number;
+  startMonth: number; // 0-11
+  startYear: number;
+  categoryId: string;
+  notes: string;
+}
+
+// ── Mortgage (#11) ────────────────────────────────────────────────────────────
+
+export type MortgageTrackType = 'prime' | 'fixed' | 'cpi' | 'variable';
+
+export interface MortgageTrack {
+  id: string;
+  type: MortgageTrackType;
+  balance: number;
+  monthlyPayment: number;
+  interestRate: number;
+  remainingMonths: number;
+  notes: string;
+}
+
+export interface Mortgage {
+  id: string;
+  name: string;
+  tracks: MortgageTrack[];
+  notes: string;
+}
+
+// ── Israeli Savings Vehicles (#13) ────────────────────────────────────────────
+
+export type SavingsVehicleType = 'keren_hishtalmut' | 'pension' | 'kupat_gemel' | 'child_savings';
+
+export interface SavingsVehicle {
+  id: string;
+  type: SavingsVehicleType;
+  name: string;
+  balance: number;
+  employeeMonthlyDeposit: number;
+  employerMonthlyDeposit: number;
+  notes: string;
+  lockDate?: string;      // keren hishtalmut - eligible withdrawal date
+  childName?: string;     // child savings - child name
+}
+
+// ── Debt Planner (#23) ────────────────────────────────────────────────────────
+
+export type DebtType = 'credit_card' | 'personal_loan' | 'car_loan' | 'overdraft' | 'other';
+
+export interface Debt {
+  id: string;
+  name: string;
+  balance: number;
+  interestRate: number;
+  minimumPayment: number;
+  type: DebtType;
+  notes: string;
+}
+
+// ── Life Goals (#27) ──────────────────────────────────────────────────────────
+
+export interface LifeGoal {
+  id: string;
+  name: string;
+  emoji: string;
+  targetAmount: number;
+  savedAmount: number;
+  targetDate: string; // YYYY-MM
+  monthlyContribution: number;
+  color: string;
+  notes: string;
+}
+
+// ── Chag Budgets (#28) ────────────────────────────────────────────────────────
+
+export interface ChagBudgetItem {
+  name: string;
+  budget: number;
+  spent: number;
+}
+
+export interface ChagBudget {
+  id: string;
+  chagName: string;
+  year: number;
+  items: ChagBudgetItem[];
+  notes: string;
+}
+
+// ── Activity Log (#33) ────────────────────────────────────────────────────────
+
+export type ActivityAction = 'add' | 'update' | 'delete';
+export type ActivityEntityType = 'expense' | 'income' | 'savings' | 'budget' | 'goal' | 'debt';
+
+export interface ActivityEntry {
+  id: string;
+  timestamp: string; // ISO
+  action: ActivityAction;
+  entityType: ActivityEntityType;
+  description: string;
+  amount?: number;
+  monthIndex?: number;
 }

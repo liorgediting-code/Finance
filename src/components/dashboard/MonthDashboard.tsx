@@ -99,6 +99,8 @@ export default function MonthDashboard() {
   const [monthIndex, setMonthIndex] = useState(currentMonthIndex);
   const year = useFinanceStore((s) => s.settings.year);
   const activeBoardId = useFinanceStore((s) => s.activeBoardId);
+  const hiddenSections = useFinanceStore((s) => s.settings.hiddenDashboardSections ?? []);
+  const visible = (section: string) => !hiddenSections.includes(section);
   const { months: boardMonths, recurringIncomes: boardRecurringIncomes, recurringExpenses: boardRecurringExpenses } = useActiveBoardData();
 
   const isCurrentMonth = monthIndex === currentMonthIndex && year === today.getFullYear();
@@ -205,28 +207,44 @@ export default function MonthDashboard() {
       ) : (
         <>
           {/* ── Summary Cards ── */}
-          <MonthSummary monthIndex={monthIndex} />
+          {visible('summary') && <MonthSummary monthIndex={monthIndex} />}
 
           {/* ── Expenses ── */}
-          <SectionDivider label="הוצאות" />
-          <div className="mb-6">
-            <ExpenseCategoryBarChart monthIndex={monthIndex} showToggle={false} />
-          </div>
-          <ExpenseBudgetSection monthIndex={monthIndex} />
+          {visible('expenses') && (
+            <>
+              <SectionDivider label="הוצאות" />
+              <div className="mb-6">
+                <ExpenseCategoryBarChart monthIndex={monthIndex} showToggle={false} />
+              </div>
+              <ExpenseBudgetSection monthIndex={monthIndex} />
+            </>
+          )}
 
           {/* ── Income ── */}
-          <SectionDivider label="הכנסות" />
-          <IncomeTable monthIndex={monthIndex} />
+          {visible('income') && (
+            <>
+              <SectionDivider label="הכנסות" />
+              <IncomeTable monthIndex={monthIndex} />
+            </>
+          )}
 
           {/* ── Annual Summary ── */}
-          <SectionDivider label="סיכום שנתי" />
-          <div className="mb-6">
-            <AnnualSummary />
-          </div>
+          {visible('annual') && (
+            <>
+              <SectionDivider label="סיכום שנתי" />
+              <div className="mb-6">
+                <AnnualSummary />
+              </div>
+            </>
+          )}
 
           {/* ── Savings ── */}
-          <SectionDivider label="חסכונות" />
-          <SavingsPage />
+          {visible('savings') && (
+            <>
+              <SectionDivider label="חסכונות" />
+              <SavingsPage />
+            </>
+          )}
         </>
       )}
     </div>

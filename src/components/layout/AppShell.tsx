@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import BottomNav from './BottomNav';
+import OnboardingWizard from '../onboarding/OnboardingWizard';
+import { OfflineBanner, InstallBanner } from '../pwa/PWABanners';
 
 interface Props {
   children: React.ReactNode;
@@ -13,6 +15,9 @@ export default function AppShell({ children }: Props) {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <OfflineBanner />
+      <InstallBanner />
+      <OnboardingWizard />
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
       <div className="flex flex-1 flex-col overflow-hidden">

@@ -77,6 +77,7 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
   const updateIncome = useFinanceStore((s) => s.updateIncome);
   const deleteIncome = useFinanceStore((s) => s.deleteIncome);
   const addRecurringIncome = useFinanceStore((s) => s.addRecurringIncome);
+  const updateRecurringIncome = useFinanceStore((s) => s.updateRecurringIncome);
   const deleteRecurringIncome = useFinanceStore((s) => s.deleteRecurringIncome);
 
   const defaultMemberId = familyMembers[0]?.id ?? '';
@@ -117,8 +118,12 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
     setEditForm({ date: entry.date, source: entry.source, memberId: entry.memberId, amount: entry.amount, notes: entry.notes });
   };
 
-  const saveEdit = (id: string) => {
-    updateIncome(monthIndex, id, editForm);
+  const saveEdit = (id: string, isRecurring: boolean) => {
+    if (isRecurring) {
+      updateRecurringIncome(id, editForm);
+    } else {
+      updateIncome(monthIndex, id, editForm);
+    }
     setEditingId(null);
   };
 
@@ -219,7 +224,7 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
               const isRecurring = !!entry.isRecurring;
               return (
                 <tr key={entry.id} className={`border-b border-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-lavender-light/30`}>
-                  {editingId === entry.id && !isRecurring ? (
+                  {editingId === entry.id ? (
                     <>
                       <td className="px-4 py-2"><input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} className={inputCls} /></td>
                       <td className="px-4 py-2"><input type="text" value={editForm.source} onChange={(e) => setEditForm({ ...editForm, source: e.target.value })} className={inputCls} /></td>
@@ -234,7 +239,7 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
                       <td className="px-4 py-2"><input type="text" value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} className={inputCls} /></td>
                       <td className="px-4 py-2 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => saveEdit(entry.id)} className="text-xs text-white bg-sage-dark hover:bg-[#8AAA7A] px-2.5 py-1 rounded-md transition-colors cursor-pointer font-medium">שמור</button>
+                          <button onClick={() => saveEdit(entry.id, isRecurring)} className="text-xs text-white bg-sage-dark hover:bg-[#8AAA7A] px-2.5 py-1 rounded-md transition-colors cursor-pointer font-medium">שמור</button>
                           <button onClick={() => setEditingId(null)} className="text-xs text-[#6B6B8A] hover:text-[#1E1E2E] px-2 py-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer">ביטול</button>
                         </div>
                       </td>
@@ -258,15 +263,13 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
                       <td className="px-4 py-2.5 text-[#9090A8] text-xs">{entry.notes}</td>
                       <td className="px-4 py-2.5 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          {!isRecurring && (
-                            <button
-                              onClick={() => startEdit(entry)}
-                              className="flex items-center gap-1 text-xs text-lavender-dark hover:text-[#5B52A0] hover:bg-lavender-light px-2 py-1 rounded-md transition-colors cursor-pointer"
-                            >
-                              <EditIcon />
-                              עריכה
-                            </button>
-                          )}
+                          <button
+                            onClick={() => startEdit(entry)}
+                            className="flex items-center gap-1 text-xs text-lavender-dark hover:text-[#5B52A0] hover:bg-lavender-light px-2 py-1 rounded-md transition-colors cursor-pointer"
+                          >
+                            <EditIcon />
+                            עריכה
+                          </button>
                           <button
                             onClick={() => {
                               const msg = isRecurring

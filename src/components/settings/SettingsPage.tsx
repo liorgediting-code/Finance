@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { formatCurrency } from '../../utils/formatters';
+import { CATEGORIES } from '../../config/categories';
 
 function SettingsSection({
   title,
@@ -55,9 +56,22 @@ function CheckIcon() {
 const inputCls =
   'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#1E1E2E] focus:outline-none focus:ring-2 focus:ring-lavender-dark transition-colors bg-white placeholder:text-[#9090A8]';
 
+const DASHBOARD_SECTIONS = [
+  { id: 'summary', label: 'כרטיסי סיכום', desc: 'הכנסות, הוצאות, יתרה' },
+  { id: 'expenses', label: 'הוצאות', desc: 'גרף, תקציב ורשימת הוצאות' },
+  { id: 'income', label: 'הכנסות', desc: 'טבלת הכנסות' },
+  { id: 'annual', label: 'סיכום שנתי', desc: 'גרף שנתי' },
+  { id: 'savings', label: 'חסכונות', desc: 'קרנות חיסכון' },
+];
+
+const COLOR_PRESETS = ['#7B6DC8', '#4A90C0', '#5A9A42', '#E06060', '#C89E50', '#4AACAC', '#C85590', '#A0A0B0', '#E06090', '#6090E0'];
+
 export default function SettingsPage() {
   const settings = useFinanceStore((s) => s.settings);
   const updateSettings = useFinanceStore((s) => s.updateSettings);
+  const toggleDashboardSection = useFinanceStore((s) => s.toggleDashboardSection);
+  const addCustomCategory = useFinanceStore((s) => s.addCustomCategory);
+  const deleteCustomCategory = useFinanceStore((s) => s.deleteCustomCategory);
   const loadDemoData = useFinanceStore((s) => s.loadDemoData);
   const familyMembers = useFinanceStore((s) => s.familyMembers);
   const addFamilyMember = useFinanceStore((s) => s.addFamilyMember);
@@ -68,10 +82,15 @@ export default function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
 
+  const hiddenSections = settings.hiddenDashboardSections ?? [];
+  const customCategories = settings.customCategories ?? [];
+
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [newMemberName, setNewMemberName] = useState('');
   const [showAddMember, setShowAddMember] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatColor, setNewCatColor] = useState(COLOR_PRESETS[0]);
 
   const handleAddMember = () => {
     const name = newMemberName.trim();
@@ -246,6 +265,100 @@ export default function SettingsPage() {
             </span>
           </p>
         )}
+      </SettingsSection>
+
+      {/* Dashboard Customization (#29) */}
+      <SettingsSection title="התאמת לוח הבקרה" accentColor="#7B6DC8">
+        <p className="text-xs text-[#9090A8] mb-4">בחר אילו חלקים יוצגו בלוח הבקרה הראשי.</p>
+        <div className="space-y-2">
+          {DASHBOARD_SECTIONS.map((sec) => {
+            const isHidden = hiddenSections.includes(sec.id);
+            return (
+              <div key={sec.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-[#1E1E2E]">{sec.label}</p>
+                  <p className="text-xs text-[#9090A8]">{sec.desc}</p>
+                </div>
+                <button
+                  onClick={() => toggleDashboardSection(sec.id)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${isHidden ? 'bg-gray-200' : 'bg-lavender-dark'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${isHidden ? 'translate-x-1' : 'translate-x-6'}`} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </SettingsSection>
+
+      {/* Custom Categories (#18) */}
+      <SettingsSection title="קטגוריות מותאמות אישית" accentColor="#4AACAC">
+        <p className="text-xs text-[#9090A8] mb-4">הוסף קטגוריות הוצאה מותאמות בנוסף לקטגוריות הקיימות.</p>
+
+        {/* Existing categories preview */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {CATEGORIES.slice(0, 8).map((cat) => (
+            <span key={cat.id} className="flex items-center gap-1 text-[10px] bg-gray-50 border border-gray-100 rounded-full px-2 py-0.5">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+              {cat.nameHe}
+            </span>
+          ))}
+          <span className="text-[10px] text-[#9090A8] self-center">+{CATEGORIES.length - 8} נוספות</span>
+        </div>
+
+        {/* Custom categories list */}
+        {customCategories.length > 0 && (
+          <div className="space-y-2 mb-4">
+            {customCategories.map((cat) => (
+              <div key={cat.id} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
+                <span className="flex-1 text-sm font-medium text-[#1E1E2E]">{cat.nameHe}</span>
+                <button
+                  onClick={() => { if (window.confirm(`למחוק את הקטגוריה "${cat.nameHe}"?`)) deleteCustomCategory(cat.id); }}
+                  className="text-[#9090A8] hover:text-red-500 cursor-pointer p-1"
+                >
+                  <TrashIcon />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add new custom category */}
+        <div className="flex flex-wrap gap-2 items-end">
+          <div className="flex-1 min-w-40">
+            <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">שם קטגוריה</label>
+            <input
+              type="text"
+              value={newCatName}
+              onChange={(e) => setNewCatName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && newCatName.trim()) { addCustomCategory({ nameHe: newCatName.trim(), color: newCatColor }); setNewCatName(''); } }}
+              placeholder="למשל: ספורט, טיפול"
+              className={inputCls}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">צבע</label>
+            <div className="flex gap-1.5">
+              {COLOR_PRESETS.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setNewCatColor(c)}
+                  className="w-6 h-6 rounded-full cursor-pointer transition-transform hover:scale-110"
+                  style={{ backgroundColor: c, boxShadow: newCatColor === c ? `0 0 0 2px white, 0 0 0 4px ${c}` : 'none' }}
+                />
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={() => { if (newCatName.trim()) { addCustomCategory({ nameHe: newCatName.trim(), color: newCatColor }); setNewCatName(''); } }}
+            disabled={!newCatName.trim()}
+            className="flex items-center gap-1.5 bg-[#4AACAC] text-white rounded-lg px-4 py-2 text-sm font-medium cursor-pointer disabled:opacity-50"
+          >
+            <PlusIcon />
+            הוסף
+          </button>
+        </div>
       </SettingsSection>
 
       {/* Demo Data */}

@@ -6,9 +6,19 @@ import type {
   MonthData,
   IncomeEntry,
   ExpenseEntry,
+  ExpenseSplit,
   SavingsFund,
   FamilyMember,
   Board,
+  Installment,
+  Mortgage,
+  MortgageTrack,
+  SavingsVehicle,
+  Debt,
+  LifeGoal,
+  ChagBudget,
+  ActivityEntry,
+  CustomCategory,
 } from '../types';
 
 // ── Cloud-synced fields ───────────────────────────────────────────────────────
@@ -20,12 +30,23 @@ interface CloudData {
   recurringExpenses: ExpenseEntry[];
   familyMembers: FamilyMember[];
   extraBoards: Board[];
+  // New modules
+  installments: Installment[];
+  mortgages: Mortgage[];
+  savingsVehicles: SavingsVehicle[];
+  debts: Debt[];
+  lifeGoals: LifeGoal[];
+  chagBudgets: ChagBudget[];
+  activityLog: ActivityEntry[];
+  // Rollover settings (#19)
+  rolloverCategories: string[];
 }
 
 const DEFAULT_DATA: CloudData = {
   settings: {
     year: 2026,
     savingsGoal: { monthlyTarget: 0, vacationGoal: 0, vacationSaved: 0 },
+    hiddenDashboardSections: [],
   },
   months: {},
   savingsFunds: [],
@@ -36,6 +57,14 @@ const DEFAULT_DATA: CloudData = {
     { id: 'member-2', name: 'בן/בת זוג 2' },
   ],
   extraBoards: [],
+  installments: [],
+  mortgages: [],
+  savingsVehicles: [],
+  debts: [],
+  lifeGoals: [],
+  chagBudgets: [],
+  activityLog: [],
+  rolloverCategories: [],
 };
 
 // ── Debounced save ────────────────────────────────────────────────────────────
@@ -63,6 +92,16 @@ function updateExtraBoard(
   return { extraBoards: next };
 }
 
+function makeActivityEntry(
+  action: ActivityEntry['action'],
+  entityType: ActivityEntry['entityType'],
+  description: string,
+  amount?: number,
+  monthIndex?: number
+): ActivityEntry {
+  return { id: uuidv4(), timestamp: new Date().toISOString(), action, entityType, description, amount, monthIndex };
+}
+
 // ── Store interface ───────────────────────────────────────────────────────────
 interface FinanceStore extends CloudData {
   _userId: string | null;
@@ -83,15 +122,18 @@ interface FinanceStore extends CloudData {
 
   // Recurring income actions
   addRecurringIncome: (entry: Omit<IncomeEntry, 'id'>) => void;
+  updateRecurringIncome: (id: string, partial: Partial<Omit<IncomeEntry, 'id'>>) => void;
   deleteRecurringIncome: (id: string) => void;
 
   // Recurring expense actions
   addRecurringExpense: (entry: Omit<ExpenseEntry, 'id'>) => void;
+  updateRecurringExpense: (id: string, partial: Partial<Omit<ExpenseEntry, 'id'>>) => void;
   deleteRecurringExpense: (id: string) => void;
 
   // Expense actions
   addExpense: (monthIndex: number, entry: Omit<ExpenseEntry, 'id'>) => void;
   updateExpense: (monthIndex: number, id: string, partial: Partial<ExpenseEntry>) => void;
+  splitExpense: (monthIndex: number, id: string, splits: Omit<ExpenseSplit, 'id'>[]) => void;
   deleteExpense: (monthIndex: number, id: string) => void;
 
   // Budget actions
@@ -105,6 +147,13 @@ interface FinanceStore extends CloudData {
 
   // Settings actions
   updateSettings: (partial: Partial<AppSettings>) => void;
+  toggleDashboardSection: (section: string) => void;
+  addCustomCategory: (cat: Omit<CustomCategory, 'id'>) => void;
+  deleteCustomCategory: (id: string) => void;
+
+  // Rollover (#19)
+  toggleRolloverCategory: (categoryId: string) => void;
+  getRolledBudget: (monthIndex: number, categoryId: string) => number;
 
   // Board state (non-synced)
   activeBoardId: string;
@@ -115,6 +164,41 @@ interface FinanceStore extends CloudData {
   renameBoard: (id: string, name: string) => void;
   deleteBoard: (id: string) => void;
   setBoardColor: (id: string, color: string) => void;
+
+  // Installments (#10)
+  addInstallment: (entry: Omit<Installment, 'id'>) => void;
+  updateInstallment: (id: string, partial: Partial<Omit<Installment, 'id'>>) => void;
+  deleteInstallment: (id: string) => void;
+  payInstallmentMonth: (id: string) => void;
+
+  // Mortgage (#11)
+  addMortgage: (mortgage: Omit<Mortgage, 'id'>) => void;
+  updateMortgage: (id: string, partial: Partial<Omit<Mortgage, 'id'>>) => void;
+  deleteMortgage: (id: string) => void;
+  addMortgageTrack: (mortgageId: string, track: Omit<MortgageTrack, 'id'>) => void;
+  updateMortgageTrack: (mortgageId: string, trackId: string, partial: Partial<Omit<MortgageTrack, 'id'>>) => void;
+  deleteMortgageTrack: (mortgageId: string, trackId: string) => void;
+
+  // Savings Vehicles (#13)
+  addSavingsVehicle: (vehicle: Omit<SavingsVehicle, 'id'>) => void;
+  updateSavingsVehicle: (id: string, partial: Partial<Omit<SavingsVehicle, 'id'>>) => void;
+  deleteSavingsVehicle: (id: string) => void;
+
+  // Debts (#23)
+  addDebt: (debt: Omit<Debt, 'id'>) => void;
+  updateDebt: (id: string, partial: Partial<Omit<Debt, 'id'>>) => void;
+  deleteDebt: (id: string) => void;
+
+  // Life Goals (#27)
+  addLifeGoal: (goal: Omit<LifeGoal, 'id'>) => void;
+  updateLifeGoal: (id: string, partial: Partial<Omit<LifeGoal, 'id'>>) => void;
+  deleteLifeGoal: (id: string) => void;
+  depositToLifeGoal: (id: string, amount: number) => void;
+
+  // Chag Budgets (#28)
+  addChagBudget: (budget: Omit<ChagBudget, 'id'>) => void;
+  updateChagBudget: (id: string, partial: Partial<Omit<ChagBudget, 'id'>>) => void;
+  deleteChagBudget: (id: string) => void;
 
   // Demo data
   loadDemoData: () => void;
@@ -141,9 +225,28 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         recurringExpenses: s.recurringExpenses,
         familyMembers: s.familyMembers,
         extraBoards: s.extraBoards,
+        installments: s.installments,
+        mortgages: s.mortgages,
+        savingsVehicles: s.savingsVehicles,
+        debts: s.debts,
+        lifeGoals: s.lifeGoals,
+        chagBudgets: s.chagBudgets,
+        activityLog: s.activityLog,
+        rolloverCategories: s.rolloverCategories,
       };
     }
   );
+
+  const logActivity = (
+    action: ActivityEntry['action'],
+    entityType: ActivityEntry['entityType'],
+    description: string,
+    amount?: number,
+    monthIndex?: number
+  ) => {
+    const entry = makeActivityEntry(action, entityType, description, amount, monthIndex);
+    set((s) => ({ activityLog: [entry, ...s.activityLog].slice(0, 200) }));
+  };
 
   return {
     ...DEFAULT_DATA,
@@ -194,6 +297,14 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           recurringExpenses: d.recurringExpenses ?? [],
           familyMembers: d.familyMembers ?? DEFAULT_DATA.familyMembers,
           extraBoards: d.extraBoards ?? [],
+          installments: d.installments ?? [],
+          mortgages: d.mortgages ?? [],
+          savingsVehicles: d.savingsVehicles ?? [],
+          debts: d.debts ?? [],
+          lifeGoals: d.lifeGoals ?? [],
+          chagBudgets: d.chagBudgets ?? [],
+          activityLog: d.activityLog ?? [],
+          rolloverCategories: d.rolloverCategories ?? [],
         });
       }
     },
@@ -201,7 +312,15 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     saveToCloud: async () => {
       const s = get();
       if (!s._userId) return;
-      const data: CloudData = { settings: s.settings, months: s.months, savingsFunds: s.savingsFunds, recurringIncomes: s.recurringIncomes, recurringExpenses: s.recurringExpenses, familyMembers: s.familyMembers, extraBoards: s.extraBoards };
+      const data: CloudData = {
+        settings: s.settings, months: s.months, savingsFunds: s.savingsFunds,
+        recurringIncomes: s.recurringIncomes, recurringExpenses: s.recurringExpenses,
+        familyMembers: s.familyMembers, extraBoards: s.extraBoards,
+        installments: s.installments, mortgages: s.mortgages,
+        savingsVehicles: s.savingsVehicles, debts: s.debts,
+        lifeGoals: s.lifeGoals, chagBudgets: s.chagBudgets,
+        activityLog: s.activityLog, rolloverCategories: s.rolloverCategories,
+      };
       await supabase.from('user_data').upsert({ user_id: s._userId, data, updated_at: new Date().toISOString() });
     },
 
@@ -224,6 +343,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           return { ...b, months: { ...b.months, [monthIndex]: { ...md, income: [...md.income, { ...entry, id: uuidv4() }] } } };
         }));
       }
+      logActivity('add', 'income', entry.source, entry.amount, monthIndex);
       sync();
     },
 
@@ -256,6 +376,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           return { ...b, months: { ...b.months, [monthIndex]: { ...md, income: md.income.filter((e) => e.id !== id) } } };
         }));
       }
+      logActivity('delete', 'income', 'הכנסה נמחקה', undefined, monthIndex);
       sync();
     },
 
@@ -266,6 +387,19 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       } else if (activeBoardId !== 'overall') {
         set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => ({
           ...b, recurringIncomes: [...b.recurringIncomes, { ...entry, id: uuidv4(), isRecurring: true }],
+        })));
+      }
+      logActivity('add', 'income', `הכנסה קבועה: ${entry.source}`, entry.amount);
+      sync();
+    },
+
+    updateRecurringIncome: (id, partial) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => ({ recurringIncomes: s.recurringIncomes.map((e) => e.id === id ? { ...e, ...partial } : e) }));
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => ({
+          ...b, recurringIncomes: b.recurringIncomes.map((e) => e.id === id ? { ...e, ...partial } : e),
         })));
       }
       sync();
@@ -291,6 +425,19 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       } else if (activeBoardId !== 'overall') {
         set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => ({
           ...b, recurringExpenses: [...b.recurringExpenses, { ...entry, id: uuidv4(), isRecurring: true }],
+        })));
+      }
+      logActivity('add', 'expense', `הוצאה קבועה: ${entry.description || entry.categoryId}`, entry.amount);
+      sync();
+    },
+
+    updateRecurringExpense: (id, partial) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => ({ recurringExpenses: s.recurringExpenses.map((e) => e.id === id ? { ...e, ...partial } : e) }));
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => ({
+          ...b, recurringExpenses: b.recurringExpenses.map((e) => e.id === id ? { ...e, ...partial } : e),
         })));
       }
       sync();
@@ -322,6 +469,9 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           return { ...b, months: { ...b.months, [monthIndex]: { ...md, expenses: [...md.expenses, { ...entry, id: uuidv4() }] } } };
         }));
       }
+      if (!entry.isPending) {
+        logActivity('add', 'expense', entry.description || entry.categoryId, entry.amount, monthIndex);
+      }
       sync();
     },
 
@@ -341,6 +491,23 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
+    splitExpense: (monthIndex, id, splitDefs) => {
+      const splits: ExpenseSplit[] = splitDefs.map((s) => ({ ...s, id: uuidv4() }));
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, expenses: md.expenses.map((e) => e.id === id ? { ...e, splits } : e) } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, expenses: md.expenses.map((e) => e.id === id ? { ...e, splits } : e) } } };
+        }));
+      }
+      sync();
+    },
+
     deleteExpense: (monthIndex, id) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
@@ -354,6 +521,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           return { ...b, months: { ...b.months, [monthIndex]: { ...md, expenses: md.expenses.filter((e) => e.id !== id) } } };
         }));
       }
+      logActivity('delete', 'expense', 'הוצאה נמחקה', undefined, monthIndex);
       sync();
     },
 
@@ -410,6 +578,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         }
         return { savingsFunds: updatedFunds };
       });
+      logActivity('add', 'savings', `הפקדה לחיסכון`, amount, monthIndex);
       sync();
     },
 
@@ -419,6 +588,107 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       }));
       sync();
     },
+
+    toggleDashboardSection: (section) => {
+      set((s) => {
+        const hidden = s.settings.hiddenDashboardSections ?? [];
+        const next = hidden.includes(section)
+          ? hidden.filter((h) => h !== section)
+          : [...hidden, section];
+        return { settings: { ...s.settings, hiddenDashboardSections: next } };
+      });
+      sync();
+    },
+
+    addCustomCategory: (cat) => {
+      set((s) => {
+        const existing = s.settings.customCategories ?? [];
+        return { settings: { ...s.settings, customCategories: [...existing, { ...cat, id: uuidv4() }] } };
+      });
+      sync();
+    },
+
+    deleteCustomCategory: (id) => {
+      set((s) => {
+        const existing = s.settings.customCategories ?? [];
+        return { settings: { ...s.settings, customCategories: existing.filter((c) => c.id !== id) } };
+      });
+      sync();
+    },
+
+    toggleRolloverCategory: (categoryId) => {
+      set((s) => {
+        const next = s.rolloverCategories.includes(categoryId)
+          ? s.rolloverCategories.filter((c) => c !== categoryId)
+          : [...s.rolloverCategories, categoryId];
+        return { rolloverCategories: next };
+      });
+      sync();
+    },
+
+    getRolledBudget: (monthIndex, categoryId) => {
+      const s = get();
+      if (!s.rolloverCategories.includes(categoryId) || monthIndex === 0) return 0;
+      const prevMonth = s.months[monthIndex - 1];
+      if (!prevMonth) return 0;
+      const prevBudget = prevMonth.budget[categoryId] ?? 0;
+      if (prevBudget === 0) return 0;
+      const prevSpent = prevMonth.expenses
+        .filter((e) => e.categoryId === categoryId)
+        .reduce((sum, e) => sum + e.amount, 0);
+      return Math.max(0, prevBudget - prevSpent);
+    },
+
+    // ── Installments ────────────────────────────────────────────────────────
+    addInstallment: (entry) => { set((s) => ({ installments: [...s.installments, { ...entry, id: uuidv4() }] })); sync(); },
+    updateInstallment: (id, partial) => { set((s) => ({ installments: s.installments.map((i) => i.id === id ? { ...i, ...partial } : i) })); sync(); },
+    deleteInstallment: (id) => { set((s) => ({ installments: s.installments.filter((i) => i.id !== id) })); sync(); },
+    payInstallmentMonth: (id) => {
+      set((s) => ({ installments: s.installments.map((i) => i.id === id ? { ...i, paidPayments: Math.min(i.paidPayments + 1, i.numPayments) } : i) }));
+      sync();
+    },
+
+    // ── Mortgage ────────────────────────────────────────────────────────────
+    addMortgage: (mortgage) => { set((s) => ({ mortgages: [...s.mortgages, { ...mortgage, id: uuidv4() }] })); sync(); },
+    updateMortgage: (id, partial) => { set((s) => ({ mortgages: s.mortgages.map((m) => m.id === id ? { ...m, ...partial } : m) })); sync(); },
+    deleteMortgage: (id) => { set((s) => ({ mortgages: s.mortgages.filter((m) => m.id !== id) })); sync(); },
+    addMortgageTrack: (mortgageId, track) => {
+      set((s) => ({ mortgages: s.mortgages.map((m) => m.id === mortgageId ? { ...m, tracks: [...m.tracks, { ...track, id: uuidv4() }] } : m) }));
+      sync();
+    },
+    updateMortgageTrack: (mortgageId, trackId, partial) => {
+      set((s) => ({ mortgages: s.mortgages.map((m) => m.id === mortgageId ? { ...m, tracks: m.tracks.map((t) => t.id === trackId ? { ...t, ...partial } : t) } : m) }));
+      sync();
+    },
+    deleteMortgageTrack: (mortgageId, trackId) => {
+      set((s) => ({ mortgages: s.mortgages.map((m) => m.id === mortgageId ? { ...m, tracks: m.tracks.filter((t) => t.id !== trackId) } : m) }));
+      sync();
+    },
+
+    // ── Savings Vehicles ────────────────────────────────────────────────────
+    addSavingsVehicle: (vehicle) => { set((s) => ({ savingsVehicles: [...s.savingsVehicles, { ...vehicle, id: uuidv4() }] })); sync(); },
+    updateSavingsVehicle: (id, partial) => { set((s) => ({ savingsVehicles: s.savingsVehicles.map((v) => v.id === id ? { ...v, ...partial } : v) })); sync(); },
+    deleteSavingsVehicle: (id) => { set((s) => ({ savingsVehicles: s.savingsVehicles.filter((v) => v.id !== id) })); sync(); },
+
+    // ── Debts ────────────────────────────────────────────────────────────────
+    addDebt: (debt) => { set((s) => ({ debts: [...s.debts, { ...debt, id: uuidv4() }] })); sync(); },
+    updateDebt: (id, partial) => { set((s) => ({ debts: s.debts.map((d) => d.id === id ? { ...d, ...partial } : d) })); sync(); },
+    deleteDebt: (id) => { set((s) => ({ debts: s.debts.filter((d) => d.id !== id) })); sync(); },
+
+    // ── Life Goals ──────────────────────────────────────────────────────────
+    addLifeGoal: (goal) => { set((s) => ({ lifeGoals: [...s.lifeGoals, { ...goal, id: uuidv4() }] })); sync(); },
+    updateLifeGoal: (id, partial) => { set((s) => ({ lifeGoals: s.lifeGoals.map((g) => g.id === id ? { ...g, ...partial } : g) })); sync(); },
+    deleteLifeGoal: (id) => { set((s) => ({ lifeGoals: s.lifeGoals.filter((g) => g.id !== id) })); sync(); },
+    depositToLifeGoal: (id, amount) => {
+      set((s) => ({ lifeGoals: s.lifeGoals.map((g) => g.id === id ? { ...g, savedAmount: g.savedAmount + amount } : g) }));
+      logActivity('add', 'savings', 'הפקדה למטרה', amount);
+      sync();
+    },
+
+    // ── Chag Budgets ────────────────────────────────────────────────────────
+    addChagBudget: (budget) => { set((s) => ({ chagBudgets: [...s.chagBudgets, { ...budget, id: uuidv4() }] })); sync(); },
+    updateChagBudget: (id, partial) => { set((s) => ({ chagBudgets: s.chagBudgets.map((b) => b.id === id ? { ...b, ...partial } : b) })); sync(); },
+    deleteChagBudget: (id) => { set((s) => ({ chagBudgets: s.chagBudgets.filter((b) => b.id !== id) })); sync(); },
 
     resetStore: () => {
       if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }

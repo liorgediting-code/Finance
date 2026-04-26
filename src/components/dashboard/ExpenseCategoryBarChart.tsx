@@ -22,6 +22,7 @@ interface Props {
 
 interface ChartItem {
   name: string;
+  categoryId: string;
   value: number;
   oneTime: number;
   fixed: number;
@@ -35,7 +36,7 @@ function buildData(
   monthIndex: number,
   recurringExpenses: ReturnType<typeof useFinanceStore.getState>['recurringExpenses']
 ): ChartItem[] {
-  const raw: { name: string; oneTime: number; fixed: number; color: string }[] = [];
+  const raw: { name: string; categoryId: string; oneTime: number; fixed: number; color: string }[] = [];
 
   CATEGORIES.filter((cat) => cat.id !== 'other').forEach((cat) => {
     let oneTime = 0;
@@ -48,7 +49,7 @@ function buildData(
       fixed = fixed * 12;
     }
     const value = oneTime + fixed;
-    if (value > 0) raw.push({ name: cat.nameHe, oneTime, fixed, color: cat.color });
+    if (value > 0) raw.push({ name: cat.nameHe, categoryId: cat.id, oneTime, fixed, color: cat.color });
   });
 
   // "other" category — split by customCategory
@@ -71,7 +72,7 @@ function buildData(
     addOther(recurringExpenses, true, 12);
   }
   otherMap.forEach(({ oneTime, fixed }, name) => {
-    if (oneTime + fixed > 0) raw.push({ name, oneTime, fixed, color: otherColor });
+    if (oneTime + fixed > 0) raw.push({ name, categoryId: 'other', oneTime, fixed, color: otherColor });
   });
 
   const total = raw.reduce((s, d) => s + d.oneTime + d.fixed, 0);
@@ -103,10 +104,19 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payl
 
 export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true }: Props) {
   const [view, setView] = useState<'month' | 'year'>('month');
+  const [drilldown, setDrilldown] = useState<string | null>(null);
   const { months, recurringExpenses } = useActiveBoardData();
 
   const data = buildData(view, months, monthIndex, recurringExpenses);
   const total = data.reduce((s, d) => s + d.value, 0);
+
+  const drilldownItem = drilldown ? data.find((d) => d.categoryId === drilldown) : null;
+  const drilldownExpenses = drilldown && view === 'month'
+    ? [
+        ...(months[monthIndex]?.expenses ?? []).filter((e) => e.categoryId === drilldown),
+        ...recurringExpenses.filter((e) => e.categoryId === drilldown).map((e) => ({ ...e, isRecurring: true as const })),
+      ]
+    : [];
 
   const chartHeight = Math.max(160, data.length * 32);
 
@@ -192,9 +202,15 @@ export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true 
                 width={80}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F2F3F7' }} />
-              <Bar dataKey="value" radius={[0, 6, 6, 0]} maxBarSize={20}>
+              <Bar
+                dataKey="value"
+                radius={[0, 6, 6, 0]}
+                maxBarSize={20}
+                onClick={(d) => { const item = d as unknown as ChartItem; setDrilldown((prev) => prev === item.categoryId ? null : item.categoryId); }}
+                style={{ cursor: 'pointer' }}
+              >
                 {data.map((entry, idx) => (
-                  <Cell key={idx} fill={entry.color} />
+                  <Cell key={idx} fill={entry.color} opacity={drilldown && drilldown !== entry.categoryId ? 0.35 : 1} />
                 ))}
                 <LabelList
                   dataKey="value"
@@ -228,6 +244,34 @@ export default function ExpenseCategoryBarChart({ monthIndex, showToggle = true 
                 </div>
               ))}
             </div>
+          </div>
+        )}
+        {/* Drill-down panel */}
+        {drilldown && drilldownItem && view === 'month' && (
+          <div className="mt-4 pt-4 border-t border-gray-100" dir="rtl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: drilldownItem.color }} />
+                <span className="text-sm font-semibold text-[#1E1E2E]">{drilldownItem.name}</span>
+                <span className="text-xs text-[#9090A8]">— {formatCurrency(drilldownItem.value)}</span>
+              </div>
+              <button onClick={() => setDrilldown(null)} className="text-xs text-[#9090A8] hover:text-[#1E1E2E] cursor-pointer">✕ סגור</button>
+            </div>
+            {drilldownExpenses.length === 0 ? (
+              <p className="text-xs text-[#9090A8]">אין עסקאות בקטגוריה זו</p>
+            ) : (
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                {drilldownExpenses.map((e) => (
+                  <div key={e.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      {e.isRecurring && <span className="text-[10px] bg-lavender-light text-[#5B52A0] px-1.5 py-0.5 rounded-full">קבוע</span>}
+                      <span className="text-[#1E1E2E]">{e.description}</span>
+                    </div>
+                    <span className="font-semibold text-red-500">{formatCurrency(e.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
