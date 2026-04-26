@@ -114,9 +114,13 @@ interface FinanceStore extends CloudData {
   addBoard: (name: string) => void;
   renameBoard: (id: string, name: string) => void;
   deleteBoard: (id: string) => void;
+  setBoardColor: (id: string, color: string) => void;
 
   // Demo data
   loadDemoData: () => void;
+
+  // Reset store to defaults (on sign-out)
+  resetStore: () => void;
 }
 
 function ensureMonth(months: Record<number, MonthData>, monthIndex: number): MonthData {
@@ -149,12 +153,16 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     setActiveBoard: (id) => { set({ activeBoardId: id }); },
 
     addBoard: (name) => {
-      set((s) => ({
-        extraBoards: [
-          ...s.extraBoards,
-          { id: uuidv4(), name, months: {}, recurringIncomes: [], recurringExpenses: [] },
-        ],
-      }));
+      const AUTO_COLORS = ['#4A90C0', '#5A9A42', '#E06060', '#4AACAC', '#C89E50', '#C85590', '#C8A830'];
+      set((s) => {
+        const color = AUTO_COLORS[s.extraBoards.length % AUTO_COLORS.length];
+        return {
+          extraBoards: [
+            ...s.extraBoards,
+            { id: uuidv4(), name, color, months: {}, recurringIncomes: [], recurringExpenses: [] },
+          ],
+        };
+      });
       sync();
     },
 
@@ -165,6 +173,11 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
 
     deleteBoard: (id) => {
       set((s) => ({ extraBoards: s.extraBoards.filter((b) => b.id !== id) }));
+      sync();
+    },
+
+    setBoardColor: (id, color) => {
+      set((s) => updateExtraBoard(s.extraBoards, id, (b) => ({ ...b, color })));
       sync();
     },
 
@@ -405,6 +418,11 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         settings: { ...s.settings, ...partial, savingsGoal: { ...s.settings.savingsGoal, ...(partial.savingsGoal ?? {}) } },
       }));
       sync();
+    },
+
+    resetStore: () => {
+      if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+      set({ ...DEFAULT_DATA, _userId: null, activeBoardId: 'personal' });
     },
 
     loadDemoData: () => {

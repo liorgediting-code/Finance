@@ -72,6 +72,7 @@ export interface Category {
 export interface Board {
   id: string;
   name: string;
+  color?: string;
   months: Record<number, MonthData>;
   recurringIncomes: IncomeEntry[];
   recurringExpenses: ExpenseEntry[];

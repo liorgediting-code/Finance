@@ -22,6 +22,11 @@
   --font-family-sans: 'Heebo', sans-serif;
 }
 
+html {
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
 body {
   margin: 0;
   background-color: #F2F3F7;
@@ -29,6 +34,9 @@ body {
   font-family: 'Heebo', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  max-width: 100vw;
 }
 
 * {
