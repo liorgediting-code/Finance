@@ -313,7 +313,7 @@ export default function Sidebar({ isOpen, onClose }: Props) {
                     </button>
                   )}
                   {renamingId !== board.id && (
-                    <div className="absolute -top-1 -left-1 hidden group-hover:flex items-center gap-0.5 bg-white rounded shadow-sm border border-gray-100 p-0.5 z-10">
+                    <div className="absolute top-full mt-1 left-0 hidden group-hover:flex items-center gap-0.5 bg-white rounded shadow-sm border border-gray-100 p-0.5 z-10">
                       <button
                         onClick={(e) => { e.stopPropagation(); startRename(board.id, board.name); }}
                         className="text-[#9090A8] hover:text-[#5B52A0] p-0.5 rounded cursor-pointer"
