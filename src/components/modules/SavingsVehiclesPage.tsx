@@ -21,8 +21,10 @@ const TYPE_DESCRIPTIONS: Record<SavingsVehicleType, string> = {
   keren_hishtalmut: 'פטורה ממס לאחר 6 שנים',
   pension: 'קצבת פרישה חודשית',
   kupat_gemel: 'חיסכון לטווח בינוני-ארוך',
-  child_savings: 'ₓ58 מהמדינה + 58 אופציונלי',
+  child_savings: '₪58 מהמדינה + 58 אופציונלי',
 };
+
+const INPUT_CLS = 'border border-gray-200 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white';
 
 const emptyForm = (): Omit<SavingsVehicle, 'id'> => ({
   type: 'keren_hishtalmut',
@@ -35,6 +37,53 @@ const emptyForm = (): Omit<SavingsVehicle, 'id'> => ({
   childName: '',
 });
 
+interface VehicleFormProps { f: Omit<SavingsVehicle, 'id'>; setF: (v: Omit<SavingsVehicle, 'id'>) => void; }
+
+function VehicleForm({ f, setF }: VehicleFormProps) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">סוג</label>
+        <select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value as SavingsVehicleType })} className={`${INPUT_CLS} cursor-pointer`}>
+          {Object.entries(TYPE_NAMES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+      </div>
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">שם / מוסד</label>
+        <input type="text" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="למשל: הפניקס, מגדל" className={INPUT_CLS} />
+      </div>
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">יתרה נוכחית (₪)</label>
+        <input type="number" value={f.balance || ''} onChange={(e) => setF({ ...f, balance: Number(e.target.value) })} placeholder="0" min={0} className={INPUT_CLS} />
+      </div>
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הפקדת עובד/ת חודשית (₪)</label>
+        <input type="number" value={f.employeeMonthlyDeposit || ''} onChange={(e) => setF({ ...f, employeeMonthlyDeposit: Number(e.target.value) })} placeholder="0" min={0} className={INPUT_CLS} />
+      </div>
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הפקדת מעסיק חודשית (₪)</label>
+        <input type="number" value={f.employerMonthlyDeposit || ''} onChange={(e) => setF({ ...f, employerMonthlyDeposit: Number(e.target.value) })} placeholder="0" min={0} className={INPUT_CLS} />
+      </div>
+      {f.type === 'keren_hishtalmut' && (
+        <div>
+          <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תאריך פתיחה (לחישוב 6 שנים)</label>
+          <input type="date" value={f.lockDate ?? ''} onChange={(e) => setF({ ...f, lockDate: e.target.value })} className={INPUT_CLS} />
+        </div>
+      )}
+      {f.type === 'child_savings' && (
+        <div>
+          <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">שם הילד/ה</label>
+          <input type="text" value={f.childName ?? ''} onChange={(e) => setF({ ...f, childName: e.target.value })} placeholder="שם הילד/ה" className={INPUT_CLS} />
+        </div>
+      )}
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הערות</label>
+        <input type="text" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} placeholder="אופציונלי" className={INPUT_CLS} />
+      </div>
+    </div>
+  );
+}
+
 export default function SavingsVehiclesPage() {
   const savingsVehicles = useFinanceStore((s) => s.savingsVehicles);
   const addSavingsVehicle = useFinanceStore((s) => s.addSavingsVehicle);
@@ -46,8 +95,6 @@ export default function SavingsVehiclesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Omit<SavingsVehicle, 'id'>>(emptyForm());
 
-  const inputCls = 'border border-gray-200 rounded-lg px-2 py-1.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white';
-
   const totalBalance = savingsVehicles.reduce((s, v) => s + v.balance, 0);
   const totalMonthly = savingsVehicles.reduce((s, v) => s + v.employeeMonthlyDeposit + v.employerMonthlyDeposit, 0);
 
@@ -58,49 +105,6 @@ export default function SavingsVehiclesPage() {
     setShowAdd(false);
   };
 
-  const VehicleForm = ({ f, setF }: { f: Omit<SavingsVehicle, 'id'>; setF: (v: Omit<SavingsVehicle, 'id'>) => void }) => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">סוג</label>
-        <select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value as SavingsVehicleType })} className={`${inputCls} cursor-pointer`}>
-          {Object.entries(TYPE_NAMES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
-      </div>
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">שם / מוסד</label>
-        <input type="text" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="למשל: הפניקס, מגדל" className={inputCls} />
-      </div>
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">יתרה נוכחית (₪)</label>
-        <input type="number" value={f.balance || ''} onChange={(e) => setF({ ...f, balance: Number(e.target.value) })} placeholder="0" min={0} className={inputCls} />
-      </div>
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הפקדה עובד/ת חודשית (₪)</label>
-        <input type="number" value={f.employeeMonthlyDeposit || ''} onChange={(e) => setF({ ...f, employeeMonthlyDeposit: Number(e.target.value) })} placeholder="0" min={0} className={inputCls} />
-      </div>
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הפקדת מעסיק חודשית (₪)</label>
-        <input type="number" value={f.employerMonthlyDeposit || ''} onChange={(e) => setF({ ...f, employerMonthlyDeposit: Number(e.target.value) })} placeholder="0" min={0} className={inputCls} />
-      </div>
-      {f.type === 'keren_hishtalmut' && (
-        <div>
-          <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תאריך פתיחה (לחישוב 6 שנים)</label>
-          <input type="date" value={f.lockDate ?? ''} onChange={(e) => setF({ ...f, lockDate: e.target.value })} className={inputCls} />
-        </div>
-      )}
-      {f.type === 'child_savings' && (
-        <div>
-          <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">שם הילד/ה</label>
-          <input type="text" value={f.childName ?? ''} onChange={(e) => setF({ ...f, childName: e.target.value })} placeholder="שם הילד/ה" className={inputCls} />
-        </div>
-      )}
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הערות</label>
-        <input type="text" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} placeholder="אופציונלי" className={inputCls} />
-      </div>
-    </div>
-  );
-
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto" dir="rtl">
       <div className="flex items-center justify-between mb-5">
@@ -108,10 +112,7 @@ export default function SavingsVehiclesPage() {
           <h1 className="text-xl font-bold text-[#1E1E2E]">חסכונות ופנסיה</h1>
           <p className="text-xs text-[#9090A8] mt-0.5">קרן השתלמות, פנסיה, קופת גמל, חסכון לכל ילד</p>
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 bg-lavender-dark text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#5B52A0] cursor-pointer shadow-sm"
-        >
+        <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 bg-lavender-dark text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#5B52A0] cursor-pointer shadow-sm">
           + הוסף
         </button>
       </div>

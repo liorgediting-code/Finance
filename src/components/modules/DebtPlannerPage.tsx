@@ -11,6 +11,8 @@ const DEBT_TYPE_NAMES: Record<DebtType, string> = {
   other: 'אחר',
 };
 
+const INPUT_CLS = 'border border-gray-200 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white';
+
 const emptyDebt = (): Omit<Debt, 'id'> => ({
   name: '',
   balance: 0,
@@ -26,10 +28,7 @@ function calcPayoffMonths(balance: number, rate: number, payment: number): numbe
   if (monthlyRate === 0) return Math.ceil(balance / payment);
   let bal = balance;
   let months = 0;
-  while (bal > 0 && months < 600) {
-    bal = bal * (1 + monthlyRate) - payment;
-    months++;
-  }
+  while (bal > 0 && months < 600) { bal = bal * (1 + monthlyRate) - payment; months++; }
   return months;
 }
 
@@ -39,12 +38,43 @@ function calcTotalInterest(balance: number, rate: number, payment: number): numb
   let bal = balance;
   let totalPaid = 0;
   let months = 0;
-  while (bal > 0 && months < 600) {
-    bal = bal * (1 + monthlyRate) - payment;
-    totalPaid += payment;
-    months++;
-  }
+  while (bal > 0 && months < 600) { bal = bal * (1 + monthlyRate) - payment; totalPaid += payment; months++; }
   return Math.max(0, totalPaid - balance);
+}
+
+interface DebtFormProps { f: Omit<Debt, 'id'>; setF: (v: Omit<Debt, 'id'>) => void; }
+
+function DebtForm({ f, setF }: DebtFormProps) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">שם החוב</label>
+        <input type="text" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="למשל: ויזה, הלוואת בנק" className={INPUT_CLS} />
+      </div>
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">סוג</label>
+        <select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value as DebtType })} className={`${INPUT_CLS} cursor-pointer`}>
+          {Object.entries(DEBT_TYPE_NAMES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+      </div>
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">יתרת חוב (₪)</label>
+        <input type="number" value={f.balance || ''} onChange={(e) => setF({ ...f, balance: Number(e.target.value) })} placeholder="0" className={INPUT_CLS} min={0} />
+      </div>
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">ריבית שנתית (%)</label>
+        <input type="number" step="0.1" value={f.interestRate || ''} onChange={(e) => setF({ ...f, interestRate: Number(e.target.value) })} placeholder="0" className={INPUT_CLS} min={0} />
+      </div>
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תשלום מינימלי (₪)</label>
+        <input type="number" value={f.minimumPayment || ''} onChange={(e) => setF({ ...f, minimumPayment: Number(e.target.value) })} placeholder="0" className={INPUT_CLS} min={0} />
+      </div>
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הערות</label>
+        <input type="text" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} placeholder="אופציונלי" className={INPUT_CLS} />
+      </div>
+    </div>
+  );
 }
 
 export default function DebtPlannerPage() {
@@ -60,8 +90,6 @@ export default function DebtPlannerPage() {
   const [strategy, setStrategy] = useState<'avalanche' | 'snowball'>('avalanche');
   const [extraPayment, setExtraPayment] = useState(0);
 
-  const inputCls = 'border border-gray-200 rounded-lg px-2 py-1.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white';
-
   const totalBalance = debts.reduce((s, d) => s + d.balance, 0);
   const totalMinimum = debts.reduce((s, d) => s + d.minimumPayment, 0);
 
@@ -74,37 +102,6 @@ export default function DebtPlannerPage() {
 
   const sorted = [...debts].sort((a, b) =>
     strategy === 'avalanche' ? b.interestRate - a.interestRate : a.balance - b.balance
-  );
-
-  const DebtForm = ({ f, setF }: { f: Omit<Debt, 'id'>; setF: (v: Omit<Debt, 'id'>) => void }) => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">שם החוב</label>
-        <input type="text" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="למשל: ויזה, הלוואת בנק" className={inputCls} />
-      </div>
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">סוג</label>
-        <select value={f.type} onChange={(e) => setF({ ...f, type: e.target.value as DebtType })} className={`${inputCls} cursor-pointer`}>
-          {Object.entries(DEBT_TYPE_NAMES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
-      </div>
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">יתרת חוב (₪)</label>
-        <input type="number" value={f.balance || ''} onChange={(e) => setF({ ...f, balance: Number(e.target.value) })} className={inputCls} min={0} />
-      </div>
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">ריבית שנתית (%)</label>
-        <input type="number" step="0.1" value={f.interestRate || ''} onChange={(e) => setF({ ...f, interestRate: Number(e.target.value) })} className={inputCls} min={0} />
-      </div>
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תשלום מינימלי (₪)</label>
-        <input type="number" value={f.minimumPayment || ''} onChange={(e) => setF({ ...f, minimumPayment: Number(e.target.value) })} className={inputCls} min={0} />
-      </div>
-      <div>
-        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הערות</label>
-        <input type="text" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} placeholder="אופציונלי" className={inputCls} />
-      </div>
-    </div>
   );
 
   return (
@@ -120,7 +117,7 @@ export default function DebtPlannerPage() {
       </div>
 
       {totalBalance > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+        <div className="grid grid-cols-3 gap-3 mb-5">
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="h-1 bg-red-400" />
             <div className="p-3">
@@ -131,7 +128,7 @@ export default function DebtPlannerPage() {
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="h-1 bg-amber-400" />
             <div className="p-3">
-              <p className="text-xs text-[#9090A8]">תשלומי מינימום/חודש</p>
+              <p className="text-xs text-[#9090A8]">מינימום/חודש</p>
               <p className="text-xl font-bold text-[#1E1E2E]">{formatCurrency(totalMinimum)}</p>
             </div>
           </div>
@@ -162,7 +159,6 @@ export default function DebtPlannerPage() {
         </div>
       ) : debts.length > 0 ? (
         <>
-          {/* Strategy selector */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
             <p className="text-xs font-semibold text-[#6B6B8A] mb-3">אסטרטגיית פירעון</p>
             <div className="flex gap-3 flex-wrap mb-3">
@@ -183,12 +179,11 @@ export default function DebtPlannerPage() {
             </div>
             <div className="flex items-center gap-3">
               <label className="text-xs text-[#6B6B8A]">תשלום נוסף מעל מינימום:</label>
-              <input type="number" value={extraPayment || ''} onChange={(e) => setExtraPayment(Number(e.target.value))} placeholder="0" className="border border-gray-200 rounded-lg px-2 py-1 w-24 text-sm" />
+              <input type="number" value={extraPayment || ''} onChange={(e) => setExtraPayment(Number(e.target.value))} placeholder="0" className="border border-gray-200 rounded-lg px-3 py-1.5 w-28 text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark" />
               <span className="text-xs text-[#9090A8]">₪/חודש</span>
             </div>
           </div>
 
-          {/* Debt list */}
           <div className="space-y-3">
             {sorted.map((debt, idx) => {
               const isFirst = idx === 0;
@@ -216,15 +211,12 @@ export default function DebtPlannerPage() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-[#1E1E2E]">{debt.name}</span>
                             <span className="text-xs text-[#9090A8] bg-gray-100 px-2 py-0.5 rounded-full">{DEBT_TYPE_NAMES[debt.type]}</span>
-                            {isFirst && extraPayment > 0 && (
-                              <span className="text-xs bg-lavender-light text-[#5B52A0] px-2 py-0.5 rounded-full font-medium">◎ מיקוד נוכחי</span>
-                            )}
+                            {isFirst && extraPayment > 0 && <span className="text-xs bg-lavender-light text-[#5B52A0] px-2 py-0.5 rounded-full font-medium">◎ מיקוד נוכחי</span>}
                           </div>
                           <p className="text-xs text-[#9090A8] mt-1">ריבית {debt.interestRate}% | מינימום {formatCurrency(debt.minimumPayment)}</p>
                         </div>
                         <p className="text-xl font-bold text-red-600 flex-shrink-0">{formatCurrency(debt.balance)}</p>
                       </div>
-
                       {months < 600 && (
                         <div className="bg-gray-50 rounded-lg p-3 text-xs text-[#6B6B8A] space-y-1">
                           <p>תאריך פירעון: <span className="font-semibold text-[#1E1E2E]">{years > 0 ? `${years} שנה ` : ''}{mo} חודשים</span></p>
@@ -232,7 +224,6 @@ export default function DebtPlannerPage() {
                           {isFirst && extraPayment > 0 && <p className="text-[#5B52A0]">✓ תשלום: {formatCurrency(payment)}/חודש (כולל {formatCurrency(extraPayment)} נוסף)</p>}
                         </div>
                       )}
-
                       <div className="flex gap-2 mt-3 pt-2 border-t border-gray-100">
                         <button onClick={() => { setEditingId(debt.id); setEditForm({ name: debt.name, balance: debt.balance, interestRate: debt.interestRate, minimumPayment: debt.minimumPayment, type: debt.type, notes: debt.notes }); }} className="text-xs text-[#9090A8] hover:text-[#4A4A60] px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">עריכה</button>
                         <button onClick={() => { if (window.confirm('למחוק חוב זה?')) deleteDebt(debt.id); }} className="text-xs text-[#9090A8] hover:text-red-500 px-2 py-1 rounded hover:bg-red-50 cursor-pointer">מחיקה</button>
