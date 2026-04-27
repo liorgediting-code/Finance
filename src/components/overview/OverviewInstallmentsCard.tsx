@@ -10,22 +10,22 @@ export default function OverviewInstallmentsCard() {
   const currentLinear = now.getFullYear() * 12 + now.getMonth();
 
   const active = installments.filter((inst) => {
-    const start = inst.startYear * 12 + inst.startMonth - 1;
+    const start = inst.startYear * 12 + inst.startMonth;
     const end = start + inst.numPayments - 1;
     return currentLinear >= start && currentLinear <= end;
   });
 
   const monthlyTotal = active.reduce((s, inst) => s + inst.totalAmount / inst.numPayments, 0);
   const totalRemaining = active.reduce((inst_s, inst) => {
-    const start = inst.startYear * 12 + inst.startMonth - 1;
+    const start = inst.startYear * 12 + inst.startMonth;
     const elapsed = currentLinear - start;
     const remaining = inst.numPayments - elapsed - 1;
     return inst_s + (remaining * inst.totalAmount / inst.numPayments);
   }, 0);
 
   const nextToFinish = active.slice().sort((a, b) => {
-    const endA = a.startYear * 12 + a.startMonth - 1 + a.numPayments;
-    const endB = b.startYear * 12 + b.startMonth - 1 + b.numPayments;
+    const endA = a.startYear * 12 + a.startMonth + a.numPayments;
+    const endB = b.startYear * 12 + b.startMonth + b.numPayments;
     return endA - endB;
   })[0];
 
