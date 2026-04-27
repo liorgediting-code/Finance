@@ -1,10 +1,22 @@
 import { Fragment, useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { formatCurrency } from '../../utils/formatters';
 import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
 import type { ExpenseEntry } from '../../types';
+
+function linkedSourceRoute(type: ExpenseEntry['linkedSourceType']): string {
+  switch (type) {
+    case 'installment': return '/installments';
+    case 'mortgage-track': return '/mortgage';
+    case 'debt': return '/debt-planner';
+    case 'savings-vehicle': return '/savings-vehicles';
+    case 'life-goal': return '/life-goals';
+    default: return '/';
+  }
+}
 
 interface Props {
   monthIndex: number;
@@ -781,6 +793,11 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                                         קבוע
                                       </span>
                                     )}
+                                    {entry.linkedSourceId && (
+                                      <span className="inline-flex items-center gap-0.5 bg-powder-light text-powder-dark text-[10px] font-semibold px-1.5 py-0.5 rounded-full" title="מנוהל אוטומטית מהמודול המקושר">
+                                        🔗 מקושר
+                                      </span>
+                                    )}
                                     {entry.isPending && (
                                       <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
                                         <ClockIcon />
@@ -832,22 +849,32 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                                         ✓ אישור
                                       </button>
                                     )}
-                                    <button
-                                      onClick={() => {
-                                        const msg = entry.isRecurring
-                                          ? `למחוק את "${entry.description || getSubName(entry)}" מכל החודשים?`
-                                          : 'למחוק הוצאה זו?';
-                                        if (window.confirm(msg)) {
-                                          entry.isRecurring
-                                            ? deleteRecurringExpense(entry.id)
-                                            : deleteExpense(monthIndex, entry.id);
-                                        }
-                                      }}
-                                      className="flex items-center gap-0.5 text-blush-dark hover:text-red-600 hover:bg-blush-light px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
-                                      title="מחיקה"
-                                    >
-                                      <TrashIcon />
-                                    </button>
+                                    {entry.linkedSourceId ? (
+                                      <NavLink
+                                        to={linkedSourceRoute(entry.linkedSourceType)}
+                                        className="flex items-center gap-0.5 text-[10px] text-powder-dark hover:text-[#4A7FA0] hover:bg-powder-light px-1.5 py-0.5 rounded-md transition-colors"
+                                        title="ערוך במודול המקור"
+                                      >
+                                        ← ערוך במקור
+                                      </NavLink>
+                                    ) : (
+                                      <button
+                                        onClick={() => {
+                                          const msg = entry.isRecurring
+                                            ? `למחוק את "${entry.description || getSubName(entry)}" מכל החודשים?`
+                                            : 'למחוק הוצאה זו?';
+                                          if (window.confirm(msg)) {
+                                            entry.isRecurring
+                                              ? deleteRecurringExpense(entry.id)
+                                              : deleteExpense(monthIndex, entry.id);
+                                          }
+                                        }}
+                                        className="flex items-center gap-0.5 text-blush-dark hover:text-red-600 hover:bg-blush-light px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
+                                        title="מחיקה"
+                                      >
+                                        <TrashIcon />
+                                      </button>
+                                    )}
                                     {entry.cancelUrl && (
                                       <a
                                         href={entry.cancelUrl}

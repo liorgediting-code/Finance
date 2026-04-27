@@ -36,6 +36,8 @@ export interface ExpenseEntry {
   memberId?: string;
   isPending?: boolean;
   splits?: ExpenseSplit[];
+  linkedSourceId?: string;
+  linkedSourceType?: 'installment' | 'mortgage-track' | 'debt' | 'savings-vehicle' | 'life-goal';
 }
 
 export interface MonthBudget {

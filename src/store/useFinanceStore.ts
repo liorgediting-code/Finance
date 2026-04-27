@@ -93,6 +93,60 @@ function updateExtraBoard(
   return { extraBoards: next };
 }
 
+// ── Linked recurring expense helpers ─────────────────────────────────────────
+// These manage auto-generated recurring expenses that mirror financial commitments.
+// They operate on the global recurringExpenses (not board-scoped) since the source
+// items (installments, debts, etc.) are also global.
+
+type LinkedSourceType = ExpenseEntry['linkedSourceType'];
+
+function upsertLinkedExpense(
+  recurringExpenses: ExpenseEntry[],
+  sourceId: string,
+  sourceType: LinkedSourceType,
+  amount: number,
+  description: string,
+  categoryId: string,
+  subcategoryId: string
+): ExpenseEntry[] {
+  if (amount <= 0) return removeLinkedExpense(recurringExpenses, sourceId);
+  const existing = recurringExpenses.find((e) => e.linkedSourceId === sourceId);
+  if (existing) {
+    return recurringExpenses.map((e) =>
+      e.linkedSourceId === sourceId
+        ? { ...e, amount, description, categoryId, subcategoryId }
+        : e
+    );
+  }
+  const newEntry: ExpenseEntry = {
+    id: uuidv4(),
+    date: new Date().toISOString().slice(0, 10),
+    categoryId,
+    subcategoryId,
+    description,
+    amount,
+    paymentMethod: 'direct_debit',
+    notes: '',
+    isRecurring: true,
+    linkedSourceId: sourceId,
+    linkedSourceType: sourceType,
+  };
+  return [...recurringExpenses, newEntry];
+}
+
+function removeLinkedExpense(recurringExpenses: ExpenseEntry[], sourceId: string): ExpenseEntry[] {
+  return recurringExpenses.filter((e) => e.linkedSourceId !== sourceId);
+}
+
+function savingsVehicleSubcategory(type: SavingsVehicle['type']): string {
+  switch (type) {
+    case 'pension': return 'savings-pension';
+    case 'keren_hishtalmut': return 'savings-education';
+    case 'kupat_gemel': return 'savings-provident';
+    case 'child_savings': return 'savings-monthly';
+  }
+}
+
 function makeActivityEntry(
   action: ActivityEntry['action'],
   entityType: ActivityEntry['entityType'],
@@ -641,9 +695,35 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     },
 
     // ── Installments ────────────────────────────────────────────────────────
-    addInstallment: (entry) => { set((s) => ({ installments: [...s.installments, { ...entry, id: uuidv4() }] })); sync(); },
-    updateInstallment: (id, partial) => { set((s) => ({ installments: s.installments.map((i) => i.id === id ? { ...i, ...partial } : i) })); sync(); },
-    deleteInstallment: (id) => { set((s) => ({ installments: s.installments.filter((i) => i.id !== id) })); sync(); },
+    addInstallment: (entry) => {
+      const newId = uuidv4();
+      const monthly = entry.numPayments > 0 ? entry.totalAmount / entry.numPayments : 0;
+      set((s) => ({
+        installments: [...s.installments, { ...entry, id: newId }],
+        recurringExpenses: upsertLinkedExpense(s.recurringExpenses, newId, 'installment', monthly, entry.description, 'financial', 'financial-credit'),
+      }));
+      sync();
+    },
+    updateInstallment: (id, partial) => {
+      set((s) => {
+        const updated = s.installments.map((i) => i.id === id ? { ...i, ...partial } : i);
+        const inst = updated.find((i) => i.id === id);
+        const monthly = inst && inst.numPayments > 0 ? inst.totalAmount / inst.numPayments : 0;
+        const desc = inst?.description ?? '';
+        return {
+          installments: updated,
+          recurringExpenses: upsertLinkedExpense(s.recurringExpenses, id, 'installment', monthly, desc, 'financial', 'financial-credit'),
+        };
+      });
+      sync();
+    },
+    deleteInstallment: (id) => {
+      set((s) => ({
+        installments: s.installments.filter((i) => i.id !== id),
+        recurringExpenses: removeLinkedExpense(s.recurringExpenses, id),
+      }));
+      sync();
+    },
     payInstallmentMonth: (id) => {
       set((s) => ({ installments: s.installments.map((i) => i.id === id ? { ...i, paidPayments: Math.min(i.paidPayments + 1, i.numPayments) } : i) }));
       sync();
@@ -654,32 +734,121 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     updateMortgage: (id, partial) => { set((s) => ({ mortgages: s.mortgages.map((m) => m.id === id ? { ...m, ...partial } : m) })); sync(); },
     deleteMortgage: (id) => { set((s) => ({ mortgages: s.mortgages.filter((m) => m.id !== id) })); sync(); },
     addMortgageTrack: (mortgageId, track) => {
-      set((s) => ({ mortgages: s.mortgages.map((m) => m.id === mortgageId ? { ...m, tracks: [...m.tracks, { ...track, id: uuidv4() }] } : m) }));
+      const newId = uuidv4();
+      const mortgage = get().mortgages.find((m) => m.id === mortgageId);
+      const desc = `משכנתא${mortgage?.name ? ` - ${mortgage.name}` : ''}`;
+      set((s) => ({
+        mortgages: s.mortgages.map((m) => m.id === mortgageId ? { ...m, tracks: [...m.tracks, { ...track, id: newId }] } : m),
+        recurringExpenses: upsertLinkedExpense(s.recurringExpenses, newId, 'mortgage-track', track.monthlyPayment, desc, 'home', 'home-mortgage'),
+      }));
       sync();
     },
     updateMortgageTrack: (mortgageId, trackId, partial) => {
-      set((s) => ({ mortgages: s.mortgages.map((m) => m.id === mortgageId ? { ...m, tracks: m.tracks.map((t) => t.id === trackId ? { ...t, ...partial } : t) } : m) }));
+      set((s) => {
+        const mortgages = s.mortgages.map((m) => m.id === mortgageId ? { ...m, tracks: m.tracks.map((t) => t.id === trackId ? { ...t, ...partial } : t) } : m);
+        const track = mortgages.find((m) => m.id === mortgageId)?.tracks.find((t) => t.id === trackId);
+        const mortgage = mortgages.find((m) => m.id === mortgageId);
+        const desc = `משכנתא${mortgage?.name ? ` - ${mortgage.name}` : ''}`;
+        return {
+          mortgages,
+          recurringExpenses: track ? upsertLinkedExpense(s.recurringExpenses, trackId, 'mortgage-track', track.monthlyPayment, desc, 'home', 'home-mortgage') : s.recurringExpenses,
+        };
+      });
       sync();
     },
     deleteMortgageTrack: (mortgageId, trackId) => {
-      set((s) => ({ mortgages: s.mortgages.map((m) => m.id === mortgageId ? { ...m, tracks: m.tracks.filter((t) => t.id !== trackId) } : m) }));
+      set((s) => ({
+        mortgages: s.mortgages.map((m) => m.id === mortgageId ? { ...m, tracks: m.tracks.filter((t) => t.id !== trackId) } : m),
+        recurringExpenses: removeLinkedExpense(s.recurringExpenses, trackId),
+      }));
       sync();
     },
 
     // ── Savings Vehicles ────────────────────────────────────────────────────
-    addSavingsVehicle: (vehicle) => { set((s) => ({ savingsVehicles: [...s.savingsVehicles, { ...vehicle, id: uuidv4() }] })); sync(); },
-    updateSavingsVehicle: (id, partial) => { set((s) => ({ savingsVehicles: s.savingsVehicles.map((v) => v.id === id ? { ...v, ...partial } : v) })); sync(); },
-    deleteSavingsVehicle: (id) => { set((s) => ({ savingsVehicles: s.savingsVehicles.filter((v) => v.id !== id) })); sync(); },
+    addSavingsVehicle: (vehicle) => {
+      const newId = uuidv4();
+      set((s) => ({
+        savingsVehicles: [...s.savingsVehicles, { ...vehicle, id: newId }],
+        recurringExpenses: upsertLinkedExpense(s.recurringExpenses, newId, 'savings-vehicle', vehicle.employeeMonthlyDeposit, vehicle.name, 'savings', savingsVehicleSubcategory(vehicle.type)),
+      }));
+      sync();
+    },
+    updateSavingsVehicle: (id, partial) => {
+      set((s) => {
+        const updated = s.savingsVehicles.map((v) => v.id === id ? { ...v, ...partial } : v);
+        const vehicle = updated.find((v) => v.id === id);
+        return {
+          savingsVehicles: updated,
+          recurringExpenses: vehicle ? upsertLinkedExpense(s.recurringExpenses, id, 'savings-vehicle', vehicle.employeeMonthlyDeposit, vehicle.name, 'savings', savingsVehicleSubcategory(vehicle.type)) : s.recurringExpenses,
+        };
+      });
+      sync();
+    },
+    deleteSavingsVehicle: (id) => {
+      set((s) => ({
+        savingsVehicles: s.savingsVehicles.filter((v) => v.id !== id),
+        recurringExpenses: removeLinkedExpense(s.recurringExpenses, id),
+      }));
+      sync();
+    },
 
     // ── Debts ────────────────────────────────────────────────────────────────
-    addDebt: (debt) => { set((s) => ({ debts: [...s.debts, { ...debt, id: uuidv4() }] })); sync(); },
-    updateDebt: (id, partial) => { set((s) => ({ debts: s.debts.map((d) => d.id === id ? { ...d, ...partial } : d) })); sync(); },
-    deleteDebt: (id) => { set((s) => ({ debts: s.debts.filter((d) => d.id !== id) })); sync(); },
+    addDebt: (debt) => {
+      const newId = uuidv4();
+      set((s) => ({
+        debts: [...s.debts, { ...debt, id: newId }],
+        recurringExpenses: upsertLinkedExpense(s.recurringExpenses, newId, 'debt', debt.minimumPayment, debt.name, 'financial', 'financial-loans'),
+      }));
+      sync();
+    },
+    updateDebt: (id, partial) => {
+      set((s) => {
+        const updated = s.debts.map((d) => d.id === id ? { ...d, ...partial } : d);
+        const debt = updated.find((d) => d.id === id);
+        return {
+          debts: updated,
+          recurringExpenses: debt ? upsertLinkedExpense(s.recurringExpenses, id, 'debt', debt.minimumPayment, debt.name, 'financial', 'financial-loans') : s.recurringExpenses,
+        };
+      });
+      sync();
+    },
+    deleteDebt: (id) => {
+      set((s) => ({
+        debts: s.debts.filter((d) => d.id !== id),
+        recurringExpenses: removeLinkedExpense(s.recurringExpenses, id),
+      }));
+      sync();
+    },
 
     // ── Life Goals ──────────────────────────────────────────────────────────
-    addLifeGoal: (goal) => { set((s) => ({ lifeGoals: [...s.lifeGoals, { ...goal, id: uuidv4() }] })); sync(); },
-    updateLifeGoal: (id, partial) => { set((s) => ({ lifeGoals: s.lifeGoals.map((g) => g.id === id ? { ...g, ...partial } : g) })); sync(); },
-    deleteLifeGoal: (id) => { set((s) => ({ lifeGoals: s.lifeGoals.filter((g) => g.id !== id) })); sync(); },
+    addLifeGoal: (goal) => {
+      const newId = uuidv4();
+      const monthly = goal.monthlyContribution ?? 0;
+      set((s) => ({
+        lifeGoals: [...s.lifeGoals, { ...goal, id: newId }],
+        recurringExpenses: monthly > 0 ? upsertLinkedExpense(s.recurringExpenses, newId, 'life-goal', monthly, goal.name, 'savings', 'savings-monthly') : s.recurringExpenses,
+      }));
+      sync();
+    },
+    updateLifeGoal: (id, partial) => {
+      set((s) => {
+        const updated = s.lifeGoals.map((g) => g.id === id ? { ...g, ...partial } : g);
+        const goal = updated.find((g) => g.id === id);
+        const monthly = goal?.monthlyContribution ?? 0;
+        return {
+          lifeGoals: updated,
+          recurringExpenses: goal ? upsertLinkedExpense(s.recurringExpenses, id, 'life-goal', monthly, goal.name, 'savings', 'savings-monthly') : s.recurringExpenses,
+        };
+      });
+      sync();
+    },
+    deleteLifeGoal: (id) => {
+      set((s) => ({
+        lifeGoals: s.lifeGoals.filter((g) => g.id !== id),
+        recurringExpenses: removeLinkedExpense(s.recurringExpenses, id),
+      }));
+      sync();
+    },
     depositToLifeGoal: (id, amount) => {
       set((s) => ({ lifeGoals: s.lifeGoals.map((g) => g.id === id ? { ...g, savedAmount: g.savedAmount + amount } : g) }));
       logActivity('add', 'savings', 'הפקדה למטרה', amount);
