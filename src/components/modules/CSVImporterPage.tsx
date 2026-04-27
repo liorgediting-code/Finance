@@ -16,16 +16,31 @@ interface ParsedRow {
   categoryId: string;
 }
 
-const BANK_FORMATS: Record<BankFormat, { name: string; dateCol: number; descCol: number; amountCol: number; skipRows: number; creditCol?: number }> = {
-  hapoalim: { name: 'בנק הפועלים', dateCol: 0, descCol: 1, amountCol: 3, skipRows: 1 },
-  leumi: { name: 'בנק לאומי', dateCol: 0, descCol: 2, amountCol: 6, skipRows: 1 },
-  discount: { name: 'בנק דיסקונט', dateCol: 0, descCol: 1, amountCol: 2, skipRows: 2 },
-  mizrahi: { name: 'בנק מזרחי טפחות', dateCol: 0, descCol: 1, amountCol: 3, skipRows: 1 },
-  max: { name: 'Max (לאומי קארד)', dateCol: 0, descCol: 2, amountCol: 5, skipRows: 1 },
-  isracard: { name: 'ישראכארד', dateCol: 0, descCol: 1, amountCol: 4, skipRows: 2 },
+// positiveIsExpense: true  → positive amounts are expenses (debit column), negatives are ignored/income
+// positiveIsExpense: false → negative amounts are expenses (signed net amount), positives are income
+const BANK_FORMATS: Record<BankFormat, {
+  name: string;
+  dateCol: number;
+  descCol: number;
+  amountCol: number;
+  skipRows: number;
+  positiveIsExpense: boolean;
+}> = {
+  hapoalim:  { name: 'בנק הפועלים',       dateCol: 0, descCol: 1, amountCol: 3, skipRows: 1, positiveIsExpense: true },
+  leumi:     { name: 'בנק לאומי',          dateCol: 0, descCol: 2, amountCol: 6, skipRows: 1, positiveIsExpense: false },
+  discount:  { name: 'בנק דיסקונט',        dateCol: 0, descCol: 1, amountCol: 2, skipRows: 2, positiveIsExpense: true },
+  mizrahi:   { name: 'בנק מזרחי טפחות',   dateCol: 0, descCol: 1, amountCol: 3, skipRows: 1, positiveIsExpense: true },
+  max:       { name: 'Max (לאומי קארד)',   dateCol: 0, descCol: 2, amountCol: 5, skipRows: 1, positiveIsExpense: true },
+  isracard:  { name: 'ישראכארד',           dateCol: 0, descCol: 1, amountCol: 4, skipRows: 2, positiveIsExpense: true },
 };
 
-function parseRows(matrix: string[][], format: BankFormat): ParsedRow[] {
+function classifyType(amount: number, format: BankFormat): 'expense' | 'income' {
+  const { positiveIsExpense } = BANK_FORMATS[format];
+  if (positiveIsExpense) return amount > 0 ? 'expense' : 'income';
+  return amount < 0 ? 'expense' : 'income';
+}
+
+function parseRows(matrix: (string | number)[][], format: BankFormat): ParsedRow[] {
   const cfg = BANK_FORMATS[format];
   const rows: ParsedRow[] = [];
 
@@ -33,19 +48,18 @@ function parseRows(matrix: string[][], format: BankFormat): ParsedRow[] {
     const cols = matrix[i];
     if (!cols || cols.length < 3) continue;
 
-    const dateStr = cols[cfg.dateCol]?.trim();
-    const desc = cols[cfg.descCol]?.trim();
-    const amountStr = (cols[cfg.amountCol] ?? '').toString().trim().replace(/[,\s₪]/g, '');
-    const amount = parseFloat(amountStr);
+    const dateStr = String(cols[cfg.dateCol] ?? '').trim();
+    const desc = String(cols[cfg.descCol] ?? '').trim();
+    const amountRaw = String(cols[cfg.amountCol] ?? '').trim().replace(/[,\s₪]/g, '');
+    const amount = parseFloat(amountRaw);
 
     if (!dateStr || !desc || isNaN(amount) || amount === 0) continue;
 
-    const isExpense = amount < 0 || format === 'max' || format === 'isracard';
     rows.push({
       date: dateStr,
       description: desc,
       amount: Math.abs(amount),
-      type: isExpense ? 'expense' : 'income',
+      type: classifyType(amount, format),
       selected: true,
       categoryId: 'other',
     });
@@ -63,12 +77,14 @@ function parseCSV(text: string, format: BankFormat): ParsedRow[] {
 function parseXLSX(buffer: ArrayBuffer, format: BankFormat): ParsedRow[] {
   const workbook = XLSX.read(buffer, { type: 'array' });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const matrix: string[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as string[][];
+  const matrix = XLSX.utils.sheet_to_json<(string | number)[]>(sheet, { header: 1, defval: '' });
   return parseRows(matrix, format);
 }
 
 export default function CSVImporterPage() {
   const addExpense = useFinanceStore((s) => s.addExpense);
+  const addIncome = useFinanceStore((s) => s.addIncome);
+  const familyMembers = useFinanceStore((s) => s.familyMembers);
 
   const csvRef = useRef<HTMLInputElement>(null);
   const xlsxRef = useRef<HTMLInputElement>(null);
@@ -96,8 +112,7 @@ export default function CSVImporterPage() {
     setActiveFileType('csv');
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      setRows(parseCSV(text, format));
+      setRows(parseCSV(ev.target?.result as string, format));
       setImported(false);
     };
     reader.readAsText(file, 'windows-1255');
@@ -110,42 +125,58 @@ export default function CSVImporterPage() {
     setActiveFileType('xlsx');
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const buffer = ev.target?.result as ArrayBuffer;
-      setRows(parseXLSX(buffer, format));
+      setRows(parseXLSX(ev.target?.result as ArrayBuffer, format));
       setImported(false);
     };
     reader.readAsArrayBuffer(file);
   };
 
-  const toggleRow = (idx: number) => {
+  const toggleRow = (idx: number) =>
     setRows((prev) => prev.map((r, i) => i === idx ? { ...r, selected: !r.selected } : r));
-  };
 
-  const setCategory = (idx: number, categoryId: string) => {
+  const toggleType = (idx: number) =>
+    setRows((prev) => prev.map((r, i) => i === idx ? { ...r, type: r.type === 'expense' ? 'income' : 'expense' } : r));
+
+  const setCategory = (idx: number, categoryId: string) =>
     setRows((prev) => prev.map((r, i) => i === idx ? { ...r, categoryId } : r));
-  };
 
   const handleImport = () => {
-    const selected = rows.filter((r) => r.selected && r.type === 'expense');
+    const selected = rows.filter((r) => r.selected);
+    const defaultMemberId = familyMembers[0]?.id ?? '';
+
     for (const row of selected) {
-      addExpense(targetMonthIndex, {
-        description: row.description,
-        amount: row.amount,
-        categoryId: row.categoryId,
-        subcategoryId: '',
-        date: row.date,
-        isRecurring: false,
-        isPending: false,
-        paymentMethod: 'credit',
-        notes: `יובא מ-${BANK_FORMATS[format].name}`,
-      });
+      if (row.type === 'expense') {
+        addExpense(targetMonthIndex, {
+          description: row.description,
+          amount: row.amount,
+          categoryId: row.categoryId,
+          subcategoryId: '',
+          date: row.date,
+          isRecurring: false,
+          isPending: false,
+          paymentMethod: 'credit',
+          notes: `יובא מ-${BANK_FORMATS[format].name}`,
+        });
+      } else {
+        addIncome(targetMonthIndex, {
+          source: row.description,
+          amount: row.amount,
+          date: row.date,
+          memberId: defaultMemberId,
+          notes: `יובא מ-${BANK_FORMATS[format].name}`,
+          isRecurring: false,
+        });
+      }
     }
+
     setImported(true);
     resetState();
   };
 
-  const selectedCount = rows.filter((r) => r.selected).length;
-  const selectedTotal = rows.filter((r) => r.selected && r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+  const selectedRows = rows.filter((r) => r.selected);
+  const selectedExpenses = selectedRows.filter((r) => r.type === 'expense');
+  const selectedIncomes = selectedRows.filter((r) => r.type === 'income');
+  const selectedTotal = selectedExpenses.reduce((s, r) => s + r.amount, 0);
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto" dir="rtl">
@@ -182,7 +213,6 @@ export default function CSVImporterPage() {
           </div>
         </div>
 
-        {/* File upload — two options side by side */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="border border-dashed border-gray-200 rounded-lg p-3 bg-gray-50">
             <label className="text-xs font-medium text-[#6B6B8A] mb-1.5 block">📄 קובץ CSV</label>
@@ -223,17 +253,21 @@ export default function CSVImporterPage() {
       {rows.length > 0 && (
         <>
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-4">
-            <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-              <div>
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-semibold text-[#6B6B8A]">{rows.length} שורות זוהו</span>
-                <span className="text-xs text-[#9090A8] mr-2">• {selectedCount} נבחרו</span>
-                <span className="text-xs text-[#9090A8]">• {activeFileType === 'xlsx' ? '📊 Excel' : '📄 CSV'}</span>
+                <span className="text-xs text-red-500">• {selectedExpenses.length} הוצאות</span>
+                <span className="text-xs text-sage-dark">• {selectedIncomes.length} הכנסות</span>
+                <span className="text-xs text-[#9090A8]">({activeFileType === 'xlsx' ? 'Excel' : 'CSV'})</span>
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setRows((prev) => prev.map((r) => ({ ...r, selected: true })))} className="text-xs text-[#5B52A0] cursor-pointer hover:underline">בחר הכל</button>
                 <button onClick={() => setRows((prev) => prev.map((r) => ({ ...r, selected: false })))} className="text-xs text-[#9090A8] cursor-pointer hover:underline">נקה</button>
               </div>
             </div>
+            <p className="px-4 py-2 text-[10px] text-[#9090A8] bg-amber-50 border-b border-amber-100">
+              לחץ על התג <strong>הוצאה / הכנסה</strong> כדי להחליף סוג עסקה
+            </p>
             <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
               {rows.map((row, idx) => (
                 <div key={idx} className={`px-4 py-3 flex items-center gap-3 ${!row.selected ? 'opacity-40' : ''}`}>
@@ -244,15 +278,28 @@ export default function CSVImporterPage() {
                       <span className="text-sm font-medium text-[#1E1E2E] truncate">{row.description}</span>
                     </div>
                   </div>
-                  <select
-                    value={row.categoryId}
-                    onChange={(e) => setCategory(idx, e.target.value)}
-                    className="border border-gray-200 rounded px-1.5 py-0.5 text-xs bg-white cursor-pointer max-w-[120px]"
+                  {row.type === 'expense' && (
+                    <select
+                      value={row.categoryId}
+                      onChange={(e) => setCategory(idx, e.target.value)}
+                      className="border border-gray-200 rounded px-1.5 py-0.5 text-xs bg-white cursor-pointer max-w-[110px]"
+                    >
+                      {CATEGORIES.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.nameHe}</option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    onClick={() => toggleType(idx)}
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full cursor-pointer flex-shrink-0 transition-colors ${
+                      row.type === 'expense'
+                        ? 'bg-red-100 text-red-600 hover:bg-red-200'
+                        : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                    }`}
+                    title="לחץ להחלפת סוג"
                   >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.nameHe}</option>
-                    ))}
-                  </select>
+                    {row.type === 'expense' ? 'הוצאה' : 'הכנסה'}
+                  </button>
                   <span className={`text-sm font-semibold flex-shrink-0 ${row.type === 'expense' ? 'text-red-500' : 'text-sage-dark'}`}>
                     {row.type === 'expense' ? '-' : '+'}{formatCurrency(row.amount)}
                   </span>
@@ -263,15 +310,19 @@ export default function CSVImporterPage() {
 
           <div className="flex items-center justify-between bg-lavender-light rounded-xl p-4">
             <div>
-              <p className="text-sm font-semibold text-[#5B52A0]">סה"כ לייבוא: {formatCurrency(selectedTotal)}</p>
-              <p className="text-xs text-[#9090A8]">{selectedCount} פעולות ל{MONTH_NAMES[targetMonthIndex]}</p>
+              <p className="text-sm font-semibold text-[#5B52A0]">
+                {selectedExpenses.length > 0 && `הוצאות: ${formatCurrency(selectedTotal)}`}
+                {selectedExpenses.length > 0 && selectedIncomes.length > 0 && ' • '}
+                {selectedIncomes.length > 0 && `${selectedIncomes.length} הכנסות`}
+              </p>
+              <p className="text-xs text-[#9090A8]">{selectedRows.length} פעולות ל{MONTH_NAMES[targetMonthIndex]}</p>
             </div>
             <button
               onClick={handleImport}
-              disabled={selectedCount === 0}
+              disabled={selectedRows.length === 0}
               className="bg-lavender-dark text-white px-6 py-2 rounded-lg text-sm font-semibold cursor-pointer hover:bg-[#5B52A0] disabled:opacity-50 transition-colors"
             >
-              ייבא {selectedCount} פעולות
+              ייבא {selectedRows.length} פעולות
             </button>
           </div>
         </>
@@ -284,7 +335,7 @@ export default function CSVImporterPage() {
           <p className="text-xs">הורד את הקובץ מאתר הבנק או האפליקציה שלך</p>
           <div className="mt-4 text-right text-xs bg-gray-50 rounded-lg p-3 space-y-1">
             <p className="font-semibold text-[#6B6B8A] mb-2">איך מורידים קובץ:</p>
-            <p>• <strong>פועלים:</strong> כרטיסי אשראי → פירוט חיובים → הורדה לאקסל (CSV או XLSX)</p>
+            <p>• <strong>פועלים:</strong> כרטיסי אשראי → פירוט חיובים → הורדה לאקסל</p>
             <p>• <strong>לאומי:</strong> שירותי אינטרנט → תנועות בחשבון → ייצוא</p>
             <p>• <strong>Max:</strong> פירוט עסקאות → הורדה כ-CSV או Excel</p>
           </div>
