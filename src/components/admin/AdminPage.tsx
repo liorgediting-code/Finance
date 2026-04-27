@@ -31,6 +31,7 @@ type Tab = 'pending' | 'all' | 'create';
 
 export default function AdminPage() {
   const profile = useAuthStore((s) => s.profile);
+  const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('pending');
   const [users, setUsers] = useState<Profile[]>([]);
@@ -43,6 +44,12 @@ export default function AdminPage() {
   const [createApproved, setCreateApproved] = useState(true);
   const [createLoading, setCreateLoading] = useState(false);
   const [createMsg, setCreateMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  // Change password inline state: userId → new password input value
+  const [changePwdUserId, setChangePwdUserId] = useState<string | null>(null);
+  const [changePwdValue, setChangePwdValue] = useState('');
+  const [changePwdLoading, setChangePwdLoading] = useState(false);
+  const [changePwdMsg, setChangePwdMsg] = useState<{ userId: string; type: 'ok' | 'err'; text: string } | null>(null);
 
   useEffect(() => {
     if (profile?.role !== 'admin') navigate('/', { replace: true });
@@ -104,6 +111,55 @@ export default function AdminPage() {
       setCreateMsg({ type: 'err', text: err instanceof Error ? err.message : 'שגיאה' });
     }
     setCreateLoading(false);
+  };
+
+  const deleteUser = async (userId: string, email: string) => {
+    if (!confirm(`האם למחוק את המשתמש ${email}? פעולה זו בלתי הפיכה.`)) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch('/api/admin/delete-user', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({ userId }),
+    });
+    const json = await res.json();
+    if (!res.ok) { alert(json.error ?? 'שגיאה במחיקת משתמש'); return; }
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+  };
+
+  const openChangePwd = (userId: string) => {
+    setChangePwdUserId(userId);
+    setChangePwdValue('');
+    setChangePwdMsg(null);
+  };
+
+  const submitChangePwd = async (userId: string) => {
+    if (changePwdValue.length < 6) {
+      setChangePwdMsg({ userId, type: 'err', text: 'סיסמה חייבת להכיל לפחות 6 תווים' });
+      return;
+    }
+    setChangePwdLoading(true);
+    setChangePwdMsg(null);
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch('/api/admin/change-password', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({ userId, password: changePwdValue }),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      setChangePwdMsg({ userId, type: 'err', text: json.error ?? 'שגיאה' });
+    } else {
+      setChangePwdMsg({ userId, type: 'ok', text: 'סיסמה עודכנה בהצלחה' });
+      setChangePwdUserId(null);
+      setChangePwdValue('');
+    }
+    setChangePwdLoading(false);
   };
 
   const pending = users.filter((u) => !u.is_approved);
@@ -174,22 +230,63 @@ export default function AdminPage() {
                         {u.is_approved ? 'מאושר' : 'ממתין'}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        {!u.is_approved ? (
+                    <td className="px-5 py-3">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {!u.is_approved ? (
+                            <button
+                              onClick={() => setApproved(u.id, true)}
+                              className="flex items-center gap-1 text-xs text-white bg-sage-dark hover:bg-[#8AAA7A] px-2.5 py-1 rounded-md transition-colors cursor-pointer font-medium"
+                            >
+                              <CheckIcon /> אשר
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setApproved(u.id, false)}
+                              className="flex items-center gap-1 text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-2.5 py-1 rounded-md transition-colors cursor-pointer"
+                            >
+                              <XIcon /> בטל אישור
+                            </button>
+                          )}
                           <button
-                            onClick={() => setApproved(u.id, true)}
-                            className="flex items-center gap-1 text-xs text-white bg-sage-dark hover:bg-[#8AAA7A] px-2.5 py-1 rounded-md transition-colors cursor-pointer font-medium"
+                            onClick={() => changePwdUserId === u.id ? setChangePwdUserId(null) : openChangePwd(u.id)}
+                            className="flex items-center gap-1 text-xs text-[#6B6B8A] hover:text-lavender-dark hover:bg-lavender px-2.5 py-1 rounded-md transition-colors cursor-pointer"
                           >
-                            <CheckIcon /> אשר
+                            🔑 סיסמה
                           </button>
-                        ) : (
-                          <button
-                            onClick={() => setApproved(u.id, false)}
-                            className="flex items-center gap-1 text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-2.5 py-1 rounded-md transition-colors cursor-pointer"
-                          >
-                            <XIcon /> בטל אישור
-                          </button>
+                          {u.id !== user?.id && (
+                            <button
+                              onClick={() => deleteUser(u.id, u.email)}
+                              className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 hover:bg-red-50 px-2.5 py-1 rounded-md transition-colors cursor-pointer"
+                            >
+                              <XIcon /> מחק
+                            </button>
+                          )}
+                        </div>
+                        {changePwdUserId === u.id && (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <input
+                              type="password"
+                              value={changePwdValue}
+                              onChange={(e) => setChangePwdValue(e.target.value)}
+                              placeholder="סיסמה חדשה"
+                              className="border border-gray-200 rounded-md px-2 py-1 text-xs w-32 focus:outline-none focus:ring-1 focus:ring-lavender-dark"
+                              dir="ltr"
+                              onKeyDown={(e) => e.key === 'Enter' && submitChangePwd(u.id)}
+                            />
+                            <button
+                              onClick={() => submitChangePwd(u.id)}
+                              disabled={changePwdLoading}
+                              className="text-xs text-white bg-lavender-dark hover:bg-[#9088B8] px-2.5 py-1 rounded-md transition-colors cursor-pointer disabled:opacity-60"
+                            >
+                              {changePwdLoading ? '...' : 'שמור'}
+                            </button>
+                          </div>
+                        )}
+                        {changePwdMsg?.userId === u.id && (
+                          <span className={`text-xs ${changePwdMsg.type === 'ok' ? 'text-green-600' : 'text-red-500'}`}>
+                            {changePwdMsg.text}
+                          </span>
                         )}
                       </div>
                     </td>
