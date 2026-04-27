@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useFinanceStore } from '../../store/useFinanceStore';
+import { useShallow } from 'zustand/react/shallow';
 
 interface Props {
   isOpen: boolean;
@@ -204,11 +205,12 @@ export default function Sidebar({ isOpen, onClose }: Props) {
   const user = useAuthStore((s) => s.user);
 
   const activeBoardId = useFinanceStore((s) => s.activeBoardId);
-  const extraBoards = useFinanceStore((s) => s.extraBoards);
+  const extraBoards = useFinanceStore(useShallow((s) => s.extraBoards));
   const setActiveBoard = useFinanceStore((s) => s.setActiveBoard);
   const addBoard = useFinanceStore((s) => s.addBoard);
   const renameBoard = useFinanceStore((s) => s.renameBoard);
   const deleteBoard = useFinanceStore((s) => s.deleteBoard);
+  const enabledModules = useFinanceStore(useShallow((s) => s.settings.enabledModules ?? []));
 
   const [newBoardName, setNewBoardName] = useState('');
   const [showAddBoard, setShowAddBoard] = useState(false);
@@ -373,54 +375,76 @@ export default function Sidebar({ isOpen, onClose }: Props) {
           {/* Tools section */}
           <div className="mb-3">
             <p className="text-[10px] font-semibold text-[#9090A8] uppercase tracking-wider px-3 mb-1 mt-2">כלים</p>
+            {/* Always-visible utilities */}
             <NavLink to="/search" className={navLinkClass} onClick={onClose}>
               <SearchIcon />
               חיפוש עסקאות
-            </NavLink>
-            <NavLink to="/cashflow" className={navLinkClass} onClick={onClose}>
-              <TrendingIcon />
-              תחזית תזרים
-            </NavLink>
-            <NavLink to="/life-goals" className={navLinkClass} onClick={onClose}>
-              <TargetIcon />
-              מטרות חיים
-            </NavLink>
-            <NavLink to="/debt-planner" className={navLinkClass} onClick={onClose}>
-              <DebtIcon />
-              תכנון חובות
-            </NavLink>
-            <NavLink to="/mortgage" className={navLinkClass} onClick={onClose}>
-              <HomeIcon />
-              משכנתא
-            </NavLink>
-            <NavLink to="/installments" className={navLinkClass} onClick={onClose}>
-              <CreditCardIcon />
-              תשלומים
-            </NavLink>
-            <NavLink to="/savings-vehicles" className={navLinkClass} onClick={onClose}>
-              <PiggyIcon />
-              חסכונות ופנסיה
-            </NavLink>
-            <NavLink to="/chag-budget" className={navLinkClass} onClick={onClose}>
-              <StarIcon />
-              תקציב חגים
-            </NavLink>
-            <NavLink to="/annual-planner" className={navLinkClass} onClick={onClose}>
-              <CalendarAnnualIcon />
-              מתכנן שנתי
-            </NavLink>
-            <NavLink to="/salary-slip" className={navLinkClass} onClick={onClose}>
-              <DocumentIcon />
-              ניתוח תלוש
-            </NavLink>
-            <NavLink to="/csv-import" className={navLinkClass} onClick={onClose}>
-              <UploadIcon />
-              ייבוא CSV
             </NavLink>
             <NavLink to="/activity" className={navLinkClass} onClick={onClose}>
               <ActivityIcon />
               יומן פעילות
             </NavLink>
+            {/* Module-gated tools */}
+            {enabledModules.includes('cashflow') && (
+              <NavLink to="/cashflow" className={navLinkClass} onClick={onClose}>
+                <TrendingIcon />
+                תחזית תזרים
+              </NavLink>
+            )}
+            {enabledModules.includes('life-goals') && (
+              <NavLink to="/life-goals" className={navLinkClass} onClick={onClose}>
+                <TargetIcon />
+                מטרות חיים
+              </NavLink>
+            )}
+            {enabledModules.includes('debt-planner') && (
+              <NavLink to="/debt-planner" className={navLinkClass} onClick={onClose}>
+                <DebtIcon />
+                תכנון חובות
+              </NavLink>
+            )}
+            {enabledModules.includes('mortgage') && (
+              <NavLink to="/mortgage" className={navLinkClass} onClick={onClose}>
+                <HomeIcon />
+                משכנתא
+              </NavLink>
+            )}
+            {enabledModules.includes('installments') && (
+              <NavLink to="/installments" className={navLinkClass} onClick={onClose}>
+                <CreditCardIcon />
+                תשלומים
+              </NavLink>
+            )}
+            {enabledModules.includes('savings-vehicles') && (
+              <NavLink to="/savings-vehicles" className={navLinkClass} onClick={onClose}>
+                <PiggyIcon />
+                חסכונות ופנסיה
+              </NavLink>
+            )}
+            {enabledModules.includes('chag-budget') && (
+              <NavLink to="/chag-budget" className={navLinkClass} onClick={onClose}>
+                <StarIcon />
+                תקציב חגים
+              </NavLink>
+            )}
+            {enabledModules.includes('annual-planner') && (
+              <NavLink to="/annual-planner" className={navLinkClass} onClick={onClose}>
+                <CalendarAnnualIcon />
+                מתכנן שנתי
+              </NavLink>
+            )}
+            {enabledModules.includes('salary-slip') && (
+              <NavLink to="/salary-slip" className={navLinkClass} onClick={onClose}>
+                <DocumentIcon />
+                ניתוח תלוש
+              </NavLink>
+            )}
+            {enabledModules.includes('csv-import') && (
+              <NavLink to="/csv-import" className={navLinkClass} onClick={onClose}>
+                <UploadIcon />
+                ייבוא CSV
+              </NavLink>
+            )}
           </div>
 
           {/* Settings pinned to bottom */}

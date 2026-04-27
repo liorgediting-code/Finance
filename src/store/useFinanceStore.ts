@@ -42,11 +42,15 @@ interface CloudData {
   rolloverCategories: string[];
 }
 
+const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import'];
+
 const DEFAULT_DATA: CloudData = {
   settings: {
     year: 2026,
     savingsGoal: { monthlyTarget: 0, vacationGoal: 0, vacationSaved: 0 },
     hiddenDashboardSections: [],
+    customCategories: [],
+    enabledModules: ALL_MODULES,
   },
   months: {},
   savingsFunds: [],

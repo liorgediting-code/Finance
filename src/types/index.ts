@@ -76,6 +76,8 @@ export interface AppSettings {
   hiddenDashboardSections?: string[];
   customCategories?: CustomCategory[];
   hasCompletedOnboarding?: boolean;
+  enabledModules?: string[];
+  primaryGoal?: string;
 }
 
 export interface SubCategory {
