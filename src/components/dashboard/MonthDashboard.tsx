@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { HEBREW_MONTHS } from '../../config/months';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -99,7 +100,7 @@ export default function MonthDashboard() {
   const [monthIndex, setMonthIndex] = useState(currentMonthIndex);
   const year = useFinanceStore((s) => s.settings.year);
   const activeBoardId = useFinanceStore((s) => s.activeBoardId);
-  const hiddenSections = useFinanceStore((s) => s.settings.hiddenDashboardSections ?? []);
+  const hiddenSections = useFinanceStore(useShallow((s) => s.settings.hiddenDashboardSections ?? []));
   const visible = (section: string) => !hiddenSections.includes(section);
   const { months: boardMonths, recurringIncomes: boardRecurringIncomes, recurringExpenses: boardRecurringExpenses } = useActiveBoardData();
 

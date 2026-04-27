@@ -290,7 +290,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       if (data?.data) {
         const d = data.data as Partial<CloudData>;
         set({
-          settings: d.settings ?? DEFAULT_DATA.settings,
+          settings: { ...DEFAULT_DATA.settings, ...(d.settings ?? {}) },
           months: d.months ?? {},
           savingsFunds: d.savingsFunds ?? [],
           recurringIncomes: d.recurringIncomes ?? [],

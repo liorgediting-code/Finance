@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { formatCurrency } from '../../utils/formatters';
@@ -128,7 +129,7 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
   const addExpense = useFinanceStore((s) => s.addExpense);
   const addRecurringExpense = useFinanceStore((s) => s.addRecurringExpense);
   const familyMembers = useFinanceStore((s) => s.familyMembers);
-  const customCategories = useFinanceStore((s) => s.settings.customCategories ?? []);
+  const customCategories = useFinanceStore(useShallow((s) => s.settings.customCategories ?? []));
 
   const [form, setForm] = useState<Omit<ExpenseEntry, 'id'>>({
     ...emptyForm(),
@@ -304,7 +305,7 @@ interface SplitPanelProps {
 }
 
 function SplitPanel({ entry, onSave, onClose }: SplitPanelProps) {
-  const customCategories = useFinanceStore((s) => s.settings.customCategories ?? []);
+  const customCategories = useFinanceStore(useShallow((s) => s.settings.customCategories ?? []));
   const [splits, setSplits] = useState(() => {
     if (entry.splits && entry.splits.length > 0) {
       return entry.splits.map((s) => ({ description: s.description, amount: s.amount, categoryId: s.categoryId }));
