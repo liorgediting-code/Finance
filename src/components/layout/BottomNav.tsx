@@ -129,7 +129,7 @@ function BoardsSheet({ onClose }: { onClose: () => void }) {
 
   const selectBoard = (id: string) => {
     setActiveBoard(id);
-    navigate('/');
+    navigate('/month');
     onClose();
   };
 
@@ -310,8 +310,7 @@ export default function BottomNav() {
         <div className="flex w-full">
           {/* Personal tab */}
           <NavLink
-            to="/"
-            end
+            to="/month"
             onClick={() => setActiveBoard('personal')}
             className={base}
           >
@@ -329,7 +328,7 @@ export default function BottomNav() {
                     className={active ? 'font-semibold' : ''}
                     style={{ color: active ? PERSONAL_COLOR : '#9090A8' }}
                   >
-                    אישי
+                    חודשי
                   </span>
                 </>
               );

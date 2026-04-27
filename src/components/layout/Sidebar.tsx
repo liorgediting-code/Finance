@@ -274,6 +274,18 @@ export default function Sidebar({ isOpen, onClose }: Props) {
 
         {/* Navigation */}
         <nav className="flex flex-1 flex-col gap-0.5 px-3 py-4 overflow-y-auto">
+          {/* Overview */}
+          <div className="mb-3">
+            <NavLink to="/" end className={navLinkClass} onClick={onClose}>
+              <BarChartIcon />
+              מבט-על
+            </NavLink>
+            <NavLink to="/month" className={navLinkClass} onClick={onClose}>
+              <CalendarIcon />
+              לוח חודשי
+            </NavLink>
+          </div>
+
           {/* Boards section */}
           <div className="mb-3">
             <p className="text-[10px] font-semibold text-[#9090A8] uppercase tracking-wider px-3 mb-1">לוחות</p>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { HEBREW_MONTHS } from '../../config/months';
 import { useFinanceStore } from '../../store/useFinanceStore';
@@ -123,6 +124,12 @@ export default function MonthDashboard() {
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto" dir="rtl">
+      {/* Back to overview */}
+      <div className="mb-3 flex justify-end">
+        <NavLink to="/" className="text-xs text-[#9090A8] hover:text-[#5B52A0] transition-colors flex items-center gap-1 cursor-pointer">
+          מבט-על ←
+        </NavLink>
+      </div>
 
       {/* ── Greeting ── */}
       {displayName && (
