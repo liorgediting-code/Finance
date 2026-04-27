@@ -34,6 +34,9 @@ export default function HealthScoreHero() {
   const year = now.getFullYear();
 
   const result = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds });
+  const prevMonth = (now.getMonth() - 1 + 12) % 12;
+  const prevResult = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds, currentMonthOverride: prevMonth });
+  const delta = result.score - prevResult.score;
 
   const scoreColor = result.score >= 70 ? 'text-sage-dark' : result.score >= 40 ? 'text-almond-dark' : 'text-blush-dark';
 
@@ -43,6 +46,11 @@ export default function HealthScoreHero() {
       <div className="flex-shrink-0 w-20 h-20 rounded-full bg-white/70 flex flex-col items-center justify-center shadow-sm">
         <span className={`text-2xl font-black ${scoreColor}`}>{result.score}</span>
         <span className="text-[10px] text-[#6B6B8A]">מתוך 100</span>
+        {delta !== 0 && (
+          <div className={`text-[11px] font-semibold mt-0.5 ${delta > 0 ? 'text-sage-dark' : 'text-blush-dark'}`}>
+            {delta > 0 ? `↑ ${delta}` : `↓ ${Math.abs(delta)}`}
+          </div>
+        )}
       </div>
 
       {/* Score bars */}

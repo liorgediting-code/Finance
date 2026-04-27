@@ -44,6 +44,17 @@ function PlusIcon() {
   );
 }
 
+function OverviewIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
 function ToolsIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -308,6 +319,30 @@ export default function BottomNav() {
         />
 
         <div className="flex w-full">
+          {/* Overview tab */}
+          <NavLink
+            to="/"
+            end
+            className={base}
+          >
+            {({ isActive }) => (
+              <>
+                <span
+                  className="flex items-center justify-center w-8 h-8 rounded-xl transition-colors duration-150"
+                  style={isActive ? { backgroundColor: PERSONAL_COLOR + '20', color: PERSONAL_COLOR } : { color: '#9090A8' }}
+                >
+                  <OverviewIcon />
+                </span>
+                <span
+                  className={isActive ? 'font-semibold' : ''}
+                  style={{ color: isActive ? PERSONAL_COLOR : '#9090A8' }}
+                >
+                  מבט-על
+                </span>
+              </>
+            )}
+          </NavLink>
+
           {/* Personal tab */}
           <NavLink
             to="/month"

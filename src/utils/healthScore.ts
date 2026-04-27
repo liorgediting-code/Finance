@@ -26,19 +26,21 @@ interface ScoreInput {
   debts: Debt[];
   lifeGoals: LifeGoal[];
   savingsFunds: SavingsFund[];
+  currentMonthOverride?: number;
 }
 
 export function computeHealthScore(input: ScoreInput): HealthScoreResult {
   const {
     months, recurringIncomes, recurringExpenses,
     mortgages, debts, lifeGoals, savingsFunds,
+    currentMonthOverride,
   } = input;
 
   // Monthly income/expense helpers
   const recurringIncome = recurringIncomes.reduce((s, e) => s + e.amount, 0);
   const recurringExpense = recurringExpenses.reduce((s, e) => s + e.amount, 0);
 
-  const currentMonth = new Date().getMonth();
+  const currentMonth = currentMonthOverride !== undefined ? currentMonthOverride : new Date().getMonth();
   const currentMonthData = months[currentMonth];
   const monthlyIncome = recurringIncome + (currentMonthData?.income ?? []).reduce((s, e) => s + e.amount, 0);
   const monthlyExpense = recurringExpense + (currentMonthData?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
