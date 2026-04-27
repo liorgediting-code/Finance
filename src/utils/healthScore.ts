@@ -44,9 +44,9 @@ export function computeHealthScore(input: ScoreInput): HealthScoreResult {
   const monthlyExpense = recurringExpense + (currentMonthData?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
   const net = monthlyIncome - monthlyExpense;
 
-  // 1. Savings rate (0-30): net/income * 100, scaled to 30
+  // 1. Savings rate (0-30): net/income * 100, clamped to 0-30
   const savingsRatePct = monthlyIncome > 0 ? (net / monthlyIncome) * 100 : 0;
-  const savingsRate = Math.min(30, Math.max(0, (savingsRatePct / 30) * 30));
+  const savingsRate = Math.min(30, Math.max(0, savingsRatePct));
 
   // 2. Debt-to-income ratio (0-25): lower monthly debt payments = better
   const totalMonthlyDebt = [
@@ -69,8 +69,7 @@ export function computeHealthScore(input: ScoreInput): HealthScoreResult {
     const exp = recurringExpense + md.expenses.reduce((s, e) => s + e.amount, 0);
     return inc > exp;
   }).length;
-  const totalTrackedMonths = Math.max(1, Object.keys(months).length);
-  const budgetAdherence = (positiveMonths / totalTrackedMonths) * 15;
+  const budgetAdherence = (positiveMonths / 12) * 15;
 
   // 5. Savings fund progress (0-10): average saved/target across all funds
   const savingsFundAvgPct = savingsFunds.length > 0
