@@ -47,15 +47,6 @@ function ShieldIcon() {
   );
 }
 
-function LayersIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
-    </svg>
-  );
-}
 
 function PencilIcon() {
   return (
@@ -274,7 +265,105 @@ export default function Sidebar({ isOpen, onClose }: Props) {
 
         {/* Navigation */}
         <nav className="flex flex-1 flex-col gap-0.5 px-3 py-4 overflow-y-auto">
-          {/* Overview */}
+          {/* Board switcher — horizontal chips */}
+          <div className="mb-4 pb-3 border-b border-gray-100">
+            <p className="text-[10px] font-semibold text-[#9090A8] uppercase tracking-wider mb-2 px-1">לוחות</p>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => { setActiveBoard('overall'); onClose(); }}
+                className="text-xs px-3 py-1.5 rounded-full font-medium transition-colors cursor-pointer"
+                style={activeBoardId === 'overall'
+                  ? { backgroundColor: '#4A90C0', color: 'white' }
+                  : { backgroundColor: '#F3F4F6', color: '#4A4A60' }}
+              >
+                כללי
+              </button>
+              <button
+                onClick={() => { setActiveBoard('personal'); onClose(); }}
+                className="text-xs px-3 py-1.5 rounded-full font-medium transition-colors cursor-pointer"
+                style={activeBoardId === 'personal'
+                  ? { backgroundColor: '#7B6DC8', color: 'white' }
+                  : { backgroundColor: '#F3F4F6', color: '#4A4A60' }}
+              >
+                אישי
+              </button>
+              {extraBoards.map((board) => (
+                <div key={board.id} className="group relative flex items-center">
+                  {renamingId === board.id ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        autoFocus
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setRenamingId(null); }}
+                        className="border border-lavender-dark rounded px-2 py-0.5 text-xs focus:outline-none w-20"
+                        dir="rtl"
+                      />
+                      <button onClick={saveRename} className="text-[10px] text-white bg-lavender-dark px-1.5 py-0.5 rounded cursor-pointer">שמור</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setActiveBoard(board.id); onClose(); }}
+                      className="text-xs px-3 py-1.5 rounded-full font-medium transition-colors cursor-pointer"
+                      style={activeBoardId === board.id
+                        ? { backgroundColor: board.color ?? '#7B6DC8', color: 'white' }
+                        : { backgroundColor: '#F3F4F6', color: '#4A4A60' }}
+                    >
+                      {board.name}
+                    </button>
+                  )}
+                  {renamingId !== board.id && (
+                    <div className="absolute -top-1 -left-1 hidden group-hover:flex items-center gap-0.5 bg-white rounded shadow-sm border border-gray-100 p-0.5 z-10">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); startRename(board.id, board.name); }}
+                        className="text-[#9090A8] hover:text-[#5B52A0] p-0.5 rounded cursor-pointer"
+                        title="שנה שם"
+                      >
+                        <PencilIcon />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`למחוק את הלוח "${board.name}"? כל הנתונים יימחקו.`)) {
+                            if (activeBoardId === board.id) setActiveBoard('personal');
+                            deleteBoard(board.id);
+                          }
+                        }}
+                        className="text-[#9090A8] hover:text-red-500 p-0.5 rounded cursor-pointer"
+                        title="מחק לוח"
+                      >
+                        <TrashSmIcon />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {showAddBoard ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    autoFocus
+                    value={newBoardName}
+                    onChange={(e) => setNewBoardName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddBoard(); if (e.key === 'Escape') { setShowAddBoard(false); setNewBoardName(''); } }}
+                    placeholder="שם הלוח"
+                    className="border border-lavender-dark rounded px-2 py-0.5 text-xs focus:outline-none w-20"
+                    dir="rtl"
+                  />
+                  <button onClick={handleAddBoard} className="text-[10px] text-white bg-lavender-dark px-1.5 py-0.5 rounded cursor-pointer">הוסף</button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAddBoard(true)}
+                  className="text-xs w-7 h-7 rounded-full bg-gray-100 text-[#9090A8] hover:bg-gray-200 hover:text-[#5B52A0] transition-colors cursor-pointer flex items-center justify-center"
+                  title="הוסף לוח"
+                >
+                  <PlusSmIcon />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Overview nav links */}
           <div className="mb-3">
             <NavLink to="/" end className={navLinkClass} onClick={onClose}>
               <BarChartIcon />
@@ -284,104 +373,6 @@ export default function Sidebar({ isOpen, onClose }: Props) {
               <CalendarIcon />
               לוח חודשי
             </NavLink>
-          </div>
-
-          {/* Boards section */}
-          <div className="mb-3">
-            <p className="text-[10px] font-semibold text-[#9090A8] uppercase tracking-wider px-3 mb-1">לוחות</p>
-
-            {/* Overall board */}
-            <button
-              onClick={() => { setActiveBoard('overall'); onClose(); }}
-              className={`${base} w-full text-right ${activeBoardId === 'overall' ? activeClass : inactiveClass}`}
-            >
-              <LayersIcon />
-              כללי
-            </button>
-
-            {/* Personal board */}
-            <button
-              onClick={() => { setActiveBoard('personal'); onClose(); }}
-              className={`${base} w-full text-right ${activeBoardId === 'personal' ? activeClass : inactiveClass}`}
-            >
-              <CalendarIcon />
-              אישי
-            </button>
-
-            {/* Extra boards */}
-            {extraBoards.map((board) => (
-              <div key={board.id} className="group relative">
-                {renamingId === board.id ? (
-                  <div className="flex items-center gap-1 px-3 py-1.5">
-                    <input
-                      autoFocus
-                      value={renameValue}
-                      onChange={(e) => setRenameValue(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setRenamingId(null); }}
-                      className="flex-1 border border-lavender-dark rounded px-2 py-0.5 text-sm focus:outline-none min-w-0"
-                      dir="rtl"
-                    />
-                    <button onClick={saveRename} className="text-[10px] text-white bg-lavender-dark px-1.5 py-0.5 rounded cursor-pointer">שמור</button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => { setActiveBoard(board.id); onClose(); }}
-                    className={`${base} w-full text-right pr-3 pl-14 ${activeBoardId === board.id ? activeClass : inactiveClass}`}
-                  >
-                    <CalendarIcon />
-                    {board.name}
-                  </button>
-                )}
-                {renamingId !== board.id && (
-                  <div className="absolute left-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); startRename(board.id, board.name); }}
-                      className="text-[#9090A8] hover:text-[#5B52A0] p-0.5 rounded cursor-pointer"
-                      title="שנה שם"
-                    >
-                      <PencilIcon />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm(`למחוק את הלוח "${board.name}"? כל הנתונים יימחקו.`)) {
-                          if (activeBoardId === board.id) setActiveBoard('personal');
-                          deleteBoard(board.id);
-                        }
-                      }}
-                      className="text-[#9090A8] hover:text-red-500 p-0.5 rounded cursor-pointer"
-                      title="מחק לוח"
-                    >
-                      <TrashSmIcon />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {/* Add board */}
-            {showAddBoard ? (
-              <div className="flex items-center gap-1 px-3 py-1.5">
-                <input
-                  autoFocus
-                  value={newBoardName}
-                  onChange={(e) => setNewBoardName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddBoard(); if (e.key === 'Escape') { setShowAddBoard(false); setNewBoardName(''); } }}
-                  placeholder="שם הלוח"
-                  className="flex-1 border border-lavender-dark rounded px-2 py-0.5 text-sm focus:outline-none min-w-0"
-                  dir="rtl"
-                />
-                <button onClick={handleAddBoard} className="text-[10px] text-white bg-lavender-dark px-1.5 py-0.5 rounded cursor-pointer">הוסף</button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAddBoard(true)}
-                className={`${base} w-full text-right text-[#9090A8] hover:text-[#5B52A0] hover:bg-lavender-light text-xs`}
-              >
-                <PlusSmIcon />
-                הוסף לוח
-              </button>
-            )}
           </div>
 
           {/* Tools section */}
