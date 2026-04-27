@@ -23,20 +23,17 @@ export default function OverviewDebtCard() {
       </div>
 
       {mortgages.length > 0 && (
-        <div>
-          <div className="flex justify-between text-xs text-[#4A4A60] mb-1">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex justify-between text-xs text-[#4A4A60] mb-0.5">
             <span>משכנתה</span>
             <span className="font-semibold text-blush-dark">{formatCurrency(mortgageBalance)}</span>
           </div>
-          {mortgages[0].tracks.map((track) => {
-            const originalBalance = track.balance + (track.monthlyPayment * track.remainingMonths);
-            const pctPaid = originalBalance > 0 ? Math.min(100, ((originalBalance - track.balance) / originalBalance) * 100) : 0;
-            return (
-              <div key={track.id} className="h-1.5 bg-blush-light rounded-full mb-1">
-                <div className="h-1.5 bg-blush-dark rounded-full" style={{ width: `${pctPaid}%` }} />
-              </div>
-            );
-          })}
+          {mortgages.flatMap((m) => m.tracks).map((track) => (
+            <div key={track.id} className="flex justify-between text-xs text-[#9090A8]">
+              <span>{track.type === 'prime' ? 'פריים' : track.type === 'fixed' ? 'קבועה' : track.type === 'cpi' ? 'צמודה' : 'משתנה'}</span>
+              <span>{formatCurrency(track.balance)} • {track.remainingMonths} חודשים</span>
+            </div>
+          ))}
         </div>
       )}
 

@@ -41,8 +41,18 @@ export default function OverviewKPIRow() {
     const prev = months[idx];
     return recurringIncome + (prev?.income ?? []).reduce((s, e) => s + e.amount, 0);
   });
+
+  // Count prior months with actual entries (not just recurring)
+  const prevMonthsWithData = [1, 2, 3].filter((offset) => {
+    const idx = ((currentMonth - offset) + 12) % 12;
+    const prev = months[idx];
+    return (prev?.income?.length ?? 0) > 0 || (prev?.expenses?.length ?? 0) > 0;
+  }).length;
+
   const avgIncome = prevMonths.reduce((s, v) => s + v, 0) / 3;
-  const incomeTrend = avgIncome > 0 ? Math.round(((monthlyIncome - avgIncome) / avgIncome) * 100) : 0;
+  const incomeTrend = prevMonthsWithData >= 2 && avgIncome > 0
+    ? Math.round(((monthlyIncome - avgIncome) / avgIncome) * 100)
+    : null;
 
   const prevExpenses = [1, 2, 3].map((offset) => {
     const idx = ((currentMonth - offset) + 12) % 12;
@@ -50,20 +60,22 @@ export default function OverviewKPIRow() {
     return recurringExpense + (prev?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
   });
   const avgExpense = prevExpenses.reduce((s, v) => s + v, 0) / 3;
-  const expenseTrend = avgExpense > 0 ? Math.round(((monthlyExpense - avgExpense) / avgExpense) * 100) : 0;
+  const expenseTrend = prevMonthsWithData >= 2 && avgExpense > 0
+    ? Math.round(((monthlyExpense - avgExpense) / avgExpense) * 100)
+    : null;
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       <KPICard
         label="הכנסה החודש"
         value={formatCurrency(monthlyIncome)}
-        sub={incomeTrend >= 0 ? `↑ ${incomeTrend}% מהממוצע` : `↓ ${Math.abs(incomeTrend)}% מהממוצע`}
+        sub={incomeTrend === null ? 'אין מספיק נתונים' : incomeTrend >= 0 ? `↑ ${incomeTrend}% מהממוצע` : `↓ ${Math.abs(incomeTrend)}% מהממוצע`}
         valueClass="text-sage-dark"
       />
       <KPICard
         label="הוצאות החודש"
         value={formatCurrency(monthlyExpense)}
-        sub={expenseTrend <= 0 ? `↓ ${Math.abs(expenseTrend)}% מהממוצע` : `↑ ${expenseTrend}% מהממוצע`}
+        sub={expenseTrend === null ? 'אין מספיק נתונים' : expenseTrend <= 0 ? `↓ ${Math.abs(expenseTrend)}% מהממוצע` : `↑ ${expenseTrend}% מהממוצע`}
         valueClass="text-blush-dark"
       />
       <KPICard

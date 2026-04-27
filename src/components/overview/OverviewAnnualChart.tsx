@@ -23,12 +23,13 @@ export default function OverviewAnnualChart() {
   const { months, recurringIncomes, recurringExpenses } = useActiveBoardData();
   const year = useFinanceStore((s) => s.settings.year);
 
+  const recurringIncome = recurringIncomes.reduce((s, e) => s + e.amount, 0);
+  const recurringExpense = recurringExpenses.reduce((s, e) => s + e.amount, 0);
+
   const data = MONTH_LABELS.map((label, i) => {
     const md = months[i];
-    const income = recurringIncomes.reduce((s, e) => s + e.amount, 0) +
-      (md?.income ?? []).reduce((s, e) => s + e.amount, 0);
-    const expense = recurringExpenses.reduce((s, e) => s + e.amount, 0) +
-      (md?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
+    const income = recurringIncome + (md?.income ?? []).reduce((s, e) => s + e.amount, 0);
+    const expense = recurringExpense + (md?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
     return { label, הכנסות: income, הוצאות: expense, חיסכון: Math.max(0, income - expense) };
   });
 

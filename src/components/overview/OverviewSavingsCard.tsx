@@ -48,7 +48,7 @@ export default function OverviewSavingsCard() {
             );
           })}
           {savingsFunds.length > 3 && (
-            <span className="text-xs text-[#9090A8]">+{savingsFunds.length - 3} קרנות נוספות — {formatCurrency(totalSaved)} / {formatCurrency(totalTarget)}</span>
+            <span className="text-xs text-[#9090A8]">+{savingsFunds.length - 3} קרנות נוספות • סה״כ: {formatCurrency(totalSaved)} / {formatCurrency(totalTarget)}</span>
           )}
         </div>
       ) : (
