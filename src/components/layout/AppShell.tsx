@@ -4,6 +4,7 @@ import Header from './Header';
 import BottomNav from './BottomNav';
 import OnboardingWizard from '../onboarding/OnboardingWizard';
 import { OfflineBanner, InstallBanner } from '../pwa/PWABanners';
+import QuickAddFAB from '../shared/QuickAddFAB';
 
 interface Props {
   children: React.ReactNode;
@@ -29,6 +30,7 @@ export default function AppShell({ children }: Props) {
       </div>
 
       <BottomNav />
+      <QuickAddFAB />
     </div>
   );
 }

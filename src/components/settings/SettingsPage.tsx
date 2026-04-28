@@ -64,6 +64,14 @@ const DASHBOARD_SECTIONS = [
   { id: 'savings', label: 'חסכונות', desc: 'קרנות חיסכון' },
 ];
 
+const FEATURE_FLAGS = [
+  { id: 'smart-insights', label: 'תובנות חכמות', desc: 'ניתוח אוטומטי של דפוסי הוצאה, חריגות תקציב ואזהרות' },
+  { id: 'net-worth', label: 'שווי נטו', desc: 'חישוב נכסים מול התחייבויות — תמונת העושר האמיתית שלך' },
+  { id: 'month-comparison', label: 'השוואה חודשית', desc: 'מגמות הכנסה והוצאה לעומת החודש הקודם' },
+  { id: 'quick-add', label: 'הוספה מהירה (FAB)', desc: 'כפתור צף להוספת הוצאה מכל עמוד' },
+  { id: 'budget-alerts', label: 'התראות תקציב', desc: 'תג אדום בתפריט כשיש קטגוריות שחרגו מהתקציב' },
+];
+
 const COLOR_PRESETS = ['#7B6DC8', '#4A90C0', '#5A9A42', '#E06060', '#C89E50', '#4AACAC', '#C85590', '#A0A0B0', '#E06090', '#6090E0'];
 
 export default function SettingsPage() {
@@ -265,6 +273,31 @@ export default function SettingsPage() {
             </span>
           </p>
         )}
+      </SettingsSection>
+
+      {/* Feature Flags */}
+      <SettingsSection title="תכונות מתקדמות" accentColor="#4AACAC">
+        <p className="text-xs text-[#9090A8] mb-4">הפעל או כבה תכונות חדשות — ניתן לשנות בכל עת.</p>
+        <div className="space-y-2">
+          {FEATURE_FLAGS.map((feat) => {
+            const isEnabled = !hiddenSections.includes(feat.id);
+            return (
+              <div key={feat.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-[#1E1E2E]">{feat.label}</p>
+                  <p className="text-xs text-[#9090A8]">{feat.desc}</p>
+                </div>
+                <button
+                  onClick={() => toggleDashboardSection(feat.id)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${isEnabled ? 'bg-[#4AACAC]' : 'bg-gray-200'}`}
+                  aria-label={`${isEnabled ? 'כבה' : 'הפעל'} ${feat.label}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </SettingsSection>
 
       {/* Dashboard Customization (#29) */}

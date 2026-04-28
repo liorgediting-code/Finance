@@ -3,6 +3,8 @@ import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useShallow } from 'zustand/react/shallow';
+import { useActiveBoardData } from '../../store/useActiveBoardData';
+import { CATEGORIES } from '../../config/categories';
 
 interface Props {
   isOpen: boolean;
@@ -202,6 +204,25 @@ export default function Sidebar({ isOpen, onClose }: Props) {
   const renameBoard = useFinanceStore((s) => s.renameBoard);
   const deleteBoard = useFinanceStore((s) => s.deleteBoard);
   const enabledModules = useFinanceStore(useShallow((s) => s.settings.enabledModules ?? []));
+  const hiddenSections = useFinanceStore(useShallow((s) => s.settings.hiddenDashboardSections ?? []));
+
+  const { months, recurringExpenses } = useActiveBoardData();
+  const currentMonth = new Date().getMonth();
+  const md = months[currentMonth];
+
+  const overBudgetCount = !hiddenSections.includes('budget-alerts')
+    ? CATEGORIES.filter((cat) => {
+        const budget = md?.budget[cat.id] ?? 0;
+        if (budget === 0) return false;
+        const spent = [
+          ...(md?.expenses ?? []),
+          ...recurringExpenses,
+        ]
+          .filter((e) => e.categoryId === cat.id)
+          .reduce((s, e) => s + e.amount, 0);
+        return spent > budget;
+      }).length
+    : 0;
 
   const [newBoardName, setNewBoardName] = useState('');
   const [showAddBoard, setShowAddBoard] = useState(false);
@@ -371,7 +392,12 @@ export default function Sidebar({ isOpen, onClose }: Props) {
             </NavLink>
             <NavLink to="/month" className={navLinkClass} onClick={onClose}>
               <CalendarIcon />
-              לוח חודשי
+              <span className="flex-1">לוח חודשי</span>
+              {overBudgetCount > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none flex-shrink-0">
+                  {overBudgetCount}
+                </span>
+              )}
             </NavLink>
           </div>
 
