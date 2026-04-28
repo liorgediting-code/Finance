@@ -441,7 +441,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
     setAddFormCatId(catId);
     setShowAddForm(true);
     if (catId) setExpandedCats((prev) => new Set([...prev, catId]));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const startEdit = (entry: ExpenseEntry) => {

@@ -684,7 +684,13 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     getRolledBudget: (monthIndex, categoryId) => {
       const s = get();
       if (!s.rolloverCategories.includes(categoryId) || monthIndex === 0) return 0;
-      const prevMonth = s.months[monthIndex - 1];
+      let boardMonths: Record<number, MonthData>;
+      if (s.activeBoardId === 'personal' || s.activeBoardId === 'overall') {
+        boardMonths = s.months;
+      } else {
+        boardMonths = s.extraBoards.find((b) => b.id === s.activeBoardId)?.months ?? {};
+      }
+      const prevMonth = boardMonths[monthIndex - 1];
       if (!prevMonth) return 0;
       const prevBudget = prevMonth.budget[categoryId] ?? 0;
       if (prevBudget === 0) return 0;
@@ -894,7 +900,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
             budget: { home: 7000, food: 3000 },
           },
         },
-        settings: { year: 2026, savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 } },
+        settings: { ...DEFAULT_DATA.settings, year: 2026, savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 } },
         savingsFunds: [
           { id: uuidv4(), name: 'חופשה לאירופה', targetAmount: 15000, savedAmount: 4500, color: '#B8CCE0', notes: 'קיץ 2027' },
           { id: uuidv4(), name: 'קרן חירום', targetAmount: 30000, savedAmount: 12000, color: '#C5CDB6', notes: '3 משכורות' },

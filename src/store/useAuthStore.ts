@@ -33,7 +33,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // Only reload data on actual sign-in, not on token refreshes (which happen every ~60 min)
+      // Also skip if data is already loaded for this user — Supabase fires SIGNED_IN for the
+      // initial session restoration which is already handled by getSession() above.
       if (event === 'SIGNED_IN' && session?.user) {
+        if (useFinanceStore.getState()._userId === session.user.id) return;
         const profile = await get().fetchProfile(session.user.id);
         set({ user: session.user, profile });
         if (profile?.is_approved) {

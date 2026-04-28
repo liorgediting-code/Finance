@@ -391,12 +391,12 @@ export default function BottomNav() {
 
           {/* Tools tab */}
           <NavLink
-            to="/life-goals"
+            to="/search"
             className={base}
           >
-            {({ isActive }) => {
+            {() => {
               const toolRoutes = ['/life-goals', '/debt-planner', '/mortgage', '/installments', '/savings-vehicles', '/chag-budget', '/annual-planner', '/salary-slip', '/csv-import', '/cashflow', '/search', '/activity'];
-              const toolActive = toolRoutes.some((r) => pathname === r) || isActive;
+              const toolActive = toolRoutes.some((r) => pathname === r);
               return (
                 <>
                   <span

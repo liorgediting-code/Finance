@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -37,24 +38,25 @@ export default function AnnualSummary() {
   const { months, recurringIncomes, recurringExpenses } = useActiveBoardData();
   const year = useFinanceStore((s) => s.settings.year);
 
-  const recurringIncomeTotal = sumAmounts(recurringIncomes);
-  const recurringExpenseTotal = sumAmounts(recurringExpenses);
+  const { data, yearIncome, yearExpenses, yearSaved } = useMemo(() => {
+    const recurringIncomeTotal = sumAmounts(recurringIncomes);
+    const recurringExpenseTotal = sumAmounts(recurringExpenses);
+    const currentMonth = new Date().getFullYear() === year ? new Date().getMonth() : 11;
 
-  const currentMonth = new Date().getFullYear() === year ? new Date().getMonth() : 11;
+    let totalIncome = 0;
+    let totalExpenses = 0;
 
-  let yearIncome = 0;
-  let yearExpenses = 0;
+    const chartData: MonthPoint[] = HEBREW_MONTHS.slice(0, currentMonth + 1).map((name, idx) => {
+      const md = months[idx];
+      const income = (md ? sumAmounts(md.income) : 0) + recurringIncomeTotal;
+      const expenses = (md ? sumAmounts(md.expenses) : 0) + recurringExpenseTotal;
+      totalIncome += income;
+      totalExpenses += expenses;
+      return { name, income, expenses };
+    });
 
-  const data: MonthPoint[] = HEBREW_MONTHS.slice(0, currentMonth + 1).map((name, idx) => {
-    const md = months[idx];
-    const income = (md ? sumAmounts(md.income) : 0) + recurringIncomeTotal;
-    const expenses = (md ? sumAmounts(md.expenses) : 0) + recurringExpenseTotal;
-    yearIncome += income;
-    yearExpenses += expenses;
-    return { name, income, expenses };
-  });
-
-  const yearSaved = yearIncome - yearExpenses;
+    return { data: chartData, yearIncome: totalIncome, yearExpenses: totalExpenses, yearSaved: totalIncome - totalExpenses };
+  }, [months, recurringIncomes, recurringExpenses, year]);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
