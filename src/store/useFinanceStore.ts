@@ -345,8 +345,11 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       const { data } = await supabase.from('user_data').select('data').eq('user_id', userId).single();
       if (data?.data) {
         const d = data.data as Partial<CloudData>;
+        // Merge any newly-added modules into the saved enabledModules list
+        const savedModules = d.settings?.enabledModules ?? ALL_MODULES;
+        const mergedModules = [...new Set([...savedModules, ...ALL_MODULES.filter((m) => !savedModules.includes(m))])];
         set({
-          settings: { ...DEFAULT_DATA.settings, ...(d.settings ?? {}) },
+          settings: { ...DEFAULT_DATA.settings, ...(d.settings ?? {}), enabledModules: mergedModules },
           months: d.months ?? {},
           savingsFunds: d.savingsFunds ?? [],
           recurringIncomes: d.recurringIncomes ?? [],
