@@ -174,6 +174,7 @@ interface FinanceStore extends CloudData {
   addIncome: (monthIndex: number, entry: Omit<IncomeEntry, 'id'>) => void;
   updateIncome: (monthIndex: number, id: string, partial: Partial<IncomeEntry>) => void;
   deleteIncome: (monthIndex: number, id: string) => void;
+  clearIncome: (monthIndex: number) => void;
 
   // Recurring income actions
   addRecurringIncome: (entry: Omit<IncomeEntry, 'id'>) => void;
@@ -190,6 +191,7 @@ interface FinanceStore extends CloudData {
   updateExpense: (monthIndex: number, id: string, partial: Partial<ExpenseEntry>) => void;
   splitExpense: (monthIndex: number, id: string, splits: Omit<ExpenseSplit, 'id'>[]) => void;
   deleteExpense: (monthIndex: number, id: string) => void;
+  clearExpenses: (monthIndex: number) => void;
 
   // Budget actions
   setBudget: (monthIndex: number, categoryId: string, amount: number) => void;
@@ -439,6 +441,22 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
+    clearIncome: (monthIndex) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, income: [] } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, income: [] } } };
+        }));
+      }
+      sync();
+    },
+
     addRecurringIncome: (entry) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
@@ -581,6 +599,22 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         }));
       }
       logActivity('delete', 'expense', 'הוצאה נמחקה', undefined, monthIndex);
+      sync();
+    },
+
+    clearExpenses: (monthIndex) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, expenses: [] } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, expenses: [] } } };
+        }));
+      }
       sync();
     },
 

@@ -6,6 +6,8 @@ import SettingsPage from './components/settings/SettingsPage'
 import AuthGuard from './components/auth/AuthGuard'
 import LoginPage from './components/auth/LoginPage'
 import SignupPage from './components/auth/SignupPage'
+import ForgotPasswordPage from './components/auth/ForgotPasswordPage'
+import ResetPasswordPage from './components/auth/ResetPasswordPage'
 import AdminPage from './components/admin/AdminPage'
 import TransactionSearchPage from './components/search/TransactionSearchPage'
 import InstallmentsPage from './components/modules/InstallmentsPage'
@@ -27,6 +29,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/*" element={
         <AuthGuard>
           <AppShell>

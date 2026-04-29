@@ -76,6 +76,7 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
   const addIncome = useFinanceStore((s) => s.addIncome);
   const updateIncome = useFinanceStore((s) => s.updateIncome);
   const deleteIncome = useFinanceStore((s) => s.deleteIncome);
+  const clearIncome = useFinanceStore((s) => s.clearIncome);
   const addRecurringIncome = useFinanceStore((s) => s.addRecurringIncome);
   const updateRecurringIncome = useFinanceStore((s) => s.updateRecurringIncome);
   const deleteRecurringIncome = useFinanceStore((s) => s.deleteRecurringIncome);
@@ -133,13 +134,27 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
     <section className="mb-8">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-base font-semibold text-[#1E1E2E]">הכנסות</h3>
-        <button
-          onClick={() => { setShowForm(!showForm); setErrors([]); }}
-          className="flex items-center gap-1.5 bg-sage-dark text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#8AAA7A] transition-colors cursor-pointer shadow-sm"
-        >
-          <PlusIcon />
-          הוסף הכנסה
-        </button>
+        <div className="flex items-center gap-2">
+          {monthlyEntries.length > 0 && (
+            <button
+              onClick={() => {
+                if (window.confirm(`למחוק את כל ${monthlyEntries.length} הכנסות החודש?`)) {
+                  clearIncome(monthIndex);
+                }
+              }}
+              className="text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-3 py-1.5 rounded-lg border border-blush-dark/30 transition-colors cursor-pointer"
+            >
+              מחק הכל
+            </button>
+          )}
+          <button
+            onClick={() => { setShowForm(!showForm); setErrors([]); }}
+            className="flex items-center gap-1.5 bg-sage-dark text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#8AAA7A] transition-colors cursor-pointer shadow-sm"
+          >
+            <PlusIcon />
+            הוסף הכנסה
+          </button>
+        </div>
       </div>
 
       {/* Add form */}
