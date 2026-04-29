@@ -37,9 +37,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { userId, updates } = req.body as { userId: string; updates: Record<string, unknown> };
   if (!userId || !updates) return res.status(400).json({ error: 'userId and updates required' });
 
+  // Only allow updating safe profile fields — never role, id, created_at, etc.
+  const ALLOWED_FIELDS = new Set(['is_approved']);
+  const safeUpdates: Record<string, unknown> = {};
+  for (const key of Object.keys(updates)) {
+    if (ALLOWED_FIELDS.has(key)) safeUpdates[key] = updates[key];
+  }
+  if (Object.keys(safeUpdates).length === 0) {
+    return res.status(400).json({ error: 'No allowed fields to update' });
+  }
+
   const { error } = await adminClient
     .from('profiles')
-    .update(updates)
+    .update(safeUpdates)
     .eq('id', userId);
 
   if (error) return res.status(500).json({ error: error.message });

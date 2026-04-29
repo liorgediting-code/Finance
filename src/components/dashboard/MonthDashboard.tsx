@@ -119,8 +119,11 @@ export default function MonthDashboard() {
   const user = useAuthStore((s) => s.user);
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
 
+  // For past years allow all 12 months; for the current year cap at today's month
+  const maxMonthIndex = year < today.getFullYear() ? 11 : currentMonthIndex;
+
   const prevMonth = () => setMonthIndex((i) => Math.max(0, i - 1));
-  const nextMonth = () => setMonthIndex((i) => Math.min(11, i + 1));
+  const nextMonth = () => setMonthIndex((i) => Math.min(maxMonthIndex, i + 1));
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto" dir="rtl">
@@ -166,7 +169,7 @@ export default function MonthDashboard() {
             {/* Next month */}
             <button
               onClick={nextMonth}
-              disabled={monthIndex >= currentMonthIndex}
+              disabled={monthIndex >= maxMonthIndex}
               className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-lavender-light text-[#4A4A60] disabled:opacity-25 disabled:cursor-not-allowed transition-colors cursor-pointer"
               aria-label="חודש הבא"
             >
@@ -195,11 +198,11 @@ export default function MonthDashboard() {
             {HEBREW_MONTHS.map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => idx <= currentMonthIndex && setMonthIndex(idx)}
+                onClick={() => idx <= maxMonthIndex && setMonthIndex(idx)}
                 className={`transition-all duration-150 rounded-full cursor-pointer ${
                   idx === monthIndex
                     ? 'w-4 h-2 bg-lavender-dark'
-                    : idx <= currentMonthIndex
+                    : idx <= maxMonthIndex
                     ? 'w-2 h-2 bg-lavender hover:bg-lavender-dark'
                     : 'w-2 h-2 bg-gray-200 cursor-not-allowed'
                 }`}

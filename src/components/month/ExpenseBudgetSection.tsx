@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
@@ -492,22 +492,24 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
     );
   });
 
-  let totalActual = 0;
-  let totalPending = 0;
-
-  const rows = CATEGORIES.map((cat) => {
-    const catExpenses = filteredExpenses.filter((e) => e.categoryId === cat.id);
-    const confirmed = catExpenses.filter((e) => !e.isPending);
-    const actual = confirmed.reduce((s, e) => s + e.amount, 0);
-    const pending = catExpenses.filter((e) => e.isPending).reduce((s, e) => s + e.amount, 0);
-    const budgetAmt = (budget[cat.id] ?? 0) + getRolledBudget(monthIndex, cat.id);
-    const overBudget = budgetAmt > 0 && actual > budgetAmt;
-    const pct = budgetAmt > 0 ? Math.min(100, Math.round((actual / budgetAmt) * 100)) : 0;
-    const nearBudget = budgetAmt > 0 && pct >= 80 && pct < 100;
-    totalActual += actual;
-    totalPending += pending;
-    return { cat, catExpenses, actual, pending, budgetAmt, overBudget, pct, nearBudget };
-  });
+  const { rows, totalActual, totalPending } = useMemo(() => {
+    let _totalActual = 0;
+    let _totalPending = 0;
+    const _rows = CATEGORIES.map((cat) => {
+      const catExpenses = filteredExpenses.filter((e) => e.categoryId === cat.id);
+      const confirmed = catExpenses.filter((e) => !e.isPending);
+      const actual = confirmed.reduce((s, e) => s + e.amount, 0);
+      const pending = catExpenses.filter((e) => e.isPending).reduce((s, e) => s + e.amount, 0);
+      const budgetAmt = (budget[cat.id] ?? 0) + getRolledBudget(monthIndex, cat.id);
+      const overBudget = budgetAmt > 0 && actual > budgetAmt;
+      const pct = budgetAmt > 0 ? Math.min(100, Math.round((actual / budgetAmt) * 100)) : 0;
+      const nearBudget = budgetAmt > 0 && pct >= 80 && pct < 100;
+      _totalActual += actual;
+      _totalPending += pending;
+      return { cat, catExpenses, actual, pending, budgetAmt, overBudget, pct, nearBudget };
+    });
+    return { rows: _rows, totalActual: _totalActual, totalPending: _totalPending };
+  }, [filteredExpenses, budget, monthIndex, getRolledBudget]);
 
   const visibleRows = rows.filter((r) => r.actual > 0 || r.pending > 0);
   const overBudgetCount = rows.filter((r) => r.overBudget).length;
@@ -896,7 +898,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                               </tr>
                               {splittingId === entry.id && (
                                 <tr>
-                                  <td colSpan={5} className="px-0 py-0">
+                                  <td colSpan={7} className="px-0 py-0">
                                     <SplitPanel
                                       entry={entry}
                                       monthIndex={monthIndex}

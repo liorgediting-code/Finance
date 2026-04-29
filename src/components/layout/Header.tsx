@@ -1,10 +1,26 @@
 import { useLocation } from 'react-router-dom';
 
+const PAGE_TITLES: Record<string, string> = {
+  '/': 'מבט-על',
+  '/month': 'לוח חודשי',
+  '/settings': 'הגדרות',
+  '/admin': 'פאנל ניהול',
+  '/search': 'חיפוש עסקאות',
+  '/activity': 'יומן פעילות',
+  '/life-goals': 'מטרות חיים',
+  '/debt-planner': 'תכנון חובות',
+  '/mortgage': 'משכנתא',
+  '/installments': 'תשלומים',
+  '/savings-vehicles': 'חסכונות ופנסיה',
+  '/chag-budget': 'תקציב חגים',
+  '/annual-planner': 'מתכנן שנתי',
+  '/salary-slip': 'ניתוח תלוש',
+  '/csv-import': 'ייבוא CSV',
+  '/cashflow': 'תחזית תזרים',
+};
+
 function getPageTitle(pathname: string): string {
-  if (pathname === '/') return 'לוח חודשי';
-  if (pathname === '/savings') return 'חסכונות';
-  if (pathname === '/settings') return 'הגדרות';
-  return 'ניהול פיננסי';
+  return PAGE_TITLES[pathname] ?? 'ניהול פיננסי';
 }
 
 export default function Header() {

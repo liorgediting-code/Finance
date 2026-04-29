@@ -73,6 +73,7 @@ export default function SettingsPage() {
   const addCustomCategory = useFinanceStore((s) => s.addCustomCategory);
   const deleteCustomCategory = useFinanceStore((s) => s.deleteCustomCategory);
   const loadDemoData = useFinanceStore((s) => s.loadDemoData);
+  const clearData = useFinanceStore((s) => s.clearData);
   const familyMembers = useFinanceStore((s) => s.familyMembers);
   const addFamilyMember = useFinanceStore((s) => s.addFamilyMember);
   const updateFamilyMember = useFinanceStore((s) => s.updateFamilyMember);
@@ -380,9 +381,9 @@ export default function SettingsPage() {
           מחק את כל הנתונים והתחל מחדש. לא ניתן לבטל פעולה זו.
         </p>
         <button
-          onClick={() => {
+          onClick={async () => {
             if (window.confirm('האם אתה בטוח? כל הנתונים יימחקו לצמיתות.')) {
-              localStorage.removeItem('finance-israel-store');
+              await clearData();
               window.location.reload();
             }
           }}
