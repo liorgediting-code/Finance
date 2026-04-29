@@ -19,6 +19,8 @@ import ActivityFeedPage from './components/modules/ActivityFeedPage'
 import CashflowPage from './components/modules/CashflowPage'
 import SalarySlipPage from './components/modules/SalarySlipPage'
 import CSVImporterPage from './components/modules/CSVImporterPage'
+import InsightsPage from './components/modules/InsightsPage'
+import FinancialCalendarPage from './components/modules/FinancialCalendarPage'
 
 export default function App() {
   return (
@@ -45,6 +47,8 @@ export default function App() {
               <Route path="/cashflow" element={<CashflowPage />} />
               <Route path="/salary-slip" element={<SalarySlipPage />} />
               <Route path="/csv-import" element={<CSVImporterPage />} />
+              <Route path="/insights" element={<InsightsPage />} />
+              <Route path="/calendar" element={<FinancialCalendarPage />} />
             </Routes>
           </AppShell>
         </AuthGuard>

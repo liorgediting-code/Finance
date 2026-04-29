@@ -42,7 +42,7 @@ interface CloudData {
   rolloverCategories: string[];
 }
 
-const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import'];
+const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import', 'insights', 'financial-calendar', 'net-worth', 'month-comparison'];
 
 const DEFAULT_DATA: CloudData = {
   settings: {
@@ -203,6 +203,7 @@ interface FinanceStore extends CloudData {
   // Settings actions
   updateSettings: (partial: Partial<AppSettings>) => void;
   toggleDashboardSection: (section: string) => void;
+  toggleModule: (moduleId: string) => void;
   addCustomCategory: (cat: Omit<CustomCategory, 'id'>) => void;
   deleteCustomCategory: (id: string) => void;
 
@@ -651,6 +652,17 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           ? hidden.filter((h) => h !== section)
           : [...hidden, section];
         return { settings: { ...s.settings, hiddenDashboardSections: next } };
+      });
+      sync();
+    },
+
+    toggleModule: (moduleId) => {
+      set((s) => {
+        const current = s.settings.enabledModules ?? ALL_MODULES;
+        const next = current.includes(moduleId)
+          ? current.filter((m) => m !== moduleId)
+          : [...current, moduleId];
+        return { settings: { ...s.settings, enabledModules: next } };
       });
       sync();
     },

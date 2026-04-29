@@ -190,6 +190,30 @@ function ActivityIcon() {
   );
 }
 
+function LightbulbIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <line x1="9" y1="18" x2="15" y2="18" />
+      <line x1="10" y1="22" x2="14" y2="22" />
+      <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+    </svg>
+  );
+}
+
+function CalendarDaysIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+      <circle cx="8" cy="15" r="1" fill="currentColor" />
+      <circle cx="12" cy="15" r="1" fill="currentColor" />
+      <circle cx="16" cy="15" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function Sidebar({ isOpen, onClose }: Props) {
   const profile = useAuthStore((s) => s.profile);
   const signOut = useAuthStore((s) => s.signOut);
@@ -388,6 +412,18 @@ export default function Sidebar({ isOpen, onClose }: Props) {
               יומן פעילות
             </NavLink>
             {/* Module-gated tools */}
+            {enabledModules.includes('insights') && (
+              <NavLink to="/insights" className={navLinkClass} onClick={onClose}>
+                <LightbulbIcon />
+                תובנות חכמות
+              </NavLink>
+            )}
+            {enabledModules.includes('financial-calendar') && (
+              <NavLink to="/calendar" className={navLinkClass} onClick={onClose}>
+                <CalendarDaysIcon />
+                לוח שנה פיננסי
+              </NavLink>
+            )}
             {enabledModules.includes('cashflow') && (
               <NavLink to="/cashflow" className={navLinkClass} onClick={onClose}>
                 <TrendingIcon />
