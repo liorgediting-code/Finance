@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { formatCurrency } from '../../utils/formatters';
-import type { SavingsFund } from '../../types';
+import type { SavingsFund, LifeGoal } from '../../types';
 
 // ── Colour palette for funds ──────────────────────────────────────────────────
 const FUND_COLORS = [
@@ -334,13 +335,101 @@ function FundCard({ fund, onEdit, onDelete, onDeposit }: FundCardProps) {
   );
 }
 
+// ── Life Goal Card (for monthly dashboard sync) ───────────────────────────────
+function LifeGoalCard({ goal, onDeposit }: { goal: LifeGoal; onDeposit: (amount: number) => void }) {
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [depositAmt, setDepositAmt] = useState('');
+
+  const pct = goal.targetAmount > 0 ? Math.min((goal.savedAmount / goal.targetAmount) * 100, 100) : 0;
+  const remaining = Math.max(goal.targetAmount - goal.savedAmount, 0);
+  const isDone = remaining <= 0;
+
+  const handleDeposit = () => {
+    const amt = parseFloat(depositAmt);
+    if (!amt || amt <= 0) return;
+    onDeposit(amt);
+    setDepositAmt('');
+    setDepositOpen(false);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden" dir="rtl">
+      <div className="h-1.5 w-full" style={{ backgroundColor: goal.color }} />
+      <div className="p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xl">{goal.emoji}</span>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-[#1E1E2E] leading-tight truncate">{goal.name}</h3>
+            {goal.monthlyContribution > 0 && (
+              <p className="text-xs text-[#9090A8]">{formatCurrency(goal.monthlyContribution)}/חודש</p>
+            )}
+          </div>
+          {isDone && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium flex-shrink-0">✓ הושג</span>}
+        </div>
+
+        <div className="mb-3">
+          <div className="flex justify-between text-xs text-[#9090A8] mb-1.5">
+            <span>{pct.toFixed(0)}% מהיעד</span>
+            <span>{isDone ? 'הושג!' : `נותר ${formatCurrency(remaining)}`}</span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: isDone ? '#6BBF6B' : goal.color }} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
+            <p className="text-xs text-[#9090A8]">נחסך</p>
+            <p className="text-sm font-bold text-[#1E1E2E]">{formatCurrency(goal.savedAmount)}</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg px-2.5 py-1.5">
+            <p className="text-xs text-[#9090A8]">יעד</p>
+            <p className="text-sm font-bold text-[#1E1E2E]">{formatCurrency(goal.targetAmount)}</p>
+          </div>
+        </div>
+
+        {!isDone && !depositOpen && (
+          <button
+            onClick={() => setDepositOpen(true)}
+            className="flex items-center gap-1.5 w-full justify-center bg-gray-50 hover:bg-lavender-light text-[#4A4A60] hover:text-[#5B52A0] rounded-lg px-4 py-2 text-sm font-medium transition-colors cursor-pointer border border-gray-200 hover:border-lavender"
+          >
+            <CoinsIcon />
+            הפקד סכום
+          </button>
+        )}
+
+        {depositOpen && (
+          <div className="flex gap-2">
+            <input
+              type="number"
+              autoFocus
+              placeholder="סכום (₪)"
+              value={depositAmt}
+              onChange={(e) => setDepositAmt(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleDeposit(); if (e.key === 'Escape') setDepositOpen(false); }}
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white"
+              min={1}
+            />
+            <button onClick={handleDeposit} className="bg-lavender-dark text-white rounded-lg px-3 py-2 text-sm font-medium cursor-pointer">הפקד</button>
+            <button onClick={() => { setDepositOpen(false); setDepositAmt(''); }} className="text-[#9090A8] px-2 py-2 rounded-lg hover:bg-gray-100 cursor-pointer text-sm">✕</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SavingsPage() {
+  const navigate = useNavigate();
   const savingsFunds = useFinanceStore((s) => s.savingsFunds);
   const addSavingsFund = useFinanceStore((s) => s.addSavingsFund);
   const updateSavingsFund = useFinanceStore((s) => s.updateSavingsFund);
   const deleteSavingsFund = useFinanceStore((s) => s.deleteSavingsFund);
   const depositToFund = useFinanceStore((s) => s.depositToFund);
+  const lifeGoals = useFinanceStore((s) => s.lifeGoals);
+  const depositToLifeGoal = useFinanceStore((s) => s.depositToLifeGoal);
+  const enabledModules = useFinanceStore((s) => s.settings.enabledModules ?? []);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -475,6 +564,33 @@ export default function SavingsPage() {
               />
             )
           ))}
+        </div>
+      )}
+
+      {/* ── Life Goals section (synced from life-goals module) ── */}
+      {enabledModules.includes('life-goals') && lifeGoals.length > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-[#1E1E2E]">מטרות חיים</h2>
+              <p className="text-xs text-[#9090A8]">סנכרון מ״מטרות חיים״ — הפקד ועדכן כאן</p>
+            </div>
+            <button
+              onClick={() => navigate('/life-goals')}
+              className="text-xs text-[#7B6DC8] hover:text-[#5B52A0] font-medium cursor-pointer"
+            >
+              ניהול מלא ←
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {lifeGoals.map((goal) => (
+              <LifeGoalCard
+                key={goal.id}
+                goal={goal}
+                onDeposit={(amt) => depositToLifeGoal(goal.id, amt)}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>

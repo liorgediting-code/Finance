@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useFinanceStore } from '../../store/useFinanceStore';
+import { useShallow } from 'zustand/react/shallow';
 import type { Board } from '../../types';
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -287,10 +288,66 @@ function BoardsSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ── ToolsSheet ────────────────────────────────────────────────────────────────
+
+const ALL_TOOLS: { module: string | null; label: string; route: string; emoji: string }[] = [
+  { module: null,                label: 'חיפוש עסקאות',    route: '/search',            emoji: '🔍' },
+  { module: null,                label: 'יומן פעילות',      route: '/activity',          emoji: '📋' },
+  { module: 'life-goals',        label: 'מטרות חיים',       route: '/life-goals',        emoji: '🎯' },
+  { module: 'cashflow',          label: 'תחזית תזרים',      route: '/cashflow',          emoji: '💧' },
+  { module: 'installments',      label: 'תשלומים',          route: '/installments',      emoji: '💳' },
+  { module: 'mortgage',          label: 'משכנתא',           route: '/mortgage',          emoji: '🏠' },
+  { module: 'savings-vehicles',  label: 'חסכונות ופנסיה',   route: '/savings-vehicles',  emoji: '🐖' },
+  { module: 'debt-planner',      label: 'תכנון חובות',      route: '/debt-planner',      emoji: '🏦' },
+  { module: 'chag-budget',       label: 'תקציב חגים',       route: '/chag-budget',       emoji: '🎉' },
+  { module: 'annual-planner',    label: 'מתכנן שנתי',       route: '/annual-planner',    emoji: '📅' },
+  { module: 'salary-slip',       label: 'ניתוח תלוש',       route: '/salary-slip',       emoji: '💰' },
+  { module: 'csv-import',        label: 'ייבוא CSV',        route: '/csv-import',        emoji: '📤' },
+];
+
+function ToolsSheet({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
+  const enabledModules = useFinanceStore(useShallow((s) => s.settings.enabledModules ?? []));
+
+  const visibleTools = ALL_TOOLS.filter(
+    (t) => t.module === null || enabledModules.includes(t.module)
+  );
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]" onClick={onClose} />
+      <div
+        className="fixed bottom-0 inset-x-0 z-50 bg-white rounded-t-2xl shadow-xl"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 4rem)' }}
+      >
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
+          <h3 className="text-base font-bold text-[#1E1E2E]">כלים</h3>
+          <button onClick={onClose} className="text-[#9090A8] text-xs px-2 py-1 rounded-lg active:bg-gray-100 cursor-pointer">
+            סגור
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2 px-4 py-4 max-h-72 overflow-y-auto">
+          {visibleTools.map((tool) => (
+            <button
+              key={tool.route}
+              onClick={() => { navigate(tool.route); onClose(); }}
+              className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-gray-50 active:bg-lavender-light cursor-pointer transition-colors"
+            >
+              <span className="text-2xl">{tool.emoji}</span>
+              <span className="text-xs text-[#1E1E2E] font-medium text-center leading-tight">{tool.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ── BottomNav ─────────────────────────────────────────────────────────────────
 
 export default function BottomNav() {
   const [showBoards, setShowBoards] = useState(false);
+  const [showTools, setShowTools] = useState(false);
   const { pathname } = useLocation();
   const activeBoardId = useFinanceStore((s) => s.activeBoardId);
   const extraBoards = useFinanceStore((s) => s.extraBoards);
@@ -306,6 +363,7 @@ export default function BottomNav() {
   return (
     <>
       {showBoards && <BoardsSheet onClose={() => setShowBoards(false)} />}
+      {showTools && <ToolsSheet onClose={() => setShowTools(false)} />}
 
       <nav
         aria-label="ניווט ראשי"
@@ -390,31 +448,29 @@ export default function BottomNav() {
           </button>
 
           {/* Tools tab */}
-          <NavLink
-            to="/life-goals"
-            className={base}
-          >
-            {({ isActive }) => {
-              const toolRoutes = ['/life-goals', '/debt-planner', '/mortgage', '/installments', '/savings-vehicles', '/chag-budget', '/annual-planner', '/salary-slip', '/csv-import', '/cashflow', '/search', '/activity'];
-              const toolActive = toolRoutes.some((r) => pathname === r) || isActive;
-              return (
-                <>
-                  <span
-                    className="flex items-center justify-center w-8 h-8 rounded-xl transition-colors duration-150"
-                    style={toolActive ? { backgroundColor: PERSONAL_COLOR + '20', color: PERSONAL_COLOR } : { color: '#9090A8' }}
-                  >
-                    <ToolsIcon />
-                  </span>
-                  <span
-                    className={toolActive ? 'font-semibold' : ''}
-                    style={{ color: toolActive ? PERSONAL_COLOR : '#9090A8' }}
-                  >
-                    כלים
-                  </span>
-                </>
-              );
-            }}
-          </NavLink>
+          {(() => {
+            const toolRoutes = ['/life-goals', '/debt-planner', '/mortgage', '/installments', '/savings-vehicles', '/chag-budget', '/annual-planner', '/salary-slip', '/csv-import', '/cashflow', '/search', '/activity'];
+            const toolActive = showTools || toolRoutes.some((r) => pathname === r);
+            return (
+              <button
+                onClick={() => setShowTools(true)}
+                className={`${base} cursor-pointer`}
+              >
+                <span
+                  className="flex items-center justify-center w-8 h-8 rounded-xl transition-colors duration-150"
+                  style={toolActive ? { backgroundColor: PERSONAL_COLOR + '20', color: PERSONAL_COLOR } : { color: '#9090A8' }}
+                >
+                  <ToolsIcon />
+                </span>
+                <span
+                  className={toolActive ? 'font-semibold' : ''}
+                  style={{ color: toolActive ? PERSONAL_COLOR : '#9090A8' }}
+                >
+                  כלים
+                </span>
+              </button>
+            );
+          })()}
 
           {/* Settings tab */}
           <NavLink
