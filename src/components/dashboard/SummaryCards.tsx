@@ -1,4 +1,4 @@
-import { useFinanceStore } from '../../store/useFinanceStore';
+import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { sumAmounts, calcRemaining, calcSavingsPercent } from '../../utils/calculations';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
 
@@ -15,11 +15,11 @@ interface CardData {
 }
 
 export default function SummaryCards({ monthIndex }: SummaryCardsProps) {
-  const months = useFinanceStore((s) => s.months);
+  const { months, recurringIncomes, recurringExpenses } = useActiveBoardData();
   const monthData = months[monthIndex];
 
-  const totalIncome = monthData ? sumAmounts(monthData.income) : 0;
-  const totalExpenses = monthData ? sumAmounts(monthData.expenses) : 0;
+  const totalIncome = (monthData ? sumAmounts(monthData.income) : 0) + sumAmounts(recurringIncomes);
+  const totalExpenses = (monthData ? sumAmounts(monthData.expenses) : 0) + sumAmounts(recurringExpenses);
   const remaining = calcRemaining(totalIncome, totalExpenses);
   const savings = remaining > 0 ? remaining : 0;
   const savingsPercent = calcSavingsPercent(savings, totalIncome);

@@ -401,17 +401,31 @@ function SplitPanel({ entry, onSave, onClose }: SplitPanelProps) {
 export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const { months, recurringExpenses } = useActiveBoardData();
   const monthData = months[monthIndex];
-  const deleteRecurringExpense = useFinanceStore((s) => s.deleteRecurringExpense);
-  const updateExpense = useFinanceStore((s) => s.updateExpense);
-  const updateRecurringExpense = useFinanceStore((s) => s.updateRecurringExpense);
-  const deleteExpense = useFinanceStore((s) => s.deleteExpense);
-  const addExpense = useFinanceStore((s) => s.addExpense);
-  const splitExpense = useFinanceStore((s) => s.splitExpense);
-  const setBudget = useFinanceStore((s) => s.setBudget);
-  const familyMembers = useFinanceStore((s) => s.familyMembers);
-  const rolloverCategories = useFinanceStore((s) => s.rolloverCategories);
-  const getRolledBudget = useFinanceStore((s) => s.getRolledBudget);
-  const toggleRolloverCategory = useFinanceStore((s) => s.toggleRolloverCategory);
+  const {
+    deleteRecurringExpense,
+    updateExpense,
+    updateRecurringExpense,
+    deleteExpense,
+    addExpense,
+    splitExpense,
+    setBudget,
+    familyMembers,
+    rolloverCategories,
+    getRolledBudget,
+    toggleRolloverCategory,
+  } = useFinanceStore(useShallow((s) => ({
+    deleteRecurringExpense: s.deleteRecurringExpense,
+    updateExpense: s.updateExpense,
+    updateRecurringExpense: s.updateRecurringExpense,
+    deleteExpense: s.deleteExpense,
+    addExpense: s.addExpense,
+    splitExpense: s.splitExpense,
+    setBudget: s.setBudget,
+    familyMembers: s.familyMembers,
+    rolloverCategories: s.rolloverCategories,
+    getRolledBudget: s.getRolledBudget,
+    toggleRolloverCategory: s.toggleRolloverCategory,
+  })));
 
   const budget = monthData?.budget ?? {};
   const monthExpenses = monthData?.expenses ?? [];

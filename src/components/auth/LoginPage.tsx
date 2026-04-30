@@ -17,7 +17,13 @@ export default function LoginPage() {
     const err = await signIn(email, password);
     setLoading(false);
     if (err) {
-      setError('אימייל או סיסמה שגויים');
+      if (err.includes('rate limit') || err.includes('too many')) {
+        setError('יותר מדי ניסיונות כניסה — המתן מספר דקות ונסה שוב');
+      } else if (err.includes('Email not confirmed')) {
+        setError('נדרש אימות אימייל לפני הכניסה');
+      } else {
+        setError('אימייל או סיסמה שגויים');
+      }
     } else {
       navigate('/');
     }

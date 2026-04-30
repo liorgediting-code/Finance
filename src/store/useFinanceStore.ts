@@ -77,7 +77,10 @@ function scheduleSync(getUserId: () => string | null, getState: () => CloudData)
     const userId = getUserId();
     if (!userId) return;
     const data = getState();
-    await supabase.from('user_data').upsert({ user_id: userId, data, updated_at: new Date().toISOString() });
+    const { error } = await supabase.from('user_data').upsert({ user_id: userId, data, updated_at: new Date().toISOString() });
+    if (error) {
+      console.error('[Finance] Cloud sync failed:', error.message);
+    }
   }, 1000);
 }
 
@@ -344,7 +347,12 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
 
     loadFromCloud: async (userId) => {
       set({ _userId: userId });
-      const { data } = await supabase.from('user_data').select('data').eq('user_id', userId).single();
+      const { data, error } = await supabase.from('user_data').select('data').eq('user_id', userId).single();
+      // PGRST116 means "no rows found" — normal for first-time users, not an error
+      if (error && error.code !== 'PGRST116') {
+        console.error('[Finance] Failed to load cloud data:', error.message);
+        return;
+      }
       if (data?.data) {
         const d = data.data as Partial<CloudData>;
         // Merge any newly-added modules into the saved enabledModules list
@@ -943,7 +951,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
             budget: { home: 7000, food: 3000 },
           },
         },
-        settings: { year: 2026, savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 } },
+        settings: { ...DEFAULT_DATA.settings, year: 2026, savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 } },
         savingsFunds: [
           { id: uuidv4(), name: 'חופשה לאירופה', targetAmount: 15000, savedAmount: 4500, color: '#B8CCE0', notes: 'קיץ 2027' },
           { id: uuidv4(), name: 'קרן חירום', targetAmount: 30000, savedAmount: 12000, color: '#C5CDB6', notes: '3 משכורות' },

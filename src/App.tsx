@@ -1,28 +1,41 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import AppShell from './components/layout/AppShell'
-import MonthDashboard from './components/dashboard/MonthDashboard'
-import OverviewDashboard from './pages/OverviewDashboard'
-import SettingsPage from './components/settings/SettingsPage'
 import AuthGuard from './components/auth/AuthGuard'
+
+// Auth pages are small and always needed — kept eager
 import LoginPage from './components/auth/LoginPage'
 import SignupPage from './components/auth/SignupPage'
 import ForgotPasswordPage from './components/auth/ForgotPasswordPage'
 import ResetPasswordPage from './components/auth/ResetPasswordPage'
-import AdminPage from './components/admin/AdminPage'
-import TransactionSearchPage from './components/search/TransactionSearchPage'
-import InstallmentsPage from './components/modules/InstallmentsPage'
-import MortgagePage from './components/modules/MortgagePage'
-import SavingsVehiclesPage from './components/modules/SavingsVehiclesPage'
-import DebtPlannerPage from './components/modules/DebtPlannerPage'
-import LifeGoalsPage from './components/modules/LifeGoalsPage'
-import ChagBudgetPage from './components/modules/ChagBudgetPage'
-import ChagimPlannerPage from './components/modules/ChagimPlannerPage'
-import ActivityFeedPage from './components/modules/ActivityFeedPage'
-import CashflowPage from './components/modules/CashflowPage'
-import SalarySlipPage from './components/modules/SalarySlipPage'
-import CSVImporterPage from './components/modules/CSVImporterPage'
-import InsightsPage from './components/modules/InsightsPage'
-import FinancialCalendarPage from './components/modules/FinancialCalendarPage'
+
+// All app pages are code-split to reduce initial bundle size
+const MonthDashboard = lazy(() => import('./components/dashboard/MonthDashboard'))
+const OverviewDashboard = lazy(() => import('./pages/OverviewDashboard'))
+const SettingsPage = lazy(() => import('./components/settings/SettingsPage'))
+const AdminPage = lazy(() => import('./components/admin/AdminPage'))
+const TransactionSearchPage = lazy(() => import('./components/search/TransactionSearchPage'))
+const InstallmentsPage = lazy(() => import('./components/modules/InstallmentsPage'))
+const MortgagePage = lazy(() => import('./components/modules/MortgagePage'))
+const SavingsVehiclesPage = lazy(() => import('./components/modules/SavingsVehiclesPage'))
+const DebtPlannerPage = lazy(() => import('./components/modules/DebtPlannerPage'))
+const LifeGoalsPage = lazy(() => import('./components/modules/LifeGoalsPage'))
+const ChagBudgetPage = lazy(() => import('./components/modules/ChagBudgetPage'))
+const ChagimPlannerPage = lazy(() => import('./components/modules/ChagimPlannerPage'))
+const ActivityFeedPage = lazy(() => import('./components/modules/ActivityFeedPage'))
+const CashflowPage = lazy(() => import('./components/modules/CashflowPage'))
+const SalarySlipPage = lazy(() => import('./components/modules/SalarySlipPage'))
+const CSVImporterPage = lazy(() => import('./components/modules/CSVImporterPage'))
+const InsightsPage = lazy(() => import('./components/modules/InsightsPage'))
+const FinancialCalendarPage = lazy(() => import('./components/modules/FinancialCalendarPage'))
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="w-8 h-8 border-4 border-lavender border-t-lavender-dark rounded-full animate-spin" />
+    </div>
+  )
+}
 
 export default function App() {
   return (
@@ -34,26 +47,28 @@ export default function App() {
       <Route path="/*" element={
         <AuthGuard>
           <AppShell>
-            <Routes>
-              <Route path="/" element={<OverviewDashboard />} />
-              <Route path="/month" element={<MonthDashboard />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="/search" element={<TransactionSearchPage />} />
-              <Route path="/installments" element={<InstallmentsPage />} />
-              <Route path="/mortgage" element={<MortgagePage />} />
-              <Route path="/savings-vehicles" element={<SavingsVehiclesPage />} />
-              <Route path="/debt-planner" element={<DebtPlannerPage />} />
-              <Route path="/life-goals" element={<LifeGoalsPage />} />
-              <Route path="/chag-budget" element={<ChagBudgetPage />} />
-              <Route path="/annual-planner" element={<ChagimPlannerPage />} />
-              <Route path="/activity" element={<ActivityFeedPage />} />
-              <Route path="/cashflow" element={<CashflowPage />} />
-              <Route path="/salary-slip" element={<SalarySlipPage />} />
-              <Route path="/csv-import" element={<CSVImporterPage />} />
-              <Route path="/insights" element={<InsightsPage />} />
-              <Route path="/calendar" element={<FinancialCalendarPage />} />
-            </Routes>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<OverviewDashboard />} />
+                <Route path="/month" element={<MonthDashboard />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/search" element={<TransactionSearchPage />} />
+                <Route path="/installments" element={<InstallmentsPage />} />
+                <Route path="/mortgage" element={<MortgagePage />} />
+                <Route path="/savings-vehicles" element={<SavingsVehiclesPage />} />
+                <Route path="/debt-planner" element={<DebtPlannerPage />} />
+                <Route path="/life-goals" element={<LifeGoalsPage />} />
+                <Route path="/chag-budget" element={<ChagBudgetPage />} />
+                <Route path="/annual-planner" element={<ChagimPlannerPage />} />
+                <Route path="/activity" element={<ActivityFeedPage />} />
+                <Route path="/cashflow" element={<CashflowPage />} />
+                <Route path="/salary-slip" element={<SalarySlipPage />} />
+                <Route path="/csv-import" element={<CSVImporterPage />} />
+                <Route path="/insights" element={<InsightsPage />} />
+                <Route path="/calendar" element={<FinancialCalendarPage />} />
+              </Routes>
+            </Suspense>
           </AppShell>
         </AuthGuard>
       } />

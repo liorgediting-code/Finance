@@ -215,17 +215,21 @@ function CalendarDaysIcon() {
 }
 
 export default function Sidebar({ isOpen, onClose }: Props) {
-  const profile = useAuthStore((s) => s.profile);
-  const signOut = useAuthStore((s) => s.signOut);
-  const user = useAuthStore((s) => s.user);
+  const { profile, signOut, user } = useAuthStore(useShallow((s) => ({
+    profile: s.profile,
+    signOut: s.signOut,
+    user: s.user,
+  })));
 
-  const activeBoardId = useFinanceStore((s) => s.activeBoardId);
-  const extraBoards = useFinanceStore(useShallow((s) => s.extraBoards));
-  const setActiveBoard = useFinanceStore((s) => s.setActiveBoard);
-  const addBoard = useFinanceStore((s) => s.addBoard);
-  const renameBoard = useFinanceStore((s) => s.renameBoard);
-  const deleteBoard = useFinanceStore((s) => s.deleteBoard);
-  const enabledModules = useFinanceStore(useShallow((s) => s.settings.enabledModules ?? []));
+  const { activeBoardId, extraBoards, setActiveBoard, addBoard, renameBoard, deleteBoard, enabledModules } = useFinanceStore(useShallow((s) => ({
+    activeBoardId: s.activeBoardId,
+    extraBoards: s.extraBoards,
+    setActiveBoard: s.setActiveBoard,
+    addBoard: s.addBoard,
+    renameBoard: s.renameBoard,
+    deleteBoard: s.deleteBoard,
+    enabledModules: s.settings.enabledModules ?? [],
+  })));
 
   const [newBoardName, setNewBoardName] = useState('');
   const [showAddBoard, setShowAddBoard] = useState(false);

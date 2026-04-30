@@ -22,8 +22,17 @@ export default function SignupPage() {
     const err = await signUp(email, password, fullName.trim());
     setLoading(false);
     if (err) {
-      if (err.includes('already registered')) setError('אימייל זה כבר רשום במערכת');
-      else setError('שגיאה בהרשמה — נסה שוב');
+      if (err.includes('already registered') || err.includes('User already registered')) {
+        setError('אימייל זה כבר רשום במערכת');
+      } else if (err.includes('rate limit') || err.includes('too many') || err.includes('over_email_send_rate_limit')) {
+        setError('יותר מדי ניסיונות — המתן מספר דקות ונסה שוב');
+      } else if (err.includes('Password should be') || err.includes('password')) {
+        setError('הסיסמה חלשה מדי — בחר סיסמה חזקה יותר');
+      } else if (err.includes('invalid') && err.includes('email')) {
+        setError('כתובת האימייל אינה תקינה');
+      } else {
+        setError('שגיאה בהרשמה — בדוק את הפרטים ונסה שוב');
+      }
     } else {
       setDone(true);
     }
