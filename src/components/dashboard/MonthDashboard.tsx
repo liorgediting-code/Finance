@@ -16,6 +16,7 @@ import SavingsPage from '../savings/SavingsPage';
 import AnnualSummary from './AnnualSummary';
 import OverallDashboard from './OverallDashboard';
 import MonthComparison from '../month/MonthComparison';
+import SpendingPaceCard from '../month/SpendingPaceCard';
 
 function ChevronLeftIcon() {
   return (
@@ -218,6 +219,13 @@ export default function MonthDashboard() {
         <>
           {/* ── Summary Cards ── */}
           {visible('summary') && <MonthSummary monthIndex={monthIndex} />}
+
+          {/* ── Spending Pace ── */}
+          {enabledModules.includes('spending-pace') && (
+            <div className="mb-2">
+              <SpendingPaceCard monthIndex={monthIndex} />
+            </div>
+          )}
 
           {/* ── Expenses ── */}
           {visible('expenses') && (

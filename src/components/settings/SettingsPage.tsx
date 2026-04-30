@@ -3,6 +3,7 @@ import { useFinanceStore } from '../../store/useFinanceStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { formatCurrency } from '../../utils/formatters';
 import { CATEGORIES } from '../../config/categories';
+import BudgetTemplates from './BudgetTemplates';
 
 function SettingsSection({
   title,
@@ -67,6 +68,11 @@ const DASHBOARD_SECTIONS = [
 const COLOR_PRESETS = ['#7B6DC8', '#4A90C0', '#5A9A42', '#E06060', '#C89E50', '#4AACAC', '#C85590', '#A0A0B0', '#E06090', '#6090E0'];
 
 const ALL_TOGGLEABLE_MODULES: Array<{ id: string; label: string; desc: string }> = [
+  { id: 'spending-pace', label: 'קצב הוצאות', desc: 'תחזית הוצאות עד סוף החודש על בסיס הקצב הנוכחי' },
+  { id: 'budget-templates', label: 'תבניות תקציב', desc: 'טעינת תקציב מוכן מראש לפי סוג משפחה' },
+  { id: 'savings-challenge', label: 'אתגר חיסכון', desc: 'אתגר 52 שבועות עם חיסכון הולך וגדל' },
+  { id: 'year-review', label: 'סיכום שנתי', desc: 'מבט שנתי מלא עם גרפים, הישגים ומגמות' },
+  { id: 'achievements', label: 'הישגים', desc: 'מעקב אחר אבני הדרך הפיננסיים שלך' },
   { id: 'insights', label: 'תובנות חכמות', desc: 'ניתוח אוטומטי של ההתנהגות הפיננסית שלך' },
   { id: 'financial-calendar', label: 'לוח שנה פיננסי', desc: 'לוח שנה ויזואלי של הוצאות קבועות ותשלומים' },
   { id: 'net-worth', label: 'שווי נטו', desc: 'כרטיס מבט-על המציג נכסים מול התחייבויות' },
@@ -103,6 +109,9 @@ export default function SettingsPage() {
   const hiddenSections = settings.hiddenDashboardSections ?? [];
   const customCategories = settings.customCategories ?? [];
   const enabledModules = settings.enabledModules ?? ALL_TOGGLEABLE_MODULES.map((m) => m.id);
+
+  const today = new Date();
+  const currentMonthIndex = today.getMonth();
 
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -285,6 +294,13 @@ export default function SettingsPage() {
           </p>
         )}
       </SettingsSection>
+
+      {/* Budget Templates */}
+      {enabledModules.includes('budget-templates') && (
+        <SettingsSection title="תבניות תקציב" accentColor="#C5CDB6">
+          <BudgetTemplates monthIndex={currentMonthIndex} />
+        </SettingsSection>
+      )}
 
       {/* Dashboard Customization (#29) */}
       <SettingsSection title="התאמת לוח הבקרה" accentColor="#7B6DC8">

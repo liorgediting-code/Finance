@@ -23,6 +23,9 @@ import SalarySlipPage from './components/modules/SalarySlipPage'
 import CSVImporterPage from './components/modules/CSVImporterPage'
 import InsightsPage from './components/modules/InsightsPage'
 import FinancialCalendarPage from './components/modules/FinancialCalendarPage'
+import SavingsChallengePage from './components/modules/SavingsChallengePage'
+import YearInReviewPage from './components/modules/YearInReviewPage'
+import AchievementsPage from './components/modules/AchievementsPage'
 
 export default function App() {
   return (
@@ -53,6 +56,9 @@ export default function App() {
               <Route path="/csv-import" element={<CSVImporterPage />} />
               <Route path="/insights" element={<InsightsPage />} />
               <Route path="/calendar" element={<FinancialCalendarPage />} />
+              <Route path="/savings-challenge" element={<SavingsChallengePage />} />
+              <Route path="/year-review" element={<YearInReviewPage />} />
+              <Route path="/achievements" element={<AchievementsPage />} />
             </Routes>
           </AppShell>
         </AuthGuard>

@@ -19,6 +19,7 @@ import type {
   ChagBudget,
   ActivityEntry,
   CustomCategory,
+  SavingsChallenge,
 } from '../types';
 
 // ── Cloud-synced fields ───────────────────────────────────────────────────────
@@ -40,9 +41,11 @@ interface CloudData {
   activityLog: ActivityEntry[];
   // Rollover settings (#19)
   rolloverCategories: string[];
+  // Savings Challenges
+  savingsChallenges: SavingsChallenge[];
 }
 
-const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import', 'insights', 'financial-calendar', 'net-worth', 'month-comparison'];
+const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import', 'insights', 'financial-calendar', 'net-worth', 'month-comparison', 'spending-pace', 'budget-templates', 'savings-challenge', 'year-review', 'achievements'];
 
 const DEFAULT_DATA: CloudData = {
   settings: {
@@ -66,6 +69,7 @@ const DEFAULT_DATA: CloudData = {
   chagBudgets: [],
   activityLog: [],
   rolloverCategories: [],
+  savingsChallenges: [],
 };
 
 // ── Debounced save ────────────────────────────────────────────────────────────
@@ -258,6 +262,12 @@ interface FinanceStore extends CloudData {
   updateChagBudget: (id: string, partial: Partial<Omit<ChagBudget, 'id'>>) => void;
   deleteChagBudget: (id: string) => void;
 
+  // Savings Challenges
+  addSavingsChallenge: (challenge: Omit<SavingsChallenge, 'id'>) => void;
+  updateSavingsChallenge: (id: string, partial: Partial<Omit<SavingsChallenge, 'id'>>) => void;
+  deleteSavingsChallenge: (id: string) => void;
+  toggleChallengeWeek: (id: string, weekNumber: number) => void;
+
   // Demo data
   loadDemoData: () => void;
 
@@ -291,6 +301,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         chagBudgets: s.chagBudgets,
         activityLog: s.activityLog,
         rolloverCategories: s.rolloverCategories,
+        savingsChallenges: s.savingsChallenges,
       };
     }
   );
@@ -366,6 +377,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           chagBudgets: d.chagBudgets ?? [],
           activityLog: d.activityLog ?? [],
           rolloverCategories: d.rolloverCategories ?? [],
+          savingsChallenges: d.savingsChallenges ?? [],
         });
       }
     },
@@ -381,6 +393,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         savingsVehicles: s.savingsVehicles, debts: s.debts,
         lifeGoals: s.lifeGoals, chagBudgets: s.chagBudgets,
         activityLog: s.activityLog, rolloverCategories: s.rolloverCategories,
+        savingsChallenges: s.savingsChallenges,
       };
       await supabase.from('user_data').upsert({ user_id: s._userId, data, updated_at: new Date().toISOString() });
     },
@@ -908,6 +921,23 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     addChagBudget: (budget) => { set((s) => ({ chagBudgets: [...s.chagBudgets, { ...budget, id: uuidv4() }] })); sync(); },
     updateChagBudget: (id, partial) => { set((s) => ({ chagBudgets: s.chagBudgets.map((b) => b.id === id ? { ...b, ...partial } : b) })); sync(); },
     deleteChagBudget: (id) => { set((s) => ({ chagBudgets: s.chagBudgets.filter((b) => b.id !== id) })); sync(); },
+
+    // ── Savings Challenges ──────────────────────────────────────────────────
+    addSavingsChallenge: (challenge) => { set((s) => ({ savingsChallenges: [...s.savingsChallenges, { ...challenge, id: uuidv4() }] })); sync(); },
+    updateSavingsChallenge: (id, partial) => { set((s) => ({ savingsChallenges: s.savingsChallenges.map((c) => c.id === id ? { ...c, ...partial } : c) })); sync(); },
+    deleteSavingsChallenge: (id) => { set((s) => ({ savingsChallenges: s.savingsChallenges.filter((c) => c.id !== id) })); sync(); },
+    toggleChallengeWeek: (id, weekNumber) => {
+      set((s) => ({
+        savingsChallenges: s.savingsChallenges.map((c) => {
+          if (c.id !== id) return c;
+          const done = c.completedWeeks.includes(weekNumber)
+            ? c.completedWeeks.filter((w) => w !== weekNumber)
+            : [...c.completedWeeks, weekNumber];
+          return { ...c, completedWeeks: done };
+        }),
+      }));
+      sync();
+    },
 
     resetStore: () => {
       if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
