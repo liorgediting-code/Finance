@@ -43,8 +43,9 @@ export function generateInsights(input: InsightInput): Insight[] {
 
   const insights: Insight[] = [];
   const currentMd = months[currentMonth];
-  const prevMonthIdx = (currentMonth - 1 + 12) % 12;
-  const prevMd = months[prevMonthIdx];
+  // Only look at the previous month within the same year (no wrap-around to December)
+  const prevMonthIdx = currentMonth > 0 ? currentMonth - 1 : null;
+  const prevMd = prevMonthIdx !== null ? months[prevMonthIdx] : undefined;
 
   const recurringIncome = recurringIncomes.reduce((s, e) => s + e.amount, 0);
   const recurringExpense = recurringExpenses.reduce((s, e) => s + e.amount, 0);

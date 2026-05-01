@@ -896,7 +896,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                               </tr>
                               {splittingId === entry.id && (
                                 <tr>
-                                  <td colSpan={5} className="px-0 py-0">
+                                  <td colSpan={7} className="px-0 py-0">
                                     <SplitPanel
                                       entry={entry}
                                       monthIndex={monthIndex}

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
@@ -48,10 +49,21 @@ export default function HealthScoreHero() {
   const currentMonthName = MONTH_NAMES[now.getMonth()];
   const year = now.getFullYear();
 
-  const result = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds });
-  const prevMonth = (now.getMonth() - 1 + 12) % 12;
-  const prevResult = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds, currentMonthOverride: prevMonth });
-  const delta = result.score - prevResult.score;
+  const result = useMemo(
+    () => computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds }),
+    [months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds]
+  );
+
+  // Only compute previous-month delta when there's a prior month in the same year
+  const prevMonthIdx = now.getMonth() > 0 ? now.getMonth() - 1 : null;
+  const prevResult = useMemo(
+    () => prevMonthIdx !== null
+      ? computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds, currentMonthOverride: prevMonthIdx })
+      : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds, prevMonthIdx]
+  );
+  const delta = prevResult !== null ? result.score - prevResult.score : 0;
 
   const scoreColor = result.score >= 70 ? 'text-sage-dark' : result.score >= 40 ? 'text-almond-dark' : 'text-blush-dark';
 

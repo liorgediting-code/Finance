@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
@@ -24,45 +25,62 @@ export default function OverviewKPIRow() {
   const currentMonth = new Date().getMonth();
   const md = months[currentMonth];
 
-  const recurringIncome = recurringIncomes.reduce((s, e) => s + e.amount, 0);
-  const recurringExpense = recurringExpenses.reduce((s, e) => s + e.amount, 0);
+  const recurringIncome = useMemo(
+    () => recurringIncomes.reduce((s, e) => s + e.amount, 0),
+    [recurringIncomes]
+  );
+  const recurringExpense = useMemo(
+    () => recurringExpenses.reduce((s, e) => s + e.amount, 0),
+    [recurringExpenses]
+  );
+
   const monthlyIncome = recurringIncome + (md?.income ?? []).reduce((s, e) => s + e.amount, 0);
   const monthlyExpense = recurringExpense + (md?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
   const net = monthlyIncome - monthlyExpense;
   const savingsRate = monthlyIncome > 0 ? Math.round((net / monthlyIncome) * 100) : 0;
 
-  const totalDebt =
-    mortgages.flatMap((m) => m.tracks).reduce((s, t) => s + t.balance, 0) +
-    debts.reduce((s, d) => s + d.balance, 0);
+  const totalDebt = useMemo(
+    () =>
+      mortgages.flatMap((m) => m.tracks).reduce((s, t) => s + t.balance, 0) +
+      debts.reduce((s, d) => s + d.balance, 0),
+    [mortgages, debts]
+  );
 
-  // 3-month average for trend
-  const prevMonths = [1, 2, 3].map((offset) => {
-    const idx = ((currentMonth - offset) + 12) % 12;
-    const prev = months[idx];
-    return recurringIncome + (prev?.income ?? []).reduce((s, e) => s + e.amount, 0);
-  });
+  // 3-month average for trend — only use months within the same year (no wrap-around)
+  const { incomeTrend, expenseTrend } = useMemo(() => {
+    const validOffsets = [1, 2, 3].filter((offset) => currentMonth - offset >= 0);
 
-  // Count prior months with actual entries (not just recurring)
-  const prevMonthsWithData = [1, 2, 3].filter((offset) => {
-    const idx = ((currentMonth - offset) + 12) % 12;
-    const prev = months[idx];
-    return (prev?.income?.length ?? 0) > 0 || (prev?.expenses?.length ?? 0) > 0;
-  }).length;
+    const prevIncomeSums = validOffsets.map((offset) => {
+      const prev = months[currentMonth - offset];
+      return recurringIncome + (prev?.income ?? []).reduce((s, e) => s + e.amount, 0);
+    });
 
-  const avgIncome = prevMonths.reduce((s, v) => s + v, 0) / 3;
-  const incomeTrend = prevMonthsWithData >= 2 && avgIncome > 0
-    ? Math.round(((monthlyIncome - avgIncome) / avgIncome) * 100)
-    : null;
+    const prevMonthsWithData = validOffsets.filter((offset) => {
+      const prev = months[currentMonth - offset];
+      return (prev?.income?.length ?? 0) > 0 || (prev?.expenses?.length ?? 0) > 0;
+    }).length;
 
-  const prevExpenses = [1, 2, 3].map((offset) => {
-    const idx = ((currentMonth - offset) + 12) % 12;
-    const prev = months[idx];
-    return recurringExpense + (prev?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
-  });
-  const avgExpense = prevExpenses.reduce((s, v) => s + v, 0) / 3;
-  const expenseTrend = prevMonthsWithData >= 2 && avgExpense > 0
-    ? Math.round(((monthlyExpense - avgExpense) / avgExpense) * 100)
-    : null;
+    const avgInc = prevIncomeSums.length > 0
+      ? prevIncomeSums.reduce((s, v) => s + v, 0) / prevIncomeSums.length
+      : 0;
+
+    const prevExpenseSums = validOffsets.map((offset) => {
+      const prev = months[currentMonth - offset];
+      return recurringExpense + (prev?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
+    });
+    const avgExp = prevExpenseSums.length > 0
+      ? prevExpenseSums.reduce((s, v) => s + v, 0) / prevExpenseSums.length
+      : 0;
+
+    return {
+      incomeTrend: prevMonthsWithData >= 2 && avgInc > 0
+        ? Math.round(((monthlyIncome - avgInc) / avgInc) * 100)
+        : null,
+      expenseTrend: prevMonthsWithData >= 2 && avgExp > 0
+        ? Math.round(((monthlyExpense - avgExp) / avgExp) * 100)
+        : null,
+    };
+  }, [months, recurringIncome, recurringExpense, currentMonth, monthlyIncome, monthlyExpense]);
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

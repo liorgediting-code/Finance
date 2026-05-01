@@ -30,20 +30,21 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
   const expenseEntries = monthData?.expenses ?? [];
 
   const totalIncome = sumAmounts(incomeEntries) + sumAmounts(recurringIncomes);
-  const totalExpenses = sumAmounts(expenseEntries) + sumAmounts(recurringExpenses);
-  const remaining = calcRemaining(totalIncome, totalExpenses);
 
-  // Pending transactions
+  // Split confirmed vs pending so remaining/savings reflect only charged expenses
   const pendingExpenses = expenseEntries.filter((e) => e.isPending);
   const pendingTotal = sumAmounts(pendingExpenses);
   const confirmedExpenses = expenseEntries.filter((e) => !e.isPending);
   const confirmedTotal = sumAmounts(confirmedExpenses) + sumAmounts(recurringExpenses);
 
+  const remaining = calcRemaining(totalIncome, confirmedTotal);
   const overspending = confirmedTotal > totalIncome && totalIncome > 0;
 
-  // vs last month
+  // vs last month (use confirmed expenses only for consistency)
   const prevIncome = prevMonthData ? sumAmounts(prevMonthData.income) + sumAmounts(recurringIncomes) : 0;
-  const prevExpenses = prevMonthData ? sumAmounts(prevMonthData.expenses) + sumAmounts(recurringExpenses) : 0;
+  const prevExpenses = prevMonthData
+    ? sumAmounts(prevMonthData.expenses.filter((e) => !e.isPending)) + sumAmounts(recurringExpenses)
+    : 0;
 
   const savingsPercent = totalIncome > 0 && remaining > 0
     ? Math.round((remaining / totalIncome) * 100)
