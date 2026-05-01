@@ -68,7 +68,7 @@ export default function CashflowPage() {
     <div className="p-4 md:p-6 max-w-3xl mx-auto" dir="rtl">
       <div className="mb-5">
         <h1 className="text-xl font-bold text-[#1E1E2E]">תחזית תזרים מזומנים</h1>
-        <p className="text-xs text-[#9090A8] mt-0.5">צפי להכנסות והוצאות חודשיות בהתבסס על פריטים קבועים</p>
+        <p className="text-xs text-[#9090A8] mt-0.5">צפי להכנסות והוצאות חודשיות בהתבסס על כל הפריטים הפעילים</p>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-5">
@@ -159,7 +159,7 @@ export default function CashflowPage() {
       </div>
 
       <p className="text-xs text-[#9090A8] mt-3 text-center">
-        * התחזית מבוססת על הכנסות והוצאות קבועות בלבד. תשלומים חד-פעמיים אינם כלולים.
+        * התחזית מבוססת על הכנסות וההוצאות הקבועות, הפעולות החודשיות שנרשמו וההתחייבויות הפעילות.
       </p>
     </div>
   );
