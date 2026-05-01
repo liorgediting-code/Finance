@@ -45,7 +45,18 @@ interface CloudData {
   savingsChallenges: SavingsChallenge[];
 }
 
-const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import', 'insights', 'financial-calendar', 'net-worth', 'month-comparison', 'spending-pace', 'budget-templates', 'savings-challenge', 'year-review', 'achievements'];
+const ALL_MODULES = [
+  'life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget',
+  'cashflow', 'annual-planner', 'salary-slip', 'csv-import', 'insights', 'financial-calendar',
+  'net-worth', 'month-comparison', 'spending-pace', 'budget-templates', 'savings-challenge',
+  'year-review', 'achievements',
+  // New features (each toggleable in Settings)
+  'monthly-report',   // כרטיס ציון פיננסי חודשי
+  'spending-trends',  // מגמות הוצאות שנתיות
+  'smart-budget',     // הצעת תקציב חכמה
+  'data-export',      // ייצוא נתונים לCSV
+  'quick-add',        // כפתור הוספה מהירה
+];
 
 const DEFAULT_DATA: CloudData = {
   settings: {
