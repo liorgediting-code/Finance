@@ -26,22 +26,30 @@ export default function CashflowPage() {
     const yr = currentYear + Math.floor(absMonthIndex / 12);
     const monthData = months[absMonthIndex];
     const recurringIncome = recurringIncomes.reduce((s, inc) => s + inc.amount, 0);
-    const recurringExpense = recurringExpenses.reduce((s, exp) => s + exp.amount, 0);
+    // Exclude installment-linked entries — handled separately with date-awareness below
+    const recurringExpense = recurringExpenses
+      .filter((e) => e.linkedSourceType !== 'installment')
+      .reduce((s, exp) => s + exp.amount, 0);
     const manualIncome = (monthData?.income ?? []).reduce((s, inc) => s + inc.amount, 0);
-    const manualExpense = (monthData?.expenses ?? []).filter((e) => !e.isRecurring).reduce((s, exp) => s + exp.amount, 0);
+    // No isRecurring filter — subscriptions live only in months[x].expenses, not in recurringExpenses
+    const manualExpense = (monthData?.expenses ?? []).reduce((s, exp) => s + exp.amount, 0);
 
     const targetLinear = currentYear * 12 + absMonthIndex;
-    const installmentPayments = installments.filter((inst) => {
-      const instStart = inst.startYear * 12 + inst.startMonth - 1;
-      const instEnd = instStart + inst.numPayments - 1;
-      return targetLinear >= instStart && targetLinear <= instEnd;
-    }).reduce((s, inst) => s + inst.totalAmount / inst.numPayments, 0);
+    const installmentPayments = installments
+      .filter((inst) => {
+        const instStart = inst.startYear * 12 + inst.startMonth - 1;
+        const instEnd = instStart + inst.numPayments - 1;
+        return targetLinear >= instStart && targetLinear <= instEnd;
+      })
+      .reduce((s, inst) => s + inst.totalAmount / inst.numPayments, 0);
 
+    const totalIncome = recurringIncome + manualIncome;
+    const totalExpenses = recurringExpense + manualExpense + installmentPayments;
     return {
       label: MonthLabel(mIdx, yr),
-      income: recurringIncome + manualIncome,
-      expenses: recurringExpense + manualExpense + installmentPayments,
-      net: recurringIncome + manualIncome - recurringExpense - manualExpense - installmentPayments,
+      income: totalIncome,
+      expenses: totalExpenses,
+      net: totalIncome - totalExpenses,
     };
   };
 
