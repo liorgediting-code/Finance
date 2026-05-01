@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useShallow } from 'zustand/react/shallow';
 import { formatCurrency } from '../../utils/formatters';
 import { CATEGORIES } from '../../config/categories';
 import BudgetTemplates from './BudgetTemplates';
+import { exportExpensesToCsv, exportIncomeToCsv, exportSavingsToCsv, exportDebtsToCsv } from '../../utils/dataExport';
 
 function SettingsSection({
   title,
@@ -87,9 +89,14 @@ const ALL_TOGGLEABLE_MODULES: Array<{ id: string; label: string; desc: string }>
   { id: 'annual-planner', label: 'מתכנן שנתי', desc: 'תכנון אירועים שנתיים' },
   { id: 'salary-slip', label: 'ניתוח תלוש', desc: 'ניתוח מרכיבי השכר' },
   { id: 'csv-import', label: 'ייבוא CSV', desc: 'ייבוא עסקאות מקובץ CSV' },
-  { id: 'smart-budget', label: 'תקציב חכם', desc: 'הצעת תקציב אוטומטית בהתבסס על ממוצע ההוצאות ב-3 חודשים אחרונים' },
+  { id: 'smart-budget', label: 'תקציב חכם', desc: 'הצעת תקציב אוטומטית לפי ממוצע 3 חודשים + עתודה — מופיע בלוח החודשי' },
   { id: 'payday-countdown', label: 'ספירה למשכורת', desc: 'כרטיס בלוח הבקרה המציג כמה ימים נותרו עד קבלת המשכורת הבאה' },
   { id: 'budget-alerts', label: 'התראות תקציב', desc: 'הצגת התראה בחודש כאשר קטגוריות חורגות מהתקציב שנקבע' },
+  // New features
+  { id: 'monthly-report', label: 'כרטיס ציון פיננסי', desc: 'ציונים A–F לכל מדד פיננסי — חיסכון, חובות, מטרות ועוד' },
+  { id: 'spending-trends', label: 'מגמות הוצאות', desc: 'גרף שנתי לפי קטגוריה — ראה כיצד ההוצאות שלך משתנות לאורך השנה' },
+  { id: 'data-export', label: 'ייצוא נתונים', desc: 'הורדת הנתונים שלך כקבצי CSV — הוצאות, הכנסות, חסכונות וחובות' },
+  { id: 'quick-add', label: 'הוספה מהירה', desc: 'כפתור + צף בפינת המסך להוספת הוצאה מהירה ללא ניווט' },
 ];
 
 export default function SettingsPage() {
@@ -109,6 +116,17 @@ export default function SettingsPage() {
   const signOut = useAuthStore((s) => s.signOut);
   const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
+
+  const exportData = useFinanceStore(useShallow((s) => ({
+    months: s.months,
+    recurringIncomes: s.recurringIncomes,
+    recurringExpenses: s.recurringExpenses,
+    savingsFunds: s.savingsFunds,
+    lifeGoals: s.lifeGoals,
+    debts: s.debts,
+    year: s.settings.year,
+  })));
+  const showDataExport = (settings.enabledModules ?? []).includes('data-export');
 
   const hiddenSections = settings.hiddenDashboardSections ?? [];
   const customCategories = settings.customCategories ?? [];
@@ -460,6 +478,59 @@ export default function SettingsPage() {
           מחק הכל והתחל מחדש
         </button>
       </SettingsSection>
+
+      {/* Data Export — feature: data-export module */}
+      {showDataExport && (
+        <SettingsSection title="ייצוא נתונים" accentColor="#4AACAC">
+          <p className="text-xs text-[#9090A8] mb-4 leading-relaxed">
+            הורד את הנתונים שלך כקבצי CSV — פתוחים בכל תוכנת גיליון אלקטרוני.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              {
+                label: 'הוצאות',
+                emoji: '💸',
+                color: '#E06060',
+                onClick: () => exportExpensesToCsv(exportData.months, exportData.recurringExpenses, exportData.year),
+              },
+              {
+                label: 'הכנסות',
+                emoji: '💰',
+                color: '#5A9A42',
+                onClick: () => exportIncomeToCsv(exportData.months, exportData.recurringIncomes, exportData.year),
+              },
+              {
+                label: 'חסכונות ומטרות',
+                emoji: '🏦',
+                color: '#4A90C0',
+                onClick: () => exportSavingsToCsv(exportData.savingsFunds, exportData.lifeGoals, exportData.year),
+              },
+              {
+                label: 'חובות',
+                emoji: '📋',
+                color: '#C89E50',
+                onClick: () => exportDebtsToCsv(exportData.debts, exportData.year),
+              },
+            ].map(({ label, emoji, color, onClick }) => (
+              <button
+                key={label}
+                onClick={onClick}
+                className="flex flex-col items-center gap-2 p-4 border-2 border-dashed rounded-xl hover:border-solid transition-all cursor-pointer group"
+                style={{ borderColor: color + '50' }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = color)}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = color + '50')}
+              >
+                <span className="text-2xl">{emoji}</span>
+                <span className="text-xs font-semibold text-[#4A4A60]">{label}</span>
+                <span className="text-[10px] text-[#9090A8]">הורד CSV</span>
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-[#9090A8] mt-3">
+            הקבצים מיוצאים בעברית עם BOM — פתח בExcel/Google Sheets ישירות.
+          </p>
+        </SettingsSection>
+      )}
 
       {/* Account */}
       <SettingsSection title="חשבון" accentColor="#5B52A0">

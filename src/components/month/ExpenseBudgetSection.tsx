@@ -5,6 +5,7 @@ import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { formatCurrency } from '../../utils/formatters';
 import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
+import { computeBudgetSuggestions } from '../../utils/budgetSuggestions';
 import type { ExpenseEntry } from '../../types';
 
 function linkedSourceRoute(type: ExpenseEntry['linkedSourceType']): string {
@@ -412,6 +413,8 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const rolloverCategories = useFinanceStore((s) => s.rolloverCategories);
   const getRolledBudget = useFinanceStore((s) => s.getRolledBudget);
   const toggleRolloverCategory = useFinanceStore((s) => s.toggleRolloverCategory);
+  const enabledModules = useFinanceStore(useShallow((s) => s.settings.enabledModules ?? []));
+  const showSmartBudget = enabledModules.includes('smart-budget');
 
   const budget = monthData?.budget ?? {};
   const monthExpenses = monthData?.expenses ?? [];
@@ -591,7 +594,33 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
       {/* Budget settings panel */}
       {showBudgetSettings && (
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
-          <p className="text-xs font-medium text-[#6B6B8A] mb-3">הגדר תקציב חודשי לכל קטגוריה (₪)</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-medium text-[#6B6B8A]">הגדר תקציב חודשי לכל קטגוריה (₪)</p>
+            {showSmartBudget && (
+              <button
+                onClick={() => {
+                  const suggestions = computeBudgetSuggestions(months, monthIndex);
+                  const hasSuggestions = Object.keys(suggestions).length > 0;
+                  if (!hasSuggestions) {
+                    alert('אין מספיק נתוני הוצאות מחודשים קודמים להצעת תקציב.');
+                    return;
+                  }
+                  if (window.confirm('להחיל הצעות תקציב חכמות לפי ממוצע 3 חודשים אחרונים (+10% עתודה)?')) {
+                    Object.entries(suggestions).forEach(([catId, amount]) => {
+                      setBudget(monthIndex, catId, amount);
+                    });
+                  }
+                }}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-lavender text-[#5B52A0] hover:bg-lavender-dark hover:text-white transition-colors cursor-pointer font-semibold"
+                title="הצע תקציב אוטומטי לפי ממוצע 3 חודשים"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                הצע תקציב חכם
+              </button>
+            )}
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {CATEGORIES.filter((c) => c.id !== 'other').map((cat) => {
               const baseBudget = budget[cat.id] ?? 0;
