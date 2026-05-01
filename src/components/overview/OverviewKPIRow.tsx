@@ -17,8 +17,8 @@ function KPICard({
 
 export default function OverviewKPIRow() {
   const { months, recurringIncomes, recurringExpenses } = useActiveBoardData();
-  const { mortgages, debts } = useFinanceStore(
-    useShallow((s) => ({ mortgages: s.mortgages, debts: s.debts }))
+  const { mortgages, debts, installments } = useFinanceStore(
+    useShallow((s) => ({ mortgages: s.mortgages, debts: s.debts, installments: s.installments }))
   );
 
   const currentMonth = new Date().getMonth();
@@ -31,9 +31,15 @@ export default function OverviewKPIRow() {
   const net = monthlyIncome - monthlyExpense;
   const savingsRate = monthlyIncome > 0 ? Math.round((net / monthlyIncome) * 100) : 0;
 
+  const installmentsBalance = installments.reduce((s, inst) => {
+    const remaining = inst.numPayments - inst.paidPayments;
+    return s + remaining * (inst.totalAmount / inst.numPayments);
+  }, 0);
+
   const totalDebt =
     mortgages.flatMap((m) => m.tracks).reduce((s, t) => s + t.balance, 0) +
-    debts.reduce((s, d) => s + d.balance, 0);
+    debts.reduce((s, d) => s + d.balance, 0) +
+    installmentsBalance;
 
   // 3-month average for trend
   const prevMonths = [1, 2, 3].map((offset) => {
