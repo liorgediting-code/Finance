@@ -1,17 +1,14 @@
 import { NavLink } from 'react-router-dom';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { formatCurrency } from '../../utils/formatters';
+import { computeMonthTotals } from '../../utils/monthlyTotals';
 
 export default function OverviewCashflowCard() {
   const { months, recurringIncomes, recurringExpenses } = useActiveBoardData();
 
-  const recurringIncome = recurringIncomes.reduce((s, e) => s + e.amount, 0);
-  const recurringExpense = recurringExpenses.reduce((s, e) => s + e.amount, 0);
-
   const monthlyNets = Object.values(months).map((md) => {
-    const inc = recurringIncome + md.income.reduce((s, e) => s + e.amount, 0);
-    const exp = recurringExpense + md.expenses.reduce((s, e) => s + e.amount, 0);
-    return inc - exp;
+    const { net } = computeMonthTotals(md, recurringIncomes, recurringExpenses);
+    return net;
   });
 
   const positiveCount = monthlyNets.filter((n) => n > 0).length;
