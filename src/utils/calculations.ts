@@ -1,7 +1,7 @@
 import { ExpenseEntry } from '../types';
 
 export function sumAmounts(entries: { amount: number }[]): number {
-  return entries.reduce((sum, entry) => sum + entry.amount, 0);
+  return entries.reduce((sum, entry) => sum + (Number.isFinite(entry.amount) ? entry.amount : 0), 0);
 }
 
 export function calcRemaining(totalIncome: number, totalExpenses: number): number {

@@ -29,14 +29,14 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
 
   const expenseEntries = monthData?.expenses ?? [];
 
-  const { totalIncome, totalExpenses } = computeMonthTotals(monthData, recurringIncomes, recurringExpenses);
-  const remaining = totalIncome - totalExpenses;
-
   // Pending transactions
   const pendingExpenses = expenseEntries.filter((e) => e.isPending);
   const pendingTotal = sumAmounts(pendingExpenses);
   const confirmedExpenses = expenseEntries.filter((e) => !e.isPending);
   const confirmedTotal = sumAmounts(confirmedExpenses) + sumAmounts(recurringExpenses);
+
+  const { totalIncome } = computeMonthTotals(monthData, recurringIncomes, recurringExpenses);
+  const remaining = totalIncome - confirmedTotal;
 
   const overspending = confirmedTotal > totalIncome && totalIncome > 0;
 

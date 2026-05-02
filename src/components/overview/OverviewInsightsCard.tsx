@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
@@ -17,12 +18,13 @@ export default function OverviewInsightsCard() {
   );
 
   const now = new Date();
-  const insights = generateInsights({
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  const insights = useMemo(() => generateInsights({
     months, recurringIncomes, recurringExpenses,
     savingsFunds, mortgages, debts, lifeGoals, installments,
-    currentMonth: now.getMonth(),
-    currentYear: now.getFullYear(),
-  });
+    currentMonth, currentYear,
+  }), [months, recurringIncomes, recurringExpenses, savingsFunds, mortgages, debts, lifeGoals, installments, currentMonth, currentYear]);
 
   const danger  = insights.filter((i) => i.severity === 'danger').length;
   const warning = insights.filter((i) => i.severity === 'warning').length;

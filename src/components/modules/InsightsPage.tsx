@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
@@ -77,11 +78,11 @@ export default function InsightsPage() {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  const insights = generateInsights({
+  const insights = useMemo(() => generateInsights({
     months, recurringIncomes, recurringExpenses,
     savingsFunds, mortgages, debts, lifeGoals, installments,
     currentMonth, currentYear,
-  });
+  }), [months, recurringIncomes, recurringExpenses, savingsFunds, mortgages, debts, lifeGoals, installments, currentMonth, currentYear]);
 
   const byGroup: Record<InsightSeverity, Insight[]> = {
     danger: [], warning: [], success: [], info: [],

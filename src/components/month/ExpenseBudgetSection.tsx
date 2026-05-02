@@ -412,6 +412,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const rolloverCategories = useFinanceStore((s) => s.rolloverCategories);
   const getRolledBudget = useFinanceStore((s) => s.getRolledBudget);
   const toggleRolloverCategory = useFinanceStore((s) => s.toggleRolloverCategory);
+  const customCategories = useFinanceStore(useShallow((s) => s.settings.customCategories ?? []));
 
   const budget = monthData?.budget ?? {};
   const monthExpenses = monthData?.expenses ?? [];
@@ -495,7 +496,12 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   let totalActual = 0;
   let totalPending = 0;
 
-  const rows = CATEGORIES.map((cat) => {
+  const allCategoryRows = [
+    ...CATEGORIES,
+    ...customCategories.map((c) => ({ ...c, subcategories: [] as { id: string; nameHe: string }[] })),
+  ];
+
+  const rows = allCategoryRows.map((cat) => {
     const catExpenses = filteredExpenses.filter((e) => e.categoryId === cat.id);
     const confirmed = catExpenses.filter((e) => !e.isPending);
     const actual = confirmed.reduce((s, e) => s + e.amount, 0);
@@ -576,7 +582,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
           <p className="text-xs font-medium text-[#6B6B8A] mb-3">הגדר תקציב חודשי לכל קטגוריה (₪)</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-            {CATEGORIES.filter((c) => c.id !== 'other').map((cat) => {
+            {[...CATEGORIES.filter((c) => c.id !== 'other'), ...customCategories.map((c) => ({ ...c, subcategories: [] as { id: string; nameHe: string }[] }))].map((cat) => {
               const baseBudget = budget[cat.id] ?? 0;
               const rolled = getRolledBudget(monthIndex, cat.id);
               const catActual = expenses.filter((e) => e.categoryId === cat.id && !e.isPending).reduce((s, e) => s + e.amount, 0);
@@ -896,7 +902,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                               </tr>
                               {splittingId === entry.id && (
                                 <tr>
-                                  <td colSpan={5} className="px-0 py-0">
+                                  <td colSpan={7} className="px-0 py-0">
                                     <SplitPanel
                                       entry={entry}
                                       monthIndex={monthIndex}

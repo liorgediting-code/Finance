@@ -399,7 +399,15 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     },
 
     // ── Family members ──────────────────────────────────────────────────────
-    addFamilyMember: (name) => { set((s) => ({ familyMembers: [...s.familyMembers, { id: uuidv4(), name }] })); sync(); },
+    addFamilyMember: (name) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      set((s) => {
+        if (s.familyMembers.some((m) => m.name.trim().toLowerCase() === trimmed.toLowerCase())) return s;
+        return { familyMembers: [...s.familyMembers, { id: uuidv4(), name: trimmed }] };
+      });
+      sync();
+    },
     updateFamilyMember: (id, name) => { set((s) => ({ familyMembers: s.familyMembers.map((m) => m.id === id ? { ...m, name } : m) })); sync(); },
     deleteFamilyMember: (id) => { set((s) => ({ familyMembers: s.familyMembers.filter((m) => m.id !== id) })); sync(); },
 
@@ -948,6 +956,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       const m1 = uuidv4();
       const m2 = uuidv4();
       set({
+        ...DEFAULT_DATA,
         familyMembers: [{ id: m1, name: 'יוסי' }, { id: m2, name: 'רונית' }],
         months: {
           0: {
@@ -973,13 +982,14 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
             budget: { home: 7000, food: 3000 },
           },
         },
-        settings: { year: 2026, savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 } },
+        settings: { ...DEFAULT_DATA.settings, year: 2026, savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 } },
         savingsFunds: [
           { id: uuidv4(), name: 'חופשה לאירופה', targetAmount: 15000, savedAmount: 4500, color: '#B8CCE0', notes: 'קיץ 2027' },
           { id: uuidv4(), name: 'קרן חירום', targetAmount: 30000, savedAmount: 12000, color: '#C5CDB6', notes: '3 משכורות' },
         ],
         recurringIncomes: [],
         recurringExpenses: [],
+        _userId: get()._userId,
       });
       sync();
     },

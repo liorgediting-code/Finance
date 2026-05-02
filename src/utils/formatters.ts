@@ -12,6 +12,9 @@ export function formatPercent(value: number): string {
 }
 
 export function formatDate(dateStr: string): string {
-  const [year, month, day] = dateStr.split('-');
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const [year, month, day] = parts;
   return `${day}/${month}/${year}`;
 }
