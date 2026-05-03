@@ -87,6 +87,11 @@ const ALL_TOGGLEABLE_MODULES: Array<{ id: string; label: string; desc: string }>
   { id: 'annual-planner', label: 'מתכנן שנתי', desc: 'תכנון אירועים שנתיים' },
   { id: 'salary-slip', label: 'ניתוח תלוש', desc: 'ניתוח מרכיבי השכר' },
   { id: 'csv-import', label: 'ייבוא CSV', desc: 'ייבוא עסקאות מקובץ CSV' },
+  { id: 'upcoming-payments', label: 'תשלומים צפויים', desc: 'רשימת הוצאות קבועות ותשלומים לחודש הנוכחי והבא' },
+  { id: 'budget-alerts', label: 'התראות תקציב', desc: 'כרטיס המציג קטגוריות שחרגו או קרובות למגבלת התקציב' },
+  { id: 'tax-refund', label: 'מחשבון החזר מס', desc: 'הערכת החזר מס שנתי בהתאם לנתוני הכנסה וניכויים' },
+  { id: 'subscription-audit', label: 'ביקורת מנויים', desc: 'סיכום כל המנויים וההוצאות הקבועות עם עלות שנתית' },
+  { id: 'spending-trends', label: 'מגמות הוצאה', desc: 'גרף השוואת הוצאות לפי קטגוריה ב-6 חודשים האחרונים' },
 ];
 
 export default function SettingsPage() {
