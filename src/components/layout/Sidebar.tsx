@@ -484,6 +484,24 @@ export default function Sidebar({ isOpen, onClose }: Props) {
                 ייבוא CSV
               </NavLink>
             )}
+            {enabledModules.includes('savings-challenge') && (
+              <NavLink to="/savings-challenge" className={navLinkClass} onClick={onClose}>
+                <StarIcon />
+                אתגר חיסכון
+              </NavLink>
+            )}
+            {enabledModules.includes('year-review') && (
+              <NavLink to="/year-review" className={navLinkClass} onClick={onClose}>
+                <BarChartIcon />
+                סיכום שנתי
+              </NavLink>
+            )}
+            {enabledModules.includes('achievements') && (
+              <NavLink to="/achievements" className={navLinkClass} onClick={onClose}>
+                <StarIcon />
+                הישגים
+              </NavLink>
+            )}
           </div>
 
           {/* Settings pinned to bottom */}

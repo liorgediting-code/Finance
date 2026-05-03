@@ -293,8 +293,10 @@ function BoardsSheet({ onClose }: { onClose: () => void }) {
 const ALL_TOOLS: { module: string | null; label: string; route: string; emoji: string }[] = [
   { module: null,                label: 'חיפוש עסקאות',    route: '/search',            emoji: '🔍' },
   { module: null,                label: 'יומן פעילות',      route: '/activity',          emoji: '📋' },
+  { module: 'insights',          label: 'תובנות חכמות',     route: '/insights',          emoji: '💡' },
   { module: 'life-goals',        label: 'מטרות חיים',       route: '/life-goals',        emoji: '🎯' },
   { module: 'cashflow',          label: 'תחזית תזרים',      route: '/cashflow',          emoji: '💧' },
+  { module: 'financial-calendar', label: 'לוח שנה',         route: '/calendar',          emoji: '🗓️' },
   { module: 'installments',      label: 'תשלומים',          route: '/installments',      emoji: '💳' },
   { module: 'mortgage',          label: 'משכנתא',           route: '/mortgage',          emoji: '🏠' },
   { module: 'savings-vehicles',  label: 'חסכונות ופנסיה',   route: '/savings-vehicles',  emoji: '🐖' },
@@ -303,6 +305,9 @@ const ALL_TOOLS: { module: string | null; label: string; route: string; emoji: s
   { module: 'annual-planner',    label: 'מתכנן שנתי',       route: '/annual-planner',    emoji: '📅' },
   { module: 'salary-slip',       label: 'ניתוח תלוש',       route: '/salary-slip',       emoji: '💰' },
   { module: 'csv-import',        label: 'ייבוא CSV',        route: '/csv-import',        emoji: '📤' },
+  { module: 'savings-challenge', label: 'אתגר חיסכון',      route: '/savings-challenge', emoji: '🏆' },
+  { module: 'year-review',       label: 'סיכום שנתי',       route: '/year-review',       emoji: '📊' },
+  { module: 'achievements',      label: 'הישגים',           route: '/achievements',      emoji: '⭐' },
 ];
 
 function ToolsSheet({ onClose }: { onClose: () => void }) {
@@ -449,7 +454,7 @@ export default function BottomNav() {
 
           {/* Tools tab */}
           {(() => {
-            const toolRoutes = ['/life-goals', '/debt-planner', '/mortgage', '/installments', '/savings-vehicles', '/chag-budget', '/annual-planner', '/salary-slip', '/csv-import', '/cashflow', '/search', '/activity'];
+            const toolRoutes = ['/life-goals', '/debt-planner', '/mortgage', '/installments', '/savings-vehicles', '/chag-budget', '/annual-planner', '/salary-slip', '/csv-import', '/cashflow', '/search', '/activity', '/insights', '/calendar', '/savings-challenge', '/year-review', '/achievements'];
             const toolActive = showTools || toolRoutes.some((r) => pathname === r);
             return (
               <button

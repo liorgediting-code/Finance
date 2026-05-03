@@ -166,10 +166,10 @@ export default function MonthDashboard() {
               )}
             </div>
 
-            {/* Next month */}
+            {/* Next month — disabled only when already at current month in current year */}
             <button
               onClick={nextMonth}
-              disabled={monthIndex >= currentMonthIndex}
+              disabled={year === today.getFullYear() && monthIndex >= currentMonthIndex}
               className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-lavender-light text-[#4A4A60] disabled:opacity-25 disabled:cursor-not-allowed transition-colors cursor-pointer"
               aria-label="חודש הבא"
             >
@@ -195,20 +195,23 @@ export default function MonthDashboard() {
 
           {/* Month dots indicator */}
           <div className="flex justify-center gap-1.5 mt-4" dir="ltr">
-            {HEBREW_MONTHS.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => idx <= currentMonthIndex && setMonthIndex(idx)}
-                className={`transition-all duration-150 rounded-full cursor-pointer ${
-                  idx === monthIndex
-                    ? 'w-4 h-2 bg-lavender-dark'
-                    : idx <= currentMonthIndex
-                    ? 'w-2 h-2 bg-lavender hover:bg-lavender-dark'
-                    : 'w-2 h-2 bg-gray-200 cursor-not-allowed'
-                }`}
-                aria-label={HEBREW_MONTHS[idx]}
-              />
-            ))}
+            {HEBREW_MONTHS.map((_, idx) => {
+              const isFuture = year === today.getFullYear() && idx > currentMonthIndex;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => !isFuture && setMonthIndex(idx)}
+                  className={`transition-all duration-150 rounded-full ${
+                    idx === monthIndex
+                      ? 'w-4 h-2 bg-lavender-dark cursor-pointer'
+                      : isFuture
+                      ? 'w-2 h-2 bg-gray-200 cursor-not-allowed'
+                      : 'w-2 h-2 bg-lavender hover:bg-lavender-dark cursor-pointer'
+                  }`}
+                  aria-label={HEBREW_MONTHS[idx]}
+                />
+              );
+            })}
           </div>
         </div>
       </div>

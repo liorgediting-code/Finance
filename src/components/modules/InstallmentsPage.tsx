@@ -35,13 +35,6 @@ const emptyForm = (): Omit<Installment, 'id'> => ({
   notes: '',
 });
 
-const TRACK_TYPE_NAMES: Record<string, string> = {
-  prime: 'פריים',
-  fixed: 'קבועה',
-  cpi: 'צמוד מדד',
-  variable: 'משתנה',
-};
-Object.assign(TRACK_TYPE_NAMES, {});
 
 export default function InstallmentsPage() {
   const installments = useFinanceStore((s) => s.installments);

@@ -74,6 +74,7 @@ const DEFAULT_DATA: CloudData = {
 
 // ── Debounced save ────────────────────────────────────────────────────────────
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
+let _setSyncError: ((msg: string | null) => void) | null = null;
 
 function scheduleSync(getUserId: () => string | null, getState: () => CloudData) {
   if (saveTimer) clearTimeout(saveTimer);
@@ -81,7 +82,13 @@ function scheduleSync(getUserId: () => string | null, getState: () => CloudData)
     const userId = getUserId();
     if (!userId) return;
     const data = getState();
-    await supabase.from('user_data').upsert({ user_id: userId, data, updated_at: new Date().toISOString() });
+    const { error } = await supabase.from('user_data').upsert({ user_id: userId, data, updated_at: new Date().toISOString() });
+    if (error) {
+      console.error('שגיאה בשמירת נתונים:', error.message);
+      _setSyncError?.('שמירת הנתונים נכשלה — בדוק חיבור לאינטרנט');
+    } else {
+      _setSyncError?.(null);
+    }
   }, 1000);
 }
 
@@ -164,6 +171,7 @@ function makeActivityEntry(
 // ── Store interface ───────────────────────────────────────────────────────────
 interface FinanceStore extends CloudData {
   _userId: string | null;
+  syncError: string | null;
 
   // Cloud sync
   loadFromCloud: (userId: string) => Promise<void>;
@@ -317,9 +325,13 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     set((s) => ({ activityLog: [entry, ...s.activityLog].slice(0, 200) }));
   };
 
+  // Wire up the sync-error setter so scheduleSync can update the store
+  _setSyncError = (msg) => set({ syncError: msg });
+
   return {
     ...DEFAULT_DATA,
     _userId: null,
+    syncError: null,
     activeBoardId: 'personal',
 
     setActiveBoard: (id) => { set({ activeBoardId: id }); },
@@ -941,12 +953,13 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
 
     resetStore: () => {
       if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
-      set({ ...DEFAULT_DATA, _userId: null, activeBoardId: 'personal' });
+      set({ ...DEFAULT_DATA, _userId: null, syncError: null, activeBoardId: 'personal' });
     },
 
     loadDemoData: () => {
       const m1 = uuidv4();
       const m2 = uuidv4();
+      const currentSettings = get().settings;
       set({
         familyMembers: [{ id: m1, name: 'יוסי' }, { id: m2, name: 'רונית' }],
         months: {
@@ -973,7 +986,12 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
             budget: { home: 7000, food: 3000 },
           },
         },
-        settings: { year: 2026, savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 } },
+        // Merge into existing settings to preserve enabledModules, hiddenDashboardSections, etc.
+        settings: {
+          ...currentSettings,
+          year: 2026,
+          savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 },
+        },
         savingsFunds: [
           { id: uuidv4(), name: 'חופשה לאירופה', targetAmount: 15000, savedAmount: 4500, color: '#B8CCE0', notes: 'קיץ 2027' },
           { id: uuidv4(), name: 'קרן חירום', targetAmount: 30000, savedAmount: 12000, color: '#C5CDB6', notes: '3 משכורות' },
