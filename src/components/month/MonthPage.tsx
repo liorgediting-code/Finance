@@ -4,11 +4,14 @@ import { useFinanceStore } from '../../store/useFinanceStore';
 import MonthSummary from './MonthSummary';
 import IncomeTable from './IncomeTable';
 import ExpenseBudgetSection from './ExpenseBudgetSection';
+import BudgetAlertBanner from './BudgetAlertBanner';
 
 export default function MonthPage() {
   const { monthIndex } = useParams<{ monthIndex: string }>();
   const idx = Number(monthIndex);
   const year = useFinanceStore((s) => s.settings.year);
+  const enabledModules = useFinanceStore((s) => s.settings.enabledModules ?? []);
+  const showAlerts = enabledModules.includes('budget-alerts');
 
   if (isNaN(idx) || idx < 0 || idx > 11) {
     return (
@@ -26,6 +29,7 @@ export default function MonthPage() {
         {monthName} {year}
       </h2>
 
+      {showAlerts && <BudgetAlertBanner monthIndex={idx} />}
       <MonthSummary monthIndex={idx} />
       <IncomeTable monthIndex={idx} />
       <ExpenseBudgetSection monthIndex={idx} />

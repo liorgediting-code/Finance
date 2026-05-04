@@ -87,6 +87,9 @@ const ALL_TOGGLEABLE_MODULES: Array<{ id: string; label: string; desc: string }>
   { id: 'annual-planner', label: 'מתכנן שנתי', desc: 'תכנון אירועים שנתיים' },
   { id: 'salary-slip', label: 'ניתוח תלוש', desc: 'ניתוח מרכיבי השכר' },
   { id: 'csv-import', label: 'ייבוא CSV', desc: 'ייבוא עסקאות מקובץ CSV' },
+  { id: 'smart-budget', label: 'תקציב חכם', desc: 'הצעת תקציב אוטומטית בהתבסס על ממוצע ההוצאות ב-3 חודשים אחרונים' },
+  { id: 'payday-countdown', label: 'ספירה למשכורת', desc: 'כרטיס בלוח הבקרה המציג כמה ימים נותרו עד קבלת המשכורת הבאה' },
+  { id: 'budget-alerts', label: 'התראות תקציב', desc: 'הצגת התראה בחודש כאשר קטגוריות חורגות מהתקציב שנקבע' },
 ];
 
 export default function SettingsPage() {

@@ -15,6 +15,7 @@ import OverviewNetWorthCard from '../components/overview/OverviewNetWorthCard';
 import OverviewInsightsCard from '../components/overview/OverviewInsightsCard';
 import OverviewCalendarCard from '../components/overview/OverviewCalendarCard';
 import OverviewAchievementsCard from '../components/overview/OverviewAchievementsCard';
+import OverviewPaydayCard from '../components/overview/OverviewPaydayCard';
 
 function SavingsChallengeCard() {
   return (
@@ -58,6 +59,7 @@ export default function OverviewDashboard() {
   const showChallenge   = enabledModules.includes('savings-challenge');
   const showYearReview  = enabledModules.includes('year-review');
   const showAchievements = enabledModules.includes('achievements');
+  const showPayday      = enabledModules.includes('payday-countdown');
 
   const middleGridClass = showNetWorth
     ? 'grid grid-cols-1 md:grid-cols-4 gap-4'
@@ -87,6 +89,7 @@ export default function OverviewDashboard() {
         {showCalendar && <OverviewCalendarCard />}
         {showChallenge && <SavingsChallengeCard />}
         {showYearReview && <YearReviewCard />}
+        {showPayday && <OverviewPaydayCard />}
       </div>
 
       {/* Achievements card — full width */}

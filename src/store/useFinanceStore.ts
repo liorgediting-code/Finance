@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../lib/supabase';
+import { CATEGORIES } from '../config/categories';
 import type {
   AppSettings,
   MonthData,
@@ -45,7 +46,7 @@ interface CloudData {
   savingsChallenges: SavingsChallenge[];
 }
 
-const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import', 'insights', 'financial-calendar', 'net-worth', 'month-comparison', 'spending-pace', 'budget-templates', 'savings-challenge', 'year-review', 'achievements'];
+const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import', 'insights', 'financial-calendar', 'net-worth', 'month-comparison', 'spending-pace', 'budget-templates', 'savings-challenge', 'year-review', 'achievements', 'smart-budget', 'payday-countdown', 'budget-alerts'];
 
 const DEFAULT_DATA: CloudData = {
   settings: {
@@ -199,6 +200,8 @@ interface FinanceStore extends CloudData {
 
   // Budget actions
   setBudget: (monthIndex: number, categoryId: string, amount: number) => void;
+  copyBudgetFromMonth: (fromMonth: number, toMonth: number) => void;
+  applySmartBudget: (monthIndex: number) => void;
 
   // Savings funds actions
   addSavingsFund: (fund: Omit<SavingsFund, 'id'>) => void;
@@ -642,6 +645,61 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
           const md = ensureMonth(b.months, monthIndex);
           return { ...b, months: { ...b.months, [monthIndex]: { ...md, budget: { ...md.budget, [categoryId]: amount } } } };
+        }));
+      }
+      sync();
+    },
+
+    copyBudgetFromMonth: (fromMonth, toMonth) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const src = s.months[fromMonth]?.budget ?? {};
+          const md = ensureMonth(s.months, toMonth);
+          return { months: { ...s.months, [toMonth]: { ...md, budget: { ...src } } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const src = b.months[fromMonth]?.budget ?? {};
+          const md = ensureMonth(b.months, toMonth);
+          return { ...b, months: { ...b.months, [toMonth]: { ...md, budget: { ...src } } } };
+        }));
+      }
+      sync();
+    },
+
+    applySmartBudget: (monthIndex) => {
+      const { activeBoardId } = get();
+      const getMonths = (): Record<number, MonthData> => {
+        const s = get();
+        if (activeBoardId === 'personal' || activeBoardId === 'overall') return s.months;
+        return s.extraBoards.find((b) => b.id === activeBoardId)?.months ?? {};
+      };
+      const allMonths = getMonths();
+      // Collect up to 3 past months that have expense data
+      const pastMonths: MonthData[] = [];
+      for (let i = monthIndex - 1; i >= 0 && pastMonths.length < 3; i--) {
+        const md = allMonths[i];
+        if (md && md.expenses.length > 0) pastMonths.push(md);
+      }
+      if (pastMonths.length === 0) return;
+      const suggested: Record<string, number> = {};
+      for (const cat of CATEGORIES) {
+        const totals = pastMonths.map((md) =>
+          md.expenses.filter((e) => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0)
+        );
+        const avg = totals.reduce((a, b) => a + b, 0) / totals.length;
+        if (avg > 0) suggested[cat.id] = Math.round(avg / 100) * 100;
+      }
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, budget: { ...md.budget, ...suggested } } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, budget: { ...md.budget, ...suggested } } } };
         }));
       }
       sync();
