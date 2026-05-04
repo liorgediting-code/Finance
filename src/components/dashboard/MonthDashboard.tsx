@@ -108,7 +108,8 @@ export default function MonthDashboard() {
   const visible = (section: string) => !hiddenSections.includes(section);
   const { months: boardMonths, recurringIncomes: boardRecurringIncomes, recurringExpenses: boardRecurringExpenses } = useActiveBoardData();
 
-  const isCurrentMonth = monthIndex === currentMonthIndex && year === today.getFullYear();
+  const isCurrentYear = year === today.getFullYear();
+  const isCurrentMonth = monthIndex === currentMonthIndex && isCurrentYear;
 
   const hebrewDate = isCurrentMonth
     ? new Intl.DateTimeFormat('he-IL', {
@@ -169,7 +170,7 @@ export default function MonthDashboard() {
             {/* Next month */}
             <button
               onClick={nextMonth}
-              disabled={monthIndex >= currentMonthIndex}
+              disabled={isCurrentYear && monthIndex >= currentMonthIndex}
               className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-lavender-light text-[#4A4A60] disabled:opacity-25 disabled:cursor-not-allowed transition-colors cursor-pointer"
               aria-label="חודש הבא"
             >
@@ -198,11 +199,11 @@ export default function MonthDashboard() {
             {HEBREW_MONTHS.map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => idx <= currentMonthIndex && setMonthIndex(idx)}
+                onClick={() => (!isCurrentYear || idx <= currentMonthIndex) && setMonthIndex(idx)}
                 className={`transition-all duration-150 rounded-full cursor-pointer ${
                   idx === monthIndex
                     ? 'w-4 h-2 bg-lavender-dark'
-                    : idx <= currentMonthIndex
+                    : !isCurrentYear || idx <= currentMonthIndex
                     ? 'w-2 h-2 bg-lavender hover:bg-lavender-dark'
                     : 'w-2 h-2 bg-gray-200 cursor-not-allowed'
                 }`}

@@ -1,9 +1,9 @@
+import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { computeHealthScore } from '../../utils/healthScore';
-
-const MONTH_NAMES = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+import { HEBREW_MONTHS } from '../../config/months';
 
 function ScoreBar({ label, value, max, displayValue }: { label: string; value: number; max: number; displayValue: string }) {
   const pct = max > 0 ? (value / max) * 100 : 0;
@@ -45,12 +45,19 @@ export default function HealthScoreHero() {
   );
 
   const now = new Date();
-  const currentMonthName = MONTH_NAMES[now.getMonth()];
+  const currentMonthName = HEBREW_MONTHS[now.getMonth()];
   const year = now.getFullYear();
+  const prevMonth = now.getMonth() > 0 ? now.getMonth() - 1 : 0;
 
-  const result = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds });
-  const prevMonth = (now.getMonth() - 1 + 12) % 12;
-  const prevResult = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds, currentMonthOverride: prevMonth });
+  const scoreInput = useMemo(() => ({
+    months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds,
+  }), [months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds]);
+
+  const result = useMemo(() => computeHealthScore(scoreInput), [scoreInput]);
+  const prevResult = useMemo(
+    () => computeHealthScore({ ...scoreInput, currentMonthOverride: prevMonth }),
+    [scoreInput, prevMonth],
+  );
   const delta = result.score - prevResult.score;
 
   const scoreColor = result.score >= 70 ? 'text-sage-dark' : result.score >= 40 ? 'text-almond-dark' : 'text-blush-dark';
