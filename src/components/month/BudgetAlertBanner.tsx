@@ -8,10 +8,11 @@ interface Props {
 }
 
 export default function BudgetAlertBanner({ monthIndex }: Props) {
-  const { months } = useActiveBoardData();
+  const { months, recurringExpenses } = useActiveBoardData();
   const monthData = months[monthIndex];
   const budget = monthData?.budget ?? {};
-  const expenses = monthData?.expenses ?? [];
+  // Include recurring expenses in the check so linked commitments (mortgage, debts, etc.) trigger alerts
+  const expenses = [...recurringExpenses, ...(monthData?.expenses ?? [])];
 
   const overBudget = CATEGORIES.filter((cat) => {
     const b = budget[cat.id] ?? 0;

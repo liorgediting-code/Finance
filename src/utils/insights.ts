@@ -22,7 +22,6 @@ interface InsightInput {
   lifeGoals: LifeGoal[];
   installments: Installment[];
   currentMonth: number;
-  currentYear: number;
 }
 
 function fmt(n: number) {

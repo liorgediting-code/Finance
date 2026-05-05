@@ -27,6 +27,10 @@ import SavingsChallengePage from './components/modules/SavingsChallengePage'
 import YearInReviewPage from './components/modules/YearInReviewPage'
 import AchievementsPage from './components/modules/AchievementsPage'
 import SubscriptionAuditPage from './components/modules/SubscriptionAuditPage'
+import UpcomingPaymentsPage from './components/modules/UpcomingPaymentsPage'
+import TaxRefundPage from './components/modules/TaxRefundPage'
+import MonthlyReportCardPage from './components/modules/MonthlyReportCardPage'
+import SpendingTrendsPage from './components/modules/SpendingTrendsPage'
 
 export default function App() {
   return (
@@ -61,6 +65,11 @@ export default function App() {
               <Route path="/year-review" element={<YearInReviewPage />} />
               <Route path="/achievements" element={<AchievementsPage />} />
               <Route path="/subscriptions" element={<SubscriptionAuditPage />} />
+              <Route path="/upcoming-payments" element={<UpcomingPaymentsPage />} />
+              <Route path="/tax-refund" element={<TaxRefundPage />} />
+              <Route path="/subscription-audit" element={<SubscriptionAuditPage />} />
+              <Route path="/report-card" element={<MonthlyReportCardPage />} />
+              <Route path="/spending-trends" element={<SpendingTrendsPage />} />
             </Routes>
           </AppShell>
         </AuthGuard>

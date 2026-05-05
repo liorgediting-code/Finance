@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
@@ -24,51 +25,55 @@ export default function OverviewKPIRow() {
   const currentMonth = new Date().getMonth();
   const md = months[currentMonth];
 
-  const recurringIncome = recurringIncomes.reduce((s, e) => s + e.amount, 0);
-  const recurringExpense = recurringExpenses.reduce((s, e) => s + e.amount, 0);
-  const monthlyIncome = recurringIncome + (md?.income ?? []).reduce((s, e) => s + e.amount, 0);
-  const monthlyExpense = recurringExpense + (md?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
-  const net = monthlyIncome - monthlyExpense;
-  const savingsRate = monthlyIncome > 0 ? Math.round((net / monthlyIncome) * 100) : 0;
+  const { monthlyIncome, monthlyExpense, net, savingsRate, totalDebt, incomeTrend, expenseTrend } = useMemo(() => {
+    const recurringIncome = recurringIncomes.reduce((s, e) => s + e.amount, 0);
+    const recurringExpense = recurringExpenses.reduce((s, e) => s + e.amount, 0);
+    const mIncome = recurringIncome + (md?.income ?? []).reduce((s, e) => s + e.amount, 0);
+    const mExpense = recurringExpense + (md?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
+    const mNet = mIncome - mExpense;
+    const mSavingsRate = mIncome > 0 ? Math.round((mNet / mIncome) * 100) : 0;
 
-  const installmentsBalance = installments.reduce((s, inst) => {
-    const remaining = inst.numPayments - inst.paidPayments;
-    return s + remaining * (inst.totalAmount / inst.numPayments);
-  }, 0);
+    const installmentsBalance = installments.reduce((s, inst) => {
+      const remaining = inst.numPayments - inst.paidPayments;
+      return s + remaining * (inst.totalAmount / inst.numPayments);
+    }, 0);
+    const mTotalDebt =
+      mortgages.flatMap((m) => m.tracks).reduce((s, t) => s + t.balance, 0) +
+      debts.reduce((s, d) => s + d.balance, 0) +
+      installmentsBalance;
 
-  const totalDebt =
-    mortgages.flatMap((m) => m.tracks).reduce((s, t) => s + t.balance, 0) +
-    debts.reduce((s, d) => s + d.balance, 0) +
-    installmentsBalance;
+    const prevMonthsWithData = [1, 2, 3].filter((offset) => {
+      const idx = ((currentMonth - offset) + 12) % 12;
+      const prev = months[idx];
+      return (prev?.income?.length ?? 0) > 0 || (prev?.expenses?.length ?? 0) > 0;
+    }).length;
 
-  // 3-month average for trend
-  const prevMonths = [1, 2, 3].map((offset) => {
-    const idx = ((currentMonth - offset) + 12) % 12;
-    const prev = months[idx];
-    return recurringIncome + (prev?.income ?? []).reduce((s, e) => s + e.amount, 0);
-  });
+    const prevIncomes = [1, 2, 3].map((offset) => {
+      const idx = ((currentMonth - offset) + 12) % 12;
+      const prev = months[idx];
+      return recurringIncome + (prev?.income ?? []).reduce((s, e) => s + e.amount, 0);
+    });
+    const avgIncome = prevIncomes.reduce((s, v) => s + v, 0) / 3;
+    const mIncomeTrend = prevMonthsWithData >= 2 && avgIncome > 0
+      ? Math.round(((mIncome - avgIncome) / avgIncome) * 100)
+      : null;
 
-  // Count prior months with actual entries (not just recurring)
-  const prevMonthsWithData = [1, 2, 3].filter((offset) => {
-    const idx = ((currentMonth - offset) + 12) % 12;
-    const prev = months[idx];
-    return (prev?.income?.length ?? 0) > 0 || (prev?.expenses?.length ?? 0) > 0;
-  }).length;
+    const prevExpenses = [1, 2, 3].map((offset) => {
+      const idx = ((currentMonth - offset) + 12) % 12;
+      const prev = months[idx];
+      return recurringExpense + (prev?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
+    });
+    const avgExpense = prevExpenses.reduce((s, v) => s + v, 0) / 3;
+    const mExpenseTrend = prevMonthsWithData >= 2 && avgExpense > 0
+      ? Math.round(((mExpense - avgExpense) / avgExpense) * 100)
+      : null;
 
-  const avgIncome = prevMonths.reduce((s, v) => s + v, 0) / 3;
-  const incomeTrend = prevMonthsWithData >= 2 && avgIncome > 0
-    ? Math.round(((monthlyIncome - avgIncome) / avgIncome) * 100)
-    : null;
-
-  const prevExpenses = [1, 2, 3].map((offset) => {
-    const idx = ((currentMonth - offset) + 12) % 12;
-    const prev = months[idx];
-    return recurringExpense + (prev?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
-  });
-  const avgExpense = prevExpenses.reduce((s, v) => s + v, 0) / 3;
-  const expenseTrend = prevMonthsWithData >= 2 && avgExpense > 0
-    ? Math.round(((monthlyExpense - avgExpense) / avgExpense) * 100)
-    : null;
+    return {
+      monthlyIncome: mIncome, monthlyExpense: mExpense, net: mNet,
+      savingsRate: mSavingsRate, totalDebt: mTotalDebt,
+      incomeTrend: mIncomeTrend, expenseTrend: mExpenseTrend,
+    };
+  }, [months, recurringIncomes, recurringExpenses, installments, mortgages, debts, md, currentMonth]);
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
