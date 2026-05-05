@@ -1,5 +1,5 @@
 import { useActiveBoardData } from '../../store/useActiveBoardData';
-import { sumAmounts } from '../../utils/calculations';
+import { sumAmounts, isEntryFuture } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/formatters';
 import StatCard from '../shared/StatCard';
 import { computeMonthTotals } from '../../utils/monthlyTotals';
@@ -28,11 +28,14 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
   const prevMonthData = monthIndex > 0 ? months[monthIndex - 1] : undefined;
 
   const expenseEntries = monthData?.expenses ?? [];
+  const incomeEntries = monthData?.income ?? [];
+  const futureIncomeTotal = sumAmounts(incomeEntries.filter((e) => isEntryFuture(e)));
+  const futureExpenseTotal = sumAmounts(expenseEntries.filter((e) => isEntryFuture(e)));
 
   // Pending transactions
   const pendingExpenses = expenseEntries.filter((e) => e.isPending);
   const pendingTotal = sumAmounts(pendingExpenses);
-  const confirmedExpenses = expenseEntries.filter((e) => !e.isPending);
+  const confirmedExpenses = expenseEntries.filter((e) => !e.isPending && !isEntryFuture(e));
   const confirmedTotal = sumAmounts(confirmedExpenses) + sumAmounts(recurringExpenses);
 
   const { totalIncome } = computeMonthTotals(monthData, recurringIncomes, recurringExpenses);
@@ -83,14 +86,28 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
           value={formatCurrency(totalIncome)}
           colorClass="bg-sage-light"
           accentColor="#5A9A42"
-          subtitle={prevIncome > 0 ? <DeltaBadge current={totalIncome} previous={prevIncome} /> : undefined}
+          subtitle={
+            <>
+              {futureIncomeTotal > 0 && (
+                <span className="text-amber-600 block">+ {formatCurrency(futureIncomeTotal)} צפוי להתקבל</span>
+              )}
+              {prevIncome > 0 && <DeltaBadge current={totalIncome} previous={prevIncome} />}
+            </>
+          }
         />
         <StatCard
           title='סה"כ הוצאות'
           value={formatCurrency(confirmedTotal)}
           colorClass="bg-blush-light"
           accentColor="#9B72C0"
-          subtitle={prevExpenses > 0 ? <DeltaBadge current={confirmedTotal} previous={prevExpenses} lowerIsBetter /> : undefined}
+          subtitle={
+            <>
+              {futureExpenseTotal > 0 && (
+                <span className="text-amber-600 block">+ {formatCurrency(futureExpenseTotal)} צפוי לצאת</span>
+              )}
+              {prevExpenses > 0 && <DeltaBadge current={confirmedTotal} previous={prevExpenses} lowerIsBetter />}
+            </>
+          }
         />
         <StatCard
           title="יתרה"
