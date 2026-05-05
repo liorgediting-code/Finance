@@ -57,3 +57,9 @@ All financial data lives in a single Zustand store (`CloudData` interface). On l
 - Month indices are 0-based (January = 0)
 - IDs generated with `uuid` v4
 - Strict TypeScript: `noUnusedLocals`, `noUnusedParameters` are enabled — build will fail on unused variables
+
+## Git Workflow
+
+- **Always push to `main`.** When finishing any task that requires a push to GitHub, merge the current branch into `main` and push `main` to `origin/main`.
+- If currently on a feature branch, run: `git checkout main && git merge <feature-branch> --ff-only && git push -u origin main`
+- Never finish by pushing only to a feature branch.
