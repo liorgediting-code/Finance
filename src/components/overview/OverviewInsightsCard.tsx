@@ -16,12 +16,10 @@ export default function OverviewInsightsCard() {
     }))
   );
 
-  const now = new Date();
   const insights = generateInsights({
     months, recurringIncomes, recurringExpenses,
     savingsFunds, mortgages, debts, lifeGoals, installments,
-    currentMonth: now.getMonth(),
-    currentYear: now.getFullYear(),
+    currentMonth: new Date().getMonth(),
   });
 
   const danger  = insights.filter((i) => i.severity === 'danger').length;

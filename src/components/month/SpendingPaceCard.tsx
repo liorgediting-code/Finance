@@ -81,10 +81,10 @@ export default function SpendingPaceCard({ monthIndex }: Props) {
             <p className="text-[10px] text-[#9090A8] mb-0.5">חיסכון צפוי</p>
             <p
               className="text-sm font-bold"
+              dir="ltr"
               style={{ color: projectedSavings >= 0 ? '#22C55E' : '#EF4444' }}
             >
-              {formatCurrency(Math.abs(projectedSavings))}
-              {projectedSavings < 0 && <span className="text-[10px] mr-0.5">-</span>}
+              {formatCurrency(projectedSavings)}
             </p>
           </div>
         </div>

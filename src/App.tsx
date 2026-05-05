@@ -29,6 +29,7 @@ import AchievementsPage from './components/modules/AchievementsPage'
 import UpcomingPaymentsPage from './components/modules/UpcomingPaymentsPage'
 import TaxRefundPage from './components/modules/TaxRefundPage'
 import SubscriptionAuditPage from './components/modules/SubscriptionAuditPage'
+import MonthlyReportCardPage from './components/modules/MonthlyReportCardPage'
 import SpendingTrendsPage from './components/modules/SpendingTrendsPage'
 
 export default function App() {
@@ -66,6 +67,7 @@ export default function App() {
               <Route path="/upcoming-payments" element={<UpcomingPaymentsPage />} />
               <Route path="/tax-refund" element={<TaxRefundPage />} />
               <Route path="/subscription-audit" element={<SubscriptionAuditPage />} />
+              <Route path="/report-card" element={<MonthlyReportCardPage />} />
               <Route path="/spending-trends" element={<SpendingTrendsPage />} />
             </Routes>
           </AppShell>

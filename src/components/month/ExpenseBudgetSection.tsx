@@ -5,6 +5,7 @@ import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { formatCurrency } from '../../utils/formatters';
 import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
+import { computeBudgetSuggestions } from '../../utils/budgetSuggestions';
 import type { ExpenseEntry } from '../../types';
 
 function linkedSourceRoute(type: ExpenseEntry['linkedSourceType']): string {
@@ -412,10 +413,13 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const rolloverCategories = useFinanceStore((s) => s.rolloverCategories);
   const getRolledBudget = useFinanceStore((s) => s.getRolledBudget);
   const toggleRolloverCategory = useFinanceStore((s) => s.toggleRolloverCategory);
+  const enabledModules = useFinanceStore(useShallow((s) => s.settings.enabledModules ?? []));
+  const showSmartBudget = enabledModules.includes('smart-budget');
 
   const budget = monthData?.budget ?? {};
   const monthExpenses = monthData?.expenses ?? [];
   const expenses = [...recurringExpenses, ...monthExpenses];
+  const customCategories = useFinanceStore(useShallow((s) => s.settings.customCategories ?? []));
 
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [showAddForm, setShowAddForm] = useState(false);
@@ -495,7 +499,18 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   let totalActual = 0;
   let totalPending = 0;
 
-  const rows = CATEGORIES.map((cat) => {
+  type RowData = {
+    cat: { id: string; nameHe: string; color: string; subcategories: { id: string; nameHe: string }[] };
+    catExpenses: typeof expenses;
+    actual: number;
+    pending: number;
+    budgetAmt: number;
+    overBudget: boolean;
+    pct: number;
+    nearBudget: boolean;
+  };
+
+  const buildRow = (cat: { id: string; nameHe: string; color: string; subcategories: { id: string; nameHe: string }[] }): RowData => {
     const catExpenses = filteredExpenses.filter((e) => e.categoryId === cat.id);
     const confirmed = catExpenses.filter((e) => !e.isPending);
     const actual = confirmed.reduce((s, e) => s + e.amount, 0);
@@ -507,7 +522,12 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
     totalActual += actual;
     totalPending += pending;
     return { cat, catExpenses, actual, pending, budgetAmt, overBudget, pct, nearBudget };
-  });
+  };
+
+  const rows: RowData[] = [
+    ...CATEGORIES.map(buildRow),
+    ...customCategories.map((cc) => buildRow({ ...cc, subcategories: [] })),
+  ];
 
   const visibleRows = rows.filter((r) => r.actual > 0 || r.pending > 0);
   const overBudgetCount = rows.filter((r) => r.overBudget).length;
@@ -574,7 +594,33 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
       {/* Budget settings panel */}
       {showBudgetSettings && (
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
-          <p className="text-xs font-medium text-[#6B6B8A] mb-3">הגדר תקציב חודשי לכל קטגוריה (₪)</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-medium text-[#6B6B8A]">הגדר תקציב חודשי לכל קטגוריה (₪)</p>
+            {showSmartBudget && (
+              <button
+                onClick={() => {
+                  const suggestions = computeBudgetSuggestions(months, monthIndex);
+                  const hasSuggestions = Object.keys(suggestions).length > 0;
+                  if (!hasSuggestions) {
+                    alert('אין מספיק נתוני הוצאות מחודשים קודמים להצעת תקציב.');
+                    return;
+                  }
+                  if (window.confirm('להחיל הצעות תקציב חכמות לפי ממוצע 3 חודשים אחרונים (+10% עתודה)?')) {
+                    Object.entries(suggestions).forEach(([catId, amount]) => {
+                      setBudget(monthIndex, catId, amount);
+                    });
+                  }
+                }}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-lavender text-[#5B52A0] hover:bg-lavender-dark hover:text-white transition-colors cursor-pointer font-semibold"
+                title="הצע תקציב אוטומטי לפי ממוצע 3 חודשים"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                הצע תקציב חכם
+              </button>
+            )}
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {CATEGORIES.filter((c) => c.id !== 'other').map((cat) => {
               const baseBudget = budget[cat.id] ?? 0;
@@ -896,7 +942,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                               </tr>
                               {splittingId === entry.id && (
                                 <tr>
-                                  <td colSpan={5} className="px-0 py-0">
+                                  <td colSpan={7} className="px-0 py-0">
                                     <SplitPanel
                                       entry={entry}
                                       monthIndex={monthIndex}

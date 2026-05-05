@@ -18,6 +18,7 @@ import OverviewAchievementsCard from '../components/overview/OverviewAchievement
 import OverviewUpcomingPaymentsCard from '../components/overview/OverviewUpcomingPaymentsCard';
 import OverviewBudgetAlertsCard from '../components/overview/OverviewBudgetAlertsCard';
 import OverviewSubscriptionCard from '../components/overview/OverviewSubscriptionCard';
+import OverviewPaydayCard from '../components/overview/OverviewPaydayCard';
 
 function SavingsChallengeCard() {
   return (
@@ -62,15 +63,29 @@ function TaxRefundCard() {
   );
 }
 
+function MonthlyReportCardCard() {
+  return (
+    <NavLink to="/report-card" className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow block">
+      <div className="h-1 w-full" style={{ backgroundColor: '#7B6DC8' }} />
+      <div className="p-4">
+        <div className="text-2xl mb-2">🎓</div>
+        <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider">כרטיס ציון</p>
+        <p className="text-sm text-[#1E1E2E] font-medium mt-1">ציון A–F חודשי</p>
+        <p className="text-xs text-[#9090A8] mt-0.5">בדוק את הציון שלך →</p>
+      </div>
+    </NavLink>
+  );
+}
+
 function SpendingTrendsCard() {
   return (
     <NavLink to="/spending-trends" className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow block">
-      <div className="h-1 w-full" style={{ backgroundColor: '#7B6DC8' }} />
+      <div className="h-1 w-full" style={{ backgroundColor: '#4A90C0' }} />
       <div className="p-4">
         <div className="text-2xl mb-2">📈</div>
-        <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider">מגמות הוצאה</p>
-        <p className="text-sm text-[#1E1E2E] font-medium mt-1">6 חודשים אחרונים</p>
-        <p className="text-xs text-[#9090A8] mt-0.5">השוואת קטגוריות →</p>
+        <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider">מגמות הוצאות</p>
+        <p className="text-sm text-[#1E1E2E] font-medium mt-1">גרף שנתי לפי קטגוריה</p>
+        <p className="text-xs text-[#9090A8] mt-0.5">ראה מגמות →</p>
       </div>
     </NavLink>
   );
@@ -94,6 +109,8 @@ export default function OverviewDashboard() {
   const showTaxRefund     = enabledModules.includes('tax-refund');
   const showSubscriptions = enabledModules.includes('subscription-audit');
   const showTrends        = enabledModules.includes('spending-trends');
+  const showPayday        = enabledModules.includes('payday-countdown');
+  const showReportCard    = enabledModules.includes('monthly-report');
 
   const middleGridClass = showNetWorth
     ? 'grid grid-cols-1 md:grid-cols-4 gap-4'
@@ -128,6 +145,8 @@ export default function OverviewDashboard() {
         {showSubscriptions && <OverviewSubscriptionCard />}
         {showTaxRefund     && <TaxRefundCard />}
         {showTrends        && <SpendingTrendsCard />}
+        {showPayday        && <OverviewPaydayCard />}
+        {showReportCard    && <MonthlyReportCardCard />}
       </div>
 
       {/* Achievements card — full width */}
