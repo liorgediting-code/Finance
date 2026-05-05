@@ -22,3 +22,7 @@ export function getCategoryTotal(expenses: ExpenseEntry[], categoryId: string): 
     .filter((expense) => expense.categoryId === categoryId)
     .reduce((sum, expense) => sum + expense.amount, 0);
 }
+
+export function isEntryFuture(entry: { isFuture?: boolean; date: string }): boolean {
+  return !!entry.isFuture && entry.date > new Date().toISOString().split('T')[0];
+}
