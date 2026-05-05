@@ -7,6 +7,7 @@ import { formatCurrency } from '../../utils/formatters';
 import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
 import { computeBudgetSuggestions } from '../../utils/budgetSuggestions';
 import type { ExpenseEntry } from '../../types';
+import { isEntryFuture } from '../../utils/calculations';
 
 function linkedSourceRoute(type: ExpenseEntry['linkedSourceType']): string {
   switch (type) {
@@ -25,6 +26,12 @@ interface Props {
 
 const today = () => new Date().toISOString().split('T')[0];
 
+const sevenDaysLater = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  return d.toISOString().split('T')[0];
+};
+
 const emptyForm = (): Omit<ExpenseEntry, 'id'> => ({
   date: today(),
   categoryId: '',
@@ -36,6 +43,7 @@ const emptyForm = (): Omit<ExpenseEntry, 'id'> => ({
   notes: '',
   cancelUrl: '',
   isPending: false,
+  isFuture: false,
 });
 
 function getSubName(entry: ExpenseEntry): string {
@@ -152,6 +160,7 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
       : '',
   });
   const [isRecurring, setIsRecurring] = useState(initialCategoryId === 'subscriptions');
+  const [isFuture, setIsFuture] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
   const selectedCat = CATEGORIES.find((c) => c.id === form.categoryId);
@@ -175,9 +184,9 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
     if (errs.length > 0) { setErrors(errs); return; }
 
     if (isRecurring) {
-      addRecurringExpense(submitForm);
+      addRecurringExpense({ ...submitForm, isFuture: false });
     } else {
-      addExpense(monthIndex, submitForm);
+      addExpense(monthIndex, { ...submitForm, isFuture });
     }
     onClose();
   };
@@ -193,7 +202,9 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
       )}
       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <div>
-          <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תאריך</label>
+          <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">
+            {isFuture ? 'תאריך צפוי' : 'תאריך'}
+          </label>
           <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={inputCls} />
         </div>
 
@@ -278,7 +289,11 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
 
       {/* Recurring toggle */}
       <div className="flex flex-wrap gap-4 mt-3">
-        <label className="flex items-center gap-2 cursor-pointer w-fit" onClick={() => setIsRecurring((v) => !v)}>
+        <label className="flex items-center gap-2 cursor-pointer w-fit" onClick={() => {
+          const next = !isRecurring;
+          setIsRecurring(next);
+          if (next) setIsFuture(false);
+        }}>
           <div className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${isRecurring ? 'bg-blush-dark' : 'bg-gray-200'}`}>
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${isRecurring ? 'translate-x-4' : 'translate-x-0'}`} />
           </div>
@@ -294,6 +309,22 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
           <span className="text-sm text-[#4A4A60] flex items-center gap-1.5">
             <ClockIcon />
             עסקה ממתינה (טרם נגבתה)
+          </span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer w-fit" onClick={() => {
+          const next = !isFuture;
+          setIsFuture(next);
+          if (next) {
+            setIsRecurring(false);
+            setForm((f) => ({ ...f, isPending: false, date: sevenDaysLater() }));
+          }
+        }}>
+          <div className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${isFuture ? 'bg-amber-500' : 'bg-gray-200'}`}>
+            <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${isFuture ? 'translate-x-4' : 'translate-x-0'}`} />
+          </div>
+          <span className="text-sm text-[#4A4A60] flex items-center gap-1.5">
+            <ClockIcon />
+            הוצאה עתידית (צפויה בתאריך זה)
           </span>
         </label>
       </div>
@@ -463,6 +494,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
       cancelUrl: entry.cancelUrl ?? '',
       memberId: entry.memberId,
       isPending: entry.isPending,
+      isFuture: entry.isFuture,
     });
   };
 
@@ -498,12 +530,14 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
 
   let totalActual = 0;
   let totalPending = 0;
+  let totalFuture = 0;
 
   type RowData = {
     cat: { id: string; nameHe: string; color: string; subcategories: { id: string; nameHe: string }[] };
     catExpenses: typeof expenses;
     actual: number;
     pending: number;
+    future: number;
     budgetAmt: number;
     overBudget: boolean;
     pct: number;
@@ -512,16 +546,18 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
 
   const buildRow = (cat: { id: string; nameHe: string; color: string; subcategories: { id: string; nameHe: string }[] }): RowData => {
     const catExpenses = filteredExpenses.filter((e) => e.categoryId === cat.id);
-    const confirmed = catExpenses.filter((e) => !e.isPending);
+    const confirmed = catExpenses.filter((e) => !e.isPending && !isEntryFuture(e));
     const actual = confirmed.reduce((s, e) => s + e.amount, 0);
-    const pending = catExpenses.filter((e) => e.isPending).reduce((s, e) => s + e.amount, 0);
+    const pending = catExpenses.filter((e) => e.isPending && !isEntryFuture(e)).reduce((s, e) => s + e.amount, 0);
+    const future = catExpenses.filter((e) => isEntryFuture(e)).reduce((s, e) => s + e.amount, 0);
     const budgetAmt = (budget[cat.id] ?? 0) + getRolledBudget(monthIndex, cat.id);
     const overBudget = budgetAmt > 0 && actual > budgetAmt;
     const pct = budgetAmt > 0 ? Math.min(100, Math.round((actual / budgetAmt) * 100)) : 0;
     const nearBudget = budgetAmt > 0 && pct >= 80 && pct < 100;
     totalActual += actual;
     totalPending += pending;
-    return { cat, catExpenses, actual, pending, budgetAmt, overBudget, pct, nearBudget };
+    totalFuture += future;
+    return { cat, catExpenses, actual, pending, future, budgetAmt, overBudget, pct, nearBudget };
   };
 
   const rows: RowData[] = [
@@ -529,7 +565,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
     ...customCategories.map((cc) => buildRow({ ...cc, subcategories: [] })),
   ];
 
-  const visibleRows = rows.filter((r) => r.actual > 0 || r.pending > 0);
+  const visibleRows = rows.filter((r) => r.actual > 0 || r.pending > 0 || r.future > 0);
   const overBudgetCount = rows.filter((r) => r.overBudget).length;
   const nearBudgetCount = rows.filter((r) => r.nearBudget).length;
 
@@ -710,7 +746,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
           </div>
         )}
 
-        {visibleRows.map(({ cat, catExpenses, actual, pending, budgetAmt, overBudget, pct, nearBudget }, rowIdx) => {
+        {visibleRows.map(({ cat, catExpenses, actual, pending, future, budgetAmt, overBudget, pct, nearBudget }, rowIdx) => {
           const isExpanded = expandedCats.has(cat.id);
 
           return (
@@ -740,6 +776,11 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                       <ClockIcon />
                     </span>
                   )}
+                  {future > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-amber-500 text-[10px]">
+                      <ClockIcon />
+                    </span>
+                  )}
                   {(overBudget || nearBudget) && (
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${overBudget ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
                       {pct}%
@@ -764,6 +805,9 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                         style={{ width: `${Math.min(100, pct)}%` }}
                       />
                     </div>
+                  )}
+                  {future > 0 && (
+                    <span className="text-[10px] font-normal text-amber-600 block">+ {formatCurrency(future)} צפוי</span>
                   )}
                 </div>
 
@@ -827,7 +871,9 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                               </tr>
                             ) : (
                               <Fragment key={entry.id}>
-                              <tr className={`border-b border-gray-100 transition-colors ${entry.isPending ? 'bg-amber-50/60' : 'hover:bg-white'}`}>
+                              <tr className={`border-b border-gray-100 transition-colors ${
+                                isEntryFuture(entry) ? 'bg-amber-50/60' : entry.isPending ? 'bg-amber-50/60' : 'hover:bg-white'
+                              }`}>
                                 <td className="px-10 py-2 text-[#6B6B8A]">{entry.date}</td>
                                 <td className="px-3 py-2 text-[#6B6B8A]">{getSubName(entry)}</td>
                                 <td className="px-3 py-2 text-[#1E1E2E]">
@@ -850,6 +896,12 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                                         ממתין
                                       </span>
                                     )}
+                                    {isEntryFuture(entry) && (
+                                      <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                                        <ClockIcon />
+                                        צפוי
+                                      </span>
+                                    )}
                                     {entry.splits && entry.splits.length > 0 && (
                                       <span className="inline-flex items-center gap-0.5 bg-lavender-light text-[#5B52A0] text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
                                         <SplitIcon />
@@ -858,7 +910,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                                     )}
                                   </div>
                                 </td>
-                                <td className="px-3 py-2 font-semibold text-[#1E1E2E]">{formatCurrency(entry.amount)}</td>
+                                <td className={`px-3 py-2 font-semibold ${isEntryFuture(entry) ? 'text-amber-700' : 'text-[#1E1E2E]'}`}>{formatCurrency(entry.amount)}</td>
                                 <td className="px-3 py-2 text-[#9090A8]">{getPaymentName(entry.paymentMethod)}</td>
                                 <td className="px-3 py-2 text-[#9090A8]">{getMemberName(entry.memberId) || '—'}</td>
                                 <td className="px-3 py-2 text-center">
@@ -971,6 +1023,9 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
             סה&quot;כ
             {totalPending > 0 && (
               <span className="text-[10px] font-normal text-amber-600 mr-2">+ {formatCurrency(totalPending)} ממתין</span>
+            )}
+            {totalFuture > 0 && (
+              <span className="text-[10px] font-normal text-amber-600 mr-2">+ {formatCurrency(totalFuture)} צפוי לצאת</span>
             )}
           </span>
           <span className="text-right text-[#1E1E2E]">{formatCurrency(totalActual)}</span>
