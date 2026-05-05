@@ -3,6 +3,7 @@ import { useFinanceStore } from '../../store/useFinanceStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { formatCurrency } from '../../utils/formatters';
 import { CATEGORIES } from '../../config/categories';
+import BudgetTemplates from './BudgetTemplates';
 
 function SettingsSection({
   title,
@@ -66,10 +67,41 @@ const DASHBOARD_SECTIONS = [
 
 const COLOR_PRESETS = ['#7B6DC8', '#4A90C0', '#5A9A42', '#E06060', '#C89E50', '#4AACAC', '#C85590', '#A0A0B0', '#E06090', '#6090E0'];
 
+const ALL_TOGGLEABLE_MODULES: Array<{ id: string; label: string; desc: string }> = [
+  { id: 'spending-pace', label: 'קצב הוצאות', desc: 'תחזית הוצאות עד סוף החודש על בסיס הקצב הנוכחי' },
+  { id: 'budget-templates', label: 'תבניות תקציב', desc: 'טעינת תקציב מוכן מראש לפי סוג משפחה' },
+  { id: 'savings-challenge', label: 'אתגר חיסכון', desc: 'אתגר 52 שבועות עם חיסכון הולך וגדל' },
+  { id: 'year-review', label: 'סיכום שנתי', desc: 'מבט שנתי מלא עם גרפים, הישגים ומגמות' },
+  { id: 'achievements', label: 'הישגים', desc: 'מעקב אחר אבני הדרך הפיננסיים שלך' },
+  { id: 'insights', label: 'תובנות חכמות', desc: 'ניתוח אוטומטי של ההתנהגות הפיננסית שלך' },
+  { id: 'financial-calendar', label: 'לוח שנה פיננסי', desc: 'לוח שנה ויזואלי של הוצאות קבועות ותשלומים' },
+  { id: 'net-worth', label: 'שווי נטו', desc: 'כרטיס מבט-על המציג נכסים מול התחייבויות' },
+  { id: 'month-comparison', label: 'השוואה חודשית', desc: 'השוואת ההוצאות בין החודש הנוכחי לחודש קודם' },
+  { id: 'cashflow', label: 'תחזית תזרים', desc: 'תחזית תזרים מזומנים לחודשים הקרובים' },
+  { id: 'life-goals', label: 'מטרות חיים', desc: 'מעקב אחר יעדים חיסכון ארוכי טווח' },
+  { id: 'debt-planner', label: 'תכנון חובות', desc: 'אסטרטגיות לסילוק חובות' },
+  { id: 'mortgage', label: 'משכנתא', desc: 'ניהול ומעקב אחר המשכנתא' },
+  { id: 'installments', label: 'תשלומים', desc: 'מעקב אחר תשלומים פעילים' },
+  { id: 'savings-vehicles', label: 'חסכונות ופנסיה', desc: 'קרן השתלמות, פנסיה וחסכונות ילדים' },
+  { id: 'chag-budget', label: 'תקציב חגים', desc: 'תקציב מיוחד לחגים' },
+  { id: 'annual-planner', label: 'מתכנן שנתי', desc: 'תכנון אירועים שנתיים' },
+  { id: 'salary-slip', label: 'ניתוח תלוש', desc: 'ניתוח מרכיבי השכר' },
+  { id: 'csv-import', label: 'ייבוא CSV', desc: 'ייבוא עסקאות מקובץ CSV' },
+  { id: 'smart-budget', label: 'תקציב חכם', desc: 'הצעת תקציב אוטומטית בהתבסס על ממוצע ההוצאות ב-3 חודשים אחרונים' },
+  { id: 'payday-countdown', label: 'ספירה למשכורת', desc: 'כרטיס בלוח הבקרה המציג כמה ימים נותרו עד קבלת המשכורת הבאה' },
+  { id: 'budget-alerts', label: 'התראות תקציב', desc: 'הצגת התראה בחודש כאשר קטגוריות חורגות מהתקציב שנקבע' },
+  { id: 'daily-budget', label: 'תקציב יומי', desc: 'כרטיס המציג כמה ניתן להוציא כל יום לפי יתרת התקציב הנותרת' },
+  { id: 'subscription-audit', label: 'ביקורת מנויים', desc: 'ניתוח עלות המנויים החודשיים והשנתיים שלך עם המלצות חיסכון' },
+  { id: 'budget-rule', label: 'כלל 50/30/20', desc: 'מד הצגת התפלגות ההוצאות לפי כלל הניהול הפיננסי הידוע' },
+  { id: 'report-card', label: 'כרטיס ציון חודשי', desc: 'ציון א-ו על הביצוע הפיננסי החודשי בהתבסס על חיסכון ועמידה בתקציב' },
+  { id: 'spending-tips', label: 'טיפים פיננסיים', desc: 'טיפים מותאמים אישית המבוססים על ניתוח דפוסי ההוצאה שלך' },
+];
+
 export default function SettingsPage() {
   const settings = useFinanceStore((s) => s.settings);
   const updateSettings = useFinanceStore((s) => s.updateSettings);
   const toggleDashboardSection = useFinanceStore((s) => s.toggleDashboardSection);
+  const toggleModule = useFinanceStore((s) => s.toggleModule);
   const addCustomCategory = useFinanceStore((s) => s.addCustomCategory);
   const deleteCustomCategory = useFinanceStore((s) => s.deleteCustomCategory);
   const loadDemoData = useFinanceStore((s) => s.loadDemoData);
@@ -84,6 +116,10 @@ export default function SettingsPage() {
 
   const hiddenSections = settings.hiddenDashboardSections ?? [];
   const customCategories = settings.customCategories ?? [];
+  const enabledModules = settings.enabledModules ?? ALL_TOGGLEABLE_MODULES.map((m) => m.id);
+
+  const today = new Date();
+  const currentMonthIndex = today.getMonth();
 
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -267,6 +303,13 @@ export default function SettingsPage() {
         )}
       </SettingsSection>
 
+      {/* Budget Templates */}
+      {enabledModules.includes('budget-templates') && (
+        <SettingsSection title="תבניות תקציב" accentColor="#C5CDB6">
+          <BudgetTemplates monthIndex={currentMonthIndex} />
+        </SettingsSection>
+      )}
+
       {/* Dashboard Customization (#29) */}
       <SettingsSection title="התאמת לוח הבקרה" accentColor="#7B6DC8">
         <p className="text-xs text-[#9090A8] mb-4">בחר אילו חלקים יוצגו בלוח הבקרה הראשי.</p>
@@ -284,6 +327,30 @@ export default function SettingsPage() {
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${isHidden ? 'bg-gray-200' : 'bg-lavender-dark'}`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${isHidden ? 'translate-x-1' : 'translate-x-6'}`} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </SettingsSection>
+
+      {/* Module Toggles */}
+      <SettingsSection title="מודולים ותכונות" accentColor="#5B52A0">
+        <p className="text-xs text-[#9090A8] mb-4">הפעל או כבה תכונות. כיבוי תכונה לא מוחק את הנתונים שלה.</p>
+        <div className="space-y-2">
+          {ALL_TOGGLEABLE_MODULES.map((mod) => {
+            const isEnabled = enabledModules.includes(mod.id);
+            return (
+              <div key={mod.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-[#1E1E2E]">{mod.label}</p>
+                  <p className="text-xs text-[#9090A8]">{mod.desc}</p>
+                </div>
+                <button
+                  onClick={() => toggleModule(mod.id)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${isEnabled ? 'bg-lavender-dark' : 'bg-gray-200'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
             );

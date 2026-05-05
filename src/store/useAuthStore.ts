@@ -13,6 +13,8 @@ interface AuthStore {
   signOut: () => Promise<void>;
   fetchProfile: (userId: string) => Promise<Profile | null>;
   approveUser: (userId: string, approve: boolean) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<string | null>;
+  updatePassword: (newPassword: string) => Promise<string | null>;
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -89,5 +91,19 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       .from('profiles')
       .update({ is_approved: approve })
       .eq('id', userId);
+  },
+
+  requestPasswordReset: async (email) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) return error.message;
+    return null;
+  },
+
+  updatePassword: async (newPassword) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return error.message;
+    return null;
   },
 }));

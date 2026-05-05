@@ -198,6 +198,17 @@ export interface ChagBudget {
   notes: string;
 }
 
+// ── Savings Challenge ─────────────────────────────────────────────────────────
+
+export interface SavingsChallenge {
+  id: string;
+  name: string;
+  weeklyBase: number; // amount × week number (e.g. ₪50 → week 1=₪50, week 2=₪100...)
+  startDate: string; // YYYY-MM-DD
+  completedWeeks: number[]; // week numbers 1-52 that are marked done
+  notes: string;
+}
+
 // ── Activity Log (#33) ────────────────────────────────────────────────────────
 
 export type ActivityAction = 'add' | 'update' | 'delete';

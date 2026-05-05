@@ -1,7 +1,8 @@
 import { useActiveBoardData } from '../../store/useActiveBoardData';
-import { sumAmounts, calcRemaining } from '../../utils/calculations';
+import { sumAmounts } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/formatters';
 import StatCard from '../shared/StatCard';
+import { computeMonthTotals } from '../../utils/monthlyTotals';
 
 interface MonthSummaryProps {
   monthIndex: number;
@@ -26,12 +27,10 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
   const monthData = months[monthIndex];
   const prevMonthData = monthIndex > 0 ? months[monthIndex - 1] : undefined;
 
-  const incomeEntries = monthData?.income ?? [];
   const expenseEntries = monthData?.expenses ?? [];
 
-  const totalIncome = sumAmounts(incomeEntries) + sumAmounts(recurringIncomes);
-  const totalExpenses = sumAmounts(expenseEntries) + sumAmounts(recurringExpenses);
-  const remaining = calcRemaining(totalIncome, totalExpenses);
+  const { totalIncome, totalExpenses } = computeMonthTotals(monthData, recurringIncomes, recurringExpenses);
+  const remaining = totalIncome - totalExpenses;
 
   // Pending transactions
   const pendingExpenses = expenseEntries.filter((e) => e.isPending);
@@ -42,8 +41,11 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
   const overspending = confirmedTotal > totalIncome && totalIncome > 0;
 
   // vs last month
-  const prevIncome = prevMonthData ? sumAmounts(prevMonthData.income) + sumAmounts(recurringIncomes) : 0;
-  const prevExpenses = prevMonthData ? sumAmounts(prevMonthData.expenses) + sumAmounts(recurringExpenses) : 0;
+  const { totalIncome: prevIncome, totalExpenses: prevExpenses } = computeMonthTotals(
+    prevMonthData,
+    recurringIncomes,
+    recurringExpenses,
+  );
 
   const savingsPercent = totalIncome > 0 && remaining > 0
     ? Math.round((remaining / totalIncome) * 100)

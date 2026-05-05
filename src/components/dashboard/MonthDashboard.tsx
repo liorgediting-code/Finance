@@ -15,6 +15,8 @@ import ExpenseCategoryBarChart from './ExpenseCategoryBarChart';
 import SavingsPage from '../savings/SavingsPage';
 import AnnualSummary from './AnnualSummary';
 import OverallDashboard from './OverallDashboard';
+import MonthComparison from '../month/MonthComparison';
+import SpendingPaceCard from '../month/SpendingPaceCard';
 
 function ChevronLeftIcon() {
   return (
@@ -102,6 +104,7 @@ export default function MonthDashboard() {
   const year = useFinanceStore((s) => s.settings.year);
   const activeBoardId = useFinanceStore((s) => s.activeBoardId);
   const hiddenSections = useFinanceStore(useShallow((s) => s.settings.hiddenDashboardSections ?? []));
+  const enabledModules = useFinanceStore(useShallow((s) => s.settings.enabledModules ?? []));
   const visible = (section: string) => !hiddenSections.includes(section);
   const { months: boardMonths, recurringIncomes: boardRecurringIncomes, recurringExpenses: boardRecurringExpenses } = useActiveBoardData();
 
@@ -217,6 +220,13 @@ export default function MonthDashboard() {
           {/* ── Summary Cards ── */}
           {visible('summary') && <MonthSummary monthIndex={monthIndex} />}
 
+          {/* ── Spending Pace ── */}
+          {enabledModules.includes('spending-pace') && (
+            <div className="mb-2">
+              <SpendingPaceCard monthIndex={monthIndex} />
+            </div>
+          )}
+
           {/* ── Expenses ── */}
           {visible('expenses') && (
             <>
@@ -251,6 +261,16 @@ export default function MonthDashboard() {
             <>
               <SectionDivider label="חסכונות" />
               <SavingsPage />
+            </>
+          )}
+
+          {/* ── Month Comparison ── */}
+          {enabledModules.includes('month-comparison') && monthIndex > 0 && (
+            <>
+              <SectionDivider label="השוואה חודשית" />
+              <div className="mb-6">
+                <MonthComparison monthIndex={monthIndex} />
+              </div>
             </>
           )}
         </>

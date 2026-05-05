@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../lib/supabase';
+import { CATEGORIES } from '../config/categories';
 import type {
   AppSettings,
   MonthData,
@@ -19,6 +20,7 @@ import type {
   ChagBudget,
   ActivityEntry,
   CustomCategory,
+  SavingsChallenge,
 } from '../types';
 
 // ── Cloud-synced fields ───────────────────────────────────────────────────────
@@ -40,9 +42,11 @@ interface CloudData {
   activityLog: ActivityEntry[];
   // Rollover settings (#19)
   rolloverCategories: string[];
+  // Savings Challenges
+  savingsChallenges: SavingsChallenge[];
 }
 
-const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import'];
+const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import', 'insights', 'financial-calendar', 'net-worth', 'month-comparison', 'spending-pace', 'budget-templates', 'savings-challenge', 'year-review', 'achievements', 'smart-budget', 'payday-countdown', 'budget-alerts', 'daily-budget', 'subscription-audit', 'budget-rule', 'report-card', 'spending-tips'];
 
 const DEFAULT_DATA: CloudData = {
   settings: {
@@ -66,6 +70,7 @@ const DEFAULT_DATA: CloudData = {
   chagBudgets: [],
   activityLog: [],
   rolloverCategories: [],
+  savingsChallenges: [],
 };
 
 // ── Debounced save ────────────────────────────────────────────────────────────
@@ -174,6 +179,7 @@ interface FinanceStore extends CloudData {
   addIncome: (monthIndex: number, entry: Omit<IncomeEntry, 'id'>) => void;
   updateIncome: (monthIndex: number, id: string, partial: Partial<IncomeEntry>) => void;
   deleteIncome: (monthIndex: number, id: string) => void;
+  clearIncome: (monthIndex: number) => void;
 
   // Recurring income actions
   addRecurringIncome: (entry: Omit<IncomeEntry, 'id'>) => void;
@@ -190,9 +196,12 @@ interface FinanceStore extends CloudData {
   updateExpense: (monthIndex: number, id: string, partial: Partial<ExpenseEntry>) => void;
   splitExpense: (monthIndex: number, id: string, splits: Omit<ExpenseSplit, 'id'>[]) => void;
   deleteExpense: (monthIndex: number, id: string) => void;
+  clearExpenses: (monthIndex: number) => void;
 
   // Budget actions
   setBudget: (monthIndex: number, categoryId: string, amount: number) => void;
+  copyBudgetFromMonth: (fromMonth: number, toMonth: number) => void;
+  applySmartBudget: (monthIndex: number) => void;
 
   // Savings funds actions
   addSavingsFund: (fund: Omit<SavingsFund, 'id'>) => void;
@@ -203,6 +212,7 @@ interface FinanceStore extends CloudData {
   // Settings actions
   updateSettings: (partial: Partial<AppSettings>) => void;
   toggleDashboardSection: (section: string) => void;
+  toggleModule: (moduleId: string) => void;
   addCustomCategory: (cat: Omit<CustomCategory, 'id'>) => void;
   deleteCustomCategory: (id: string) => void;
 
@@ -255,6 +265,12 @@ interface FinanceStore extends CloudData {
   updateChagBudget: (id: string, partial: Partial<Omit<ChagBudget, 'id'>>) => void;
   deleteChagBudget: (id: string) => void;
 
+  // Savings Challenges
+  addSavingsChallenge: (challenge: Omit<SavingsChallenge, 'id'>) => void;
+  updateSavingsChallenge: (id: string, partial: Partial<Omit<SavingsChallenge, 'id'>>) => void;
+  deleteSavingsChallenge: (id: string) => void;
+  toggleChallengeWeek: (id: string, weekNumber: number) => void;
+
   // Demo data
   loadDemoData: () => void;
 
@@ -288,6 +304,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         chagBudgets: s.chagBudgets,
         activityLog: s.activityLog,
         rolloverCategories: s.rolloverCategories,
+        savingsChallenges: s.savingsChallenges,
       };
     }
   );
@@ -344,8 +361,11 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       const { data } = await supabase.from('user_data').select('data').eq('user_id', userId).single();
       if (data?.data) {
         const d = data.data as Partial<CloudData>;
+        // Merge any newly-added modules into the saved enabledModules list
+        const savedModules = d.settings?.enabledModules ?? ALL_MODULES;
+        const mergedModules = [...new Set([...savedModules, ...ALL_MODULES.filter((m) => !savedModules.includes(m))])];
         set({
-          settings: { ...DEFAULT_DATA.settings, ...(d.settings ?? {}) },
+          settings: { ...DEFAULT_DATA.settings, ...(d.settings ?? {}), enabledModules: mergedModules },
           months: d.months ?? {},
           savingsFunds: d.savingsFunds ?? [],
           recurringIncomes: d.recurringIncomes ?? [],
@@ -360,6 +380,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           chagBudgets: d.chagBudgets ?? [],
           activityLog: d.activityLog ?? [],
           rolloverCategories: d.rolloverCategories ?? [],
+          savingsChallenges: d.savingsChallenges ?? [],
         });
       }
     },
@@ -375,6 +396,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         savingsVehicles: s.savingsVehicles, debts: s.debts,
         lifeGoals: s.lifeGoals, chagBudgets: s.chagBudgets,
         activityLog: s.activityLog, rolloverCategories: s.rolloverCategories,
+        savingsChallenges: s.savingsChallenges,
       };
       await supabase.from('user_data').upsert({ user_id: s._userId, data, updated_at: new Date().toISOString() });
     },
@@ -432,6 +454,22 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         }));
       }
       logActivity('delete', 'income', 'הכנסה נמחקה', undefined, monthIndex);
+      sync();
+    },
+
+    clearIncome: (monthIndex) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, income: [] } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, income: [] } } };
+        }));
+      }
       sync();
     },
 
@@ -580,6 +618,22 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
+    clearExpenses: (monthIndex) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, expenses: [] } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, expenses: [] } } };
+        }));
+      }
+      sync();
+    },
+
     setBudget: (monthIndex, categoryId, amount) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
@@ -591,6 +645,61 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
           const md = ensureMonth(b.months, monthIndex);
           return { ...b, months: { ...b.months, [monthIndex]: { ...md, budget: { ...md.budget, [categoryId]: amount } } } };
+        }));
+      }
+      sync();
+    },
+
+    copyBudgetFromMonth: (fromMonth, toMonth) => {
+      const { activeBoardId } = get();
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const src = s.months[fromMonth]?.budget ?? {};
+          const md = ensureMonth(s.months, toMonth);
+          return { months: { ...s.months, [toMonth]: { ...md, budget: { ...src } } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const src = b.months[fromMonth]?.budget ?? {};
+          const md = ensureMonth(b.months, toMonth);
+          return { ...b, months: { ...b.months, [toMonth]: { ...md, budget: { ...src } } } };
+        }));
+      }
+      sync();
+    },
+
+    applySmartBudget: (monthIndex) => {
+      const { activeBoardId } = get();
+      const getMonths = (): Record<number, MonthData> => {
+        const s = get();
+        if (activeBoardId === 'personal' || activeBoardId === 'overall') return s.months;
+        return s.extraBoards.find((b) => b.id === activeBoardId)?.months ?? {};
+      };
+      const allMonths = getMonths();
+      // Collect up to 3 past months that have expense data
+      const pastMonths: MonthData[] = [];
+      for (let i = monthIndex - 1; i >= 0 && pastMonths.length < 3; i--) {
+        const md = allMonths[i];
+        if (md && md.expenses.length > 0) pastMonths.push(md);
+      }
+      if (pastMonths.length === 0) return;
+      const suggested: Record<string, number> = {};
+      for (const cat of CATEGORIES) {
+        const totals = pastMonths.map((md) =>
+          md.expenses.filter((e) => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0)
+        );
+        const avg = totals.reduce((a, b) => a + b, 0) / totals.length;
+        if (avg > 0) suggested[cat.id] = Math.round(avg / 100) * 100;
+      }
+      if (activeBoardId === 'personal') {
+        set((s) => {
+          const md = ensureMonth(s.months, monthIndex);
+          return { months: { ...s.months, [monthIndex]: { ...md, budget: { ...md.budget, ...suggested } } } };
+        });
+      } else if (activeBoardId !== 'overall') {
+        set((s) => updateExtraBoard(s.extraBoards, activeBoardId, (b) => {
+          const md = ensureMonth(b.months, monthIndex);
+          return { ...b, months: { ...b.months, [monthIndex]: { ...md, budget: { ...md.budget, ...suggested } } } };
         }));
       }
       sync();
@@ -651,6 +760,17 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           ? hidden.filter((h) => h !== section)
           : [...hidden, section];
         return { settings: { ...s.settings, hiddenDashboardSections: next } };
+      });
+      sync();
+    },
+
+    toggleModule: (moduleId) => {
+      set((s) => {
+        const current = s.settings.enabledModules ?? ALL_MODULES;
+        const next = current.includes(moduleId)
+          ? current.filter((m) => m !== moduleId)
+          : [...current, moduleId];
+        return { settings: { ...s.settings, enabledModules: next } };
       });
       sync();
     },
@@ -859,6 +979,23 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     addChagBudget: (budget) => { set((s) => ({ chagBudgets: [...s.chagBudgets, { ...budget, id: uuidv4() }] })); sync(); },
     updateChagBudget: (id, partial) => { set((s) => ({ chagBudgets: s.chagBudgets.map((b) => b.id === id ? { ...b, ...partial } : b) })); sync(); },
     deleteChagBudget: (id) => { set((s) => ({ chagBudgets: s.chagBudgets.filter((b) => b.id !== id) })); sync(); },
+
+    // ── Savings Challenges ──────────────────────────────────────────────────
+    addSavingsChallenge: (challenge) => { set((s) => ({ savingsChallenges: [...s.savingsChallenges, { ...challenge, id: uuidv4() }] })); sync(); },
+    updateSavingsChallenge: (id, partial) => { set((s) => ({ savingsChallenges: s.savingsChallenges.map((c) => c.id === id ? { ...c, ...partial } : c) })); sync(); },
+    deleteSavingsChallenge: (id) => { set((s) => ({ savingsChallenges: s.savingsChallenges.filter((c) => c.id !== id) })); sync(); },
+    toggleChallengeWeek: (id, weekNumber) => {
+      set((s) => ({
+        savingsChallenges: s.savingsChallenges.map((c) => {
+          if (c.id !== id) return c;
+          const done = c.completedWeeks.includes(weekNumber)
+            ? c.completedWeeks.filter((w) => w !== weekNumber)
+            : [...c.completedWeeks, weekNumber];
+          return { ...c, completedWeeks: done };
+        }),
+      }));
+      sync();
+    },
 
     resetStore: () => {
       if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }

@@ -38,6 +38,7 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
   const addExpense = useFinanceStore((s) => s.addExpense);
   const updateExpense = useFinanceStore((s) => s.updateExpense);
   const deleteExpense = useFinanceStore((s) => s.deleteExpense);
+  const clearExpenses = useFinanceStore((s) => s.clearExpenses);
 
   const expenseEntries = monthData?.expenses ?? [];
   const totalExpenses = sumAmounts(expenseEntries);
@@ -76,7 +77,21 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
 
   return (
     <section className="mb-8">
-      <h3 className="text-lg font-semibold text-gray-700 mb-3">הוצאות</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold text-gray-700">הוצאות</h3>
+        {expenseEntries.length > 0 && (
+          <button
+            onClick={() => {
+              if (window.confirm(`למחוק את כל ${expenseEntries.length} ההוצאות של החודש?`)) {
+                clearExpenses(monthIndex);
+              }
+            }}
+            className="text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-3 py-1.5 rounded-lg border border-blush-dark/30 transition-colors cursor-pointer"
+          >
+            מחק הכל
+          </button>
+        )}
+      </div>
       <div className="overflow-x-auto rounded-lg shadow-sm">
         <table className="w-full text-sm border-collapse">
           <thead>

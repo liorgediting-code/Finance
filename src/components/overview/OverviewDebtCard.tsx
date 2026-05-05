@@ -4,16 +4,24 @@ import { useFinanceStore } from '../../store/useFinanceStore';
 import { formatCurrency } from '../../utils/formatters';
 
 export default function OverviewDebtCard() {
-  const { mortgages, debts } = useFinanceStore(
-    useShallow((s) => ({ mortgages: s.mortgages, debts: s.debts }))
+  const { mortgages, debts, installments } = useFinanceStore(
+    useShallow((s) => ({ mortgages: s.mortgages, debts: s.debts, installments: s.installments }))
   );
 
   const mortgageBalance = mortgages.flatMap((m) => m.tracks).reduce((s, t) => s + t.balance, 0);
   const mortgagePayment = mortgages.flatMap((m) => m.tracks).reduce((s, t) => s + t.monthlyPayment, 0);
   const debtBalance = debts.reduce((s, d) => s + d.balance, 0);
   const debtPayment = debts.reduce((s, d) => s + d.minimumPayment, 0);
-  const totalBalance = mortgageBalance + debtBalance;
-  const totalPayment = mortgagePayment + debtPayment;
+  const installmentsBalance = installments.reduce((s, inst) => {
+    const remaining = inst.numPayments - inst.paidPayments;
+    return s + remaining * (inst.totalAmount / inst.numPayments);
+  }, 0);
+  const installmentsPayment = installments.reduce(
+    (s, inst) => s + inst.totalAmount / inst.numPayments,
+    0,
+  );
+  const totalBalance = mortgageBalance + debtBalance + installmentsBalance;
+  const totalPayment = mortgagePayment + debtPayment + installmentsPayment;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-3">
@@ -44,7 +52,25 @@ export default function OverviewDebtCard() {
         </div>
       ))}
 
-      {(mortgages.length > 0 || debts.length > 0) && (
+      {installments.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <div className="flex justify-between text-xs text-[#4A4A60] mb-0.5">
+            <span>תשלומים בתשלומים</span>
+            <span className="font-semibold text-almond-dark">{formatCurrency(installmentsBalance)}</span>
+          </div>
+          {installments.slice(0, 3).map((inst) => {
+            const remaining = inst.numPayments - inst.paidPayments;
+            return (
+              <div key={inst.id} className="flex justify-between text-xs text-[#9090A8]">
+                <span>{inst.description}</span>
+                <span>{formatCurrency(remaining * (inst.totalAmount / inst.numPayments))} • {remaining} חודשים</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {(mortgages.length > 0 || debts.length > 0 || installments.length > 0) && (
         <>
           <div className="h-px bg-gray-100" />
           <div className="flex flex-col gap-1">
@@ -60,7 +86,7 @@ export default function OverviewDebtCard() {
         </>
       )}
 
-      {mortgages.length === 0 && debts.length === 0 && (
+      {mortgages.length === 0 && debts.length === 0 && installments.length === 0 && (
         <p className="text-xs text-[#9090A8]">אין חובות רשומים</p>
       )}
     </div>

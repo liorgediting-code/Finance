@@ -6,6 +6,8 @@ import SettingsPage from './components/settings/SettingsPage'
 import AuthGuard from './components/auth/AuthGuard'
 import LoginPage from './components/auth/LoginPage'
 import SignupPage from './components/auth/SignupPage'
+import ForgotPasswordPage from './components/auth/ForgotPasswordPage'
+import ResetPasswordPage from './components/auth/ResetPasswordPage'
 import AdminPage from './components/admin/AdminPage'
 import TransactionSearchPage from './components/search/TransactionSearchPage'
 import InstallmentsPage from './components/modules/InstallmentsPage'
@@ -19,12 +21,20 @@ import ActivityFeedPage from './components/modules/ActivityFeedPage'
 import CashflowPage from './components/modules/CashflowPage'
 import SalarySlipPage from './components/modules/SalarySlipPage'
 import CSVImporterPage from './components/modules/CSVImporterPage'
+import InsightsPage from './components/modules/InsightsPage'
+import FinancialCalendarPage from './components/modules/FinancialCalendarPage'
+import SavingsChallengePage from './components/modules/SavingsChallengePage'
+import YearInReviewPage from './components/modules/YearInReviewPage'
+import AchievementsPage from './components/modules/AchievementsPage'
+import SubscriptionAuditPage from './components/modules/SubscriptionAuditPage'
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/*" element={
         <AuthGuard>
           <AppShell>
@@ -45,6 +55,12 @@ export default function App() {
               <Route path="/cashflow" element={<CashflowPage />} />
               <Route path="/salary-slip" element={<SalarySlipPage />} />
               <Route path="/csv-import" element={<CSVImporterPage />} />
+              <Route path="/insights" element={<InsightsPage />} />
+              <Route path="/calendar" element={<FinancialCalendarPage />} />
+              <Route path="/savings-challenge" element={<SavingsChallengePage />} />
+              <Route path="/year-review" element={<YearInReviewPage />} />
+              <Route path="/achievements" element={<AchievementsPage />} />
+              <Route path="/subscriptions" element={<SubscriptionAuditPage />} />
             </Routes>
           </AppShell>
         </AuthGuard>

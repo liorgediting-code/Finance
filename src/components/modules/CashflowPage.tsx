@@ -26,22 +26,30 @@ export default function CashflowPage() {
     const yr = currentYear + Math.floor(absMonthIndex / 12);
     const monthData = months[absMonthIndex];
     const recurringIncome = recurringIncomes.reduce((s, inc) => s + inc.amount, 0);
-    const recurringExpense = recurringExpenses.reduce((s, exp) => s + exp.amount, 0);
+    // Exclude installment-linked entries — handled separately with date-awareness below
+    const recurringExpense = recurringExpenses
+      .filter((e) => e.linkedSourceType !== 'installment')
+      .reduce((s, exp) => s + exp.amount, 0);
     const manualIncome = (monthData?.income ?? []).reduce((s, inc) => s + inc.amount, 0);
-    const manualExpense = (monthData?.expenses ?? []).filter((e) => !e.isRecurring).reduce((s, exp) => s + exp.amount, 0);
+    // No isRecurring filter — subscriptions live only in months[x].expenses, not in recurringExpenses
+    const manualExpense = (monthData?.expenses ?? []).reduce((s, exp) => s + exp.amount, 0);
 
     const targetLinear = currentYear * 12 + absMonthIndex;
-    const installmentPayments = installments.filter((inst) => {
-      const instStart = inst.startYear * 12 + inst.startMonth - 1;
-      const instEnd = instStart + inst.numPayments - 1;
-      return targetLinear >= instStart && targetLinear <= instEnd;
-    }).reduce((s, inst) => s + inst.totalAmount / inst.numPayments, 0);
+    const installmentPayments = installments
+      .filter((inst) => {
+        const instStart = inst.startYear * 12 + inst.startMonth - 1;
+        const instEnd = instStart + inst.numPayments - 1;
+        return targetLinear >= instStart && targetLinear <= instEnd;
+      })
+      .reduce((s, inst) => s + inst.totalAmount / inst.numPayments, 0);
 
+    const totalIncome = recurringIncome + manualIncome;
+    const totalExpenses = recurringExpense + manualExpense + installmentPayments;
     return {
       label: MonthLabel(mIdx, yr),
-      income: recurringIncome + manualIncome,
-      expenses: recurringExpense + manualExpense + installmentPayments,
-      net: recurringIncome + manualIncome - recurringExpense - manualExpense - installmentPayments,
+      income: totalIncome,
+      expenses: totalExpenses,
+      net: totalIncome - totalExpenses,
     };
   };
 
@@ -60,7 +68,7 @@ export default function CashflowPage() {
     <div className="p-4 md:p-6 max-w-3xl mx-auto" dir="rtl">
       <div className="mb-5">
         <h1 className="text-xl font-bold text-[#1E1E2E]">תחזית תזרים מזומנים</h1>
-        <p className="text-xs text-[#9090A8] mt-0.5">צפי להכנסות והוצאות חודשיות בהתבסס על פריטים קבועים</p>
+        <p className="text-xs text-[#9090A8] mt-0.5">צפי להכנסות והוצאות חודשיות בהתבסס על כל הפריטים הפעילים</p>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-5">
@@ -151,7 +159,7 @@ export default function CashflowPage() {
       </div>
 
       <p className="text-xs text-[#9090A8] mt-3 text-center">
-        * התחזית מבוססת על הכנסות והוצאות קבועות בלבד. תשלומים חד-פעמיים אינם כלולים.
+        * התחזית מבוססת על הכנסות וההוצאות הקבועות, הפעולות החודשיות שנרשמו וההתחייבויות הפעילות.
       </p>
     </div>
   );
