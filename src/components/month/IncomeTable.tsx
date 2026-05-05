@@ -132,7 +132,15 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
 
   const startEdit = (entry: IncomeEntry) => {
     setEditingId(entry.id);
-    setEditForm({ date: entry.date, source: entry.source, memberId: entry.memberId, amount: entry.amount, notes: entry.notes });
+    setEditForm({
+      date: entry.date,
+      source: entry.source,
+      memberId: entry.memberId,
+      amount: entry.amount,
+      notes: entry.notes,
+      isRecurring: entry.isRecurring,
+      isFuture: entry.isFuture,
+    });
   };
 
   const saveEdit = (id: string, isRecurring: boolean) => {
