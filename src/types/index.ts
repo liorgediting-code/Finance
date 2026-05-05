@@ -11,6 +11,7 @@ export interface IncomeEntry {
   amount: number;
   notes: string;
   isRecurring?: boolean;
+  isFuture?: boolean;
 }
 
 export interface ExpenseSplit {
@@ -35,6 +36,7 @@ export interface ExpenseEntry {
   cancelUrl?: string;
   memberId?: string;
   isPending?: boolean;
+  isFuture?: boolean;
   splits?: ExpenseSplit[];
   linkedSourceId?: string;
   linkedSourceType?: 'installment' | 'mortgage-track' | 'debt' | 'savings-vehicle' | 'life-goal';
