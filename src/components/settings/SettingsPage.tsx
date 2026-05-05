@@ -90,6 +90,11 @@ const ALL_TOGGLEABLE_MODULES: Array<{ id: string; label: string; desc: string }>
   { id: 'smart-budget', label: 'תקציב חכם', desc: 'הצעת תקציב אוטומטית בהתבסס על ממוצע ההוצאות ב-3 חודשים אחרונים' },
   { id: 'payday-countdown', label: 'ספירה למשכורת', desc: 'כרטיס בלוח הבקרה המציג כמה ימים נותרו עד קבלת המשכורת הבאה' },
   { id: 'budget-alerts', label: 'התראות תקציב', desc: 'הצגת התראה בחודש כאשר קטגוריות חורגות מהתקציב שנקבע' },
+  { id: 'daily-budget', label: 'תקציב יומי', desc: 'כרטיס המציג כמה ניתן להוציא כל יום לפי יתרת התקציב הנותרת' },
+  { id: 'subscription-audit', label: 'ביקורת מנויים', desc: 'ניתוח עלות המנויים החודשיים והשנתיים שלך עם המלצות חיסכון' },
+  { id: 'budget-rule', label: 'כלל 50/30/20', desc: 'מד הצגת התפלגות ההוצאות לפי כלל הניהול הפיננסי הידוע' },
+  { id: 'report-card', label: 'כרטיס ציון חודשי', desc: 'ציון א-ו על הביצוע הפיננסי החודשי בהתבסס על חיסכון ועמידה בתקציב' },
+  { id: 'spending-tips', label: 'טיפים פיננסיים', desc: 'טיפים מותאמים אישית המבוססים על ניתוח דפוסי ההוצאה שלך' },
 ];
 
 export default function SettingsPage() {

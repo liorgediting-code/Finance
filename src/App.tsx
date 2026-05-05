@@ -26,6 +26,7 @@ import FinancialCalendarPage from './components/modules/FinancialCalendarPage'
 import SavingsChallengePage from './components/modules/SavingsChallengePage'
 import YearInReviewPage from './components/modules/YearInReviewPage'
 import AchievementsPage from './components/modules/AchievementsPage'
+import SubscriptionAuditPage from './components/modules/SubscriptionAuditPage'
 
 export default function App() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
               <Route path="/savings-challenge" element={<SavingsChallengePage />} />
               <Route path="/year-review" element={<YearInReviewPage />} />
               <Route path="/achievements" element={<AchievementsPage />} />
+              <Route path="/subscriptions" element={<SubscriptionAuditPage />} />
             </Routes>
           </AppShell>
         </AuthGuard>

@@ -46,7 +46,7 @@ interface CloudData {
   savingsChallenges: SavingsChallenge[];
 }
 
-const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import', 'insights', 'financial-calendar', 'net-worth', 'month-comparison', 'spending-pace', 'budget-templates', 'savings-challenge', 'year-review', 'achievements', 'smart-budget', 'payday-countdown', 'budget-alerts'];
+const ALL_MODULES = ['life-goals', 'debt-planner', 'mortgage', 'installments', 'savings-vehicles', 'chag-budget', 'cashflow', 'annual-planner', 'salary-slip', 'csv-import', 'insights', 'financial-calendar', 'net-worth', 'month-comparison', 'spending-pace', 'budget-templates', 'savings-challenge', 'year-review', 'achievements', 'smart-budget', 'payday-countdown', 'budget-alerts', 'daily-budget', 'subscription-audit', 'budget-rule', 'report-card', 'spending-tips'];
 
 const DEFAULT_DATA: CloudData = {
   settings: {

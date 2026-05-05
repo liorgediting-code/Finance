@@ -484,6 +484,12 @@ export default function Sidebar({ isOpen, onClose }: Props) {
                 ייבוא CSV
               </NavLink>
             )}
+            {enabledModules.includes('subscription-audit') && (
+              <NavLink to="/subscriptions" className={navLinkClass} onClick={onClose}>
+                <SearchIcon />
+                ביקורת מנויים
+              </NavLink>
+            )}
           </div>
 
           {/* Settings pinned to bottom */}
