@@ -87,12 +87,14 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
           colorClass="bg-sage-light"
           accentColor="#5A9A42"
           subtitle={
-            <>
-              {futureIncomeTotal > 0 && (
-                <span className="text-amber-600 block">+ {formatCurrency(futureIncomeTotal)} צפוי להתקבל</span>
-              )}
-              {prevIncome > 0 && <DeltaBadge current={totalIncome} previous={prevIncome} />}
-            </>
+            futureIncomeTotal > 0 || prevIncome > 0 ? (
+              <>
+                {futureIncomeTotal > 0 && (
+                  <span className="text-amber-600 block">+ {formatCurrency(futureIncomeTotal)} צפוי להתקבל</span>
+                )}
+                {prevIncome > 0 && <DeltaBadge current={totalIncome} previous={prevIncome} />}
+              </>
+            ) : undefined
           }
         />
         <StatCard
@@ -101,12 +103,14 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
           colorClass="bg-blush-light"
           accentColor="#9B72C0"
           subtitle={
-            <>
-              {futureExpenseTotal > 0 && (
-                <span className="text-amber-600 block">+ {formatCurrency(futureExpenseTotal)} צפוי לצאת</span>
-              )}
-              {prevExpenses > 0 && <DeltaBadge current={confirmedTotal} previous={prevExpenses} lowerIsBetter />}
-            </>
+            futureExpenseTotal > 0 || prevExpenses > 0 ? (
+              <>
+                {futureExpenseTotal > 0 && (
+                  <span className="text-amber-600 block">+ {formatCurrency(futureExpenseTotal)} צפוי לצאת</span>
+                )}
+                {prevExpenses > 0 && <DeltaBadge current={confirmedTotal} previous={prevExpenses} lowerIsBetter />}
+              </>
+            ) : undefined
           }
         />
         <StatCard
