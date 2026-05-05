@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useFinanceStore } from '../../store/useFinanceStore';
@@ -23,15 +24,16 @@ export default function OverviewAnnualChart() {
   const { months, recurringIncomes, recurringExpenses } = useActiveBoardData();
   const year = useFinanceStore((s) => s.settings.year);
 
-  const recurringIncome = recurringIncomes.reduce((s, e) => s + e.amount, 0);
-  const recurringExpense = recurringExpenses.reduce((s, e) => s + e.amount, 0);
-
-  const data = MONTH_LABELS.map((label, i) => {
-    const md = months[i];
-    const income = recurringIncome + (md?.income ?? []).reduce((s, e) => s + e.amount, 0);
-    const expense = recurringExpense + (md?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
-    return { label, הכנסות: income, הוצאות: expense, חיסכון: Math.max(0, income - expense) };
-  });
+  const data = useMemo(() => {
+    const recurringIncome = recurringIncomes.reduce((s, e) => s + e.amount, 0);
+    const recurringExpense = recurringExpenses.reduce((s, e) => s + e.amount, 0);
+    return MONTH_LABELS.map((label, i) => {
+      const md = months[i];
+      const income = recurringIncome + (md?.income ?? []).reduce((s, e) => s + e.amount, 0);
+      const expense = recurringExpense + (md?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
+      return { label, הכנסות: income, הוצאות: expense, חיסכון: Math.max(0, income - expense) };
+    });
+  }, [months, recurringIncomes, recurringExpenses]);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm p-4">

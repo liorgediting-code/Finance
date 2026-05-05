@@ -416,6 +416,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const budget = monthData?.budget ?? {};
   const monthExpenses = monthData?.expenses ?? [];
   const expenses = [...recurringExpenses, ...monthExpenses];
+  const customCategories = useFinanceStore(useShallow((s) => s.settings.customCategories ?? []));
 
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const [showAddForm, setShowAddForm] = useState(false);
@@ -495,7 +496,18 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   let totalActual = 0;
   let totalPending = 0;
 
-  const rows = CATEGORIES.map((cat) => {
+  type RowData = {
+    cat: { id: string; nameHe: string; color: string; subcategories: { id: string; nameHe: string }[] };
+    catExpenses: typeof expenses;
+    actual: number;
+    pending: number;
+    budgetAmt: number;
+    overBudget: boolean;
+    pct: number;
+    nearBudget: boolean;
+  };
+
+  const buildRow = (cat: { id: string; nameHe: string; color: string; subcategories: { id: string; nameHe: string }[] }): RowData => {
     const catExpenses = filteredExpenses.filter((e) => e.categoryId === cat.id);
     const confirmed = catExpenses.filter((e) => !e.isPending);
     const actual = confirmed.reduce((s, e) => s + e.amount, 0);
@@ -507,7 +519,12 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
     totalActual += actual;
     totalPending += pending;
     return { cat, catExpenses, actual, pending, budgetAmt, overBudget, pct, nearBudget };
-  });
+  };
+
+  const rows: RowData[] = [
+    ...CATEGORIES.map(buildRow),
+    ...customCategories.map((cc) => buildRow({ ...cc, subcategories: [] })),
+  ];
 
   const visibleRows = rows.filter((r) => r.actual > 0 || r.pending > 0);
   const overBudgetCount = rows.filter((r) => r.overBudget).length;
@@ -896,7 +913,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                               </tr>
                               {splittingId === entry.id && (
                                 <tr>
-                                  <td colSpan={5} className="px-0 py-0">
+                                  <td colSpan={7} className="px-0 py-0">
                                     <SplitPanel
                                       entry={entry}
                                       monthIndex={monthIndex}

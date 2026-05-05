@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
@@ -48,10 +49,12 @@ export default function HealthScoreHero() {
   const currentMonthName = MONTH_NAMES[now.getMonth()];
   const year = now.getFullYear();
 
-  const result = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds });
-  const prevMonth = (now.getMonth() - 1 + 12) % 12;
-  const prevResult = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds, currentMonthOverride: prevMonth });
-  const delta = result.score - prevResult.score;
+  const { result, delta } = useMemo(() => {
+    const r = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds });
+    const prevMonth = (now.getMonth() - 1 + 12) % 12;
+    const prev = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds, currentMonthOverride: prevMonth });
+    return { result: r, delta: r.score - prev.score };
+  }, [months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const scoreColor = result.score >= 70 ? 'text-sage-dark' : result.score >= 40 ? 'text-almond-dark' : 'text-blush-dark';
 
@@ -89,7 +92,7 @@ export default function HealthScoreHero() {
           <ScoreBar label="שיעור חיסכון" value={result.breakdown.savingsRate} max={30} displayValue={`${result.savingsRatePct}%`} />
           <ScoreBar label="יחס חוב/הכנסה" value={result.breakdown.debtRatio} max={25} displayValue={result.debtRatioLabel} />
           <ScoreBar label="התקדמות יעדים" value={result.breakdown.goalsProgress} max={20} displayValue={`${result.goalsAvgPct}%`} />
-          <ScoreBar label="עמידה בתקציב" value={result.breakdown.budgetAdherence} max={15} displayValue={`${result.positiveMonths}/${Object.keys(months).length || 0}`} />
+          <ScoreBar label="עמידה בתקציב" value={result.breakdown.budgetAdherence} max={15} displayValue={`${result.positiveMonths}/12`} />
         </div>
         <div className="flex-shrink-0 text-right">
           <h2 className="text-base font-bold text-[#1E1E2E]">בריאות פיננסית</h2>
@@ -102,7 +105,7 @@ export default function HealthScoreHero() {
         <ScoreBarMobile label="שיעור חיסכון" value={result.breakdown.savingsRate} max={30} displayValue={`${result.savingsRatePct}%`} />
         <ScoreBarMobile label="יחס חוב/הכנסה" value={result.breakdown.debtRatio} max={25} displayValue={result.debtRatioLabel} />
         <ScoreBarMobile label="התקדמות יעדים" value={result.breakdown.goalsProgress} max={20} displayValue={`${result.goalsAvgPct}%`} />
-        <ScoreBarMobile label="עמידה בתקציב" value={result.breakdown.budgetAdherence} max={15} displayValue={`${result.positiveMonths}/${Object.keys(months).length || 0}`} />
+        <ScoreBarMobile label="עמידה בתקציב" value={result.breakdown.budgetAdherence} max={15} displayValue={`${result.positiveMonths}/12`} />
       </div>
     </div>
   );

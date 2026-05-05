@@ -73,14 +73,12 @@ export default function InsightsPage() {
     }))
   );
 
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  const currentMonth = new Date().getMonth();
 
   const insights = generateInsights({
     months, recurringIncomes, recurringExpenses,
     savingsFunds, mortgages, debts, lifeGoals, installments,
-    currentMonth, currentYear,
+    currentMonth,
   });
 
   const byGroup: Record<InsightSeverity, Insight[]> = {
