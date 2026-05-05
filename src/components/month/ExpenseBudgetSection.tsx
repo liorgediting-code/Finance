@@ -302,7 +302,11 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
             הוצאה קבועה (תופיע בכל חודש)
           </span>
         </label>
-        <label className="flex items-center gap-2 cursor-pointer w-fit" onClick={() => setForm((f) => ({ ...f, isPending: !f.isPending }))}>
+        <label className="flex items-center gap-2 cursor-pointer w-fit" onClick={() => {
+          const next = !form.isPending;
+          setForm((f) => ({ ...f, isPending: next }));
+          if (next) setIsFuture(false);
+        }}>
           <div className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${form.isPending ? 'bg-amber-500' : 'bg-gray-200'}`}>
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${form.isPending ? 'translate-x-4' : 'translate-x-0'}`} />
           </div>
@@ -509,7 +513,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
 
   const duplicateExpense = (entry: ExpenseEntry) => {
     const { id: _id, isRecurring: _r, ...rest } = entry;
-    addExpense(monthIndex, { ...rest, isPending: false, date: today() });
+    addExpense(monthIndex, { ...rest, isPending: false, isFuture: false, date: today() });
   };
 
   const inputCls = 'border border-gray-200 rounded-lg px-2 py-1.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark transition-colors bg-white';
@@ -661,7 +665,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
             {CATEGORIES.filter((c) => c.id !== 'other').map((cat) => {
               const baseBudget = budget[cat.id] ?? 0;
               const rolled = getRolledBudget(monthIndex, cat.id);
-              const catActual = expenses.filter((e) => e.categoryId === cat.id && !e.isPending).reduce((s, e) => s + e.amount, 0);
+              const catActual = expenses.filter((e) => e.categoryId === cat.id && !e.isPending && !isEntryFuture(e)).reduce((s, e) => s + e.amount, 0);
               const isOver = (baseBudget + rolled) > 0 && catActual > (baseBudget + rolled);
               const hasRollover = rolloverCategories.includes(cat.id);
               return (
