@@ -24,5 +24,6 @@ export function getCategoryTotal(expenses: ExpenseEntry[], categoryId: string): 
 }
 
 export function isEntryFuture(entry: { isFuture?: boolean; date: string }): boolean {
-  return !!entry.isFuture && entry.date > new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('sv'); // 'sv' locale produces YYYY-MM-DD in local timezone
+  return !!entry.isFuture && entry.date > today;
 }
