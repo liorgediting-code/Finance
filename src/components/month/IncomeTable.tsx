@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
-import { sumAmounts } from '../../utils/calculations';
+import { sumAmounts, isEntryFuture } from '../../utils/calculations';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import type { IncomeEntry } from '../../types';
 
@@ -11,6 +11,12 @@ interface IncomeTableProps {
 
 const today = () => new Date().toISOString().split('T')[0];
 
+const sevenDaysLater = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  return d.toISOString().split('T')[0];
+};
+
 interface FormData {
   date: string;
   source: string;
@@ -18,6 +24,7 @@ interface FormData {
   amount: number;
   notes: string;
   isRecurring: boolean;
+  isFuture: boolean;
 }
 
 const emptyForm = (defaultMemberId: string): FormData => ({
@@ -27,6 +34,7 @@ const emptyForm = (defaultMemberId: string): FormData => ({
   amount: 0,
   notes: '',
   isRecurring: false,
+  isFuture: false,
 });
 
 function PlusIcon() {
@@ -69,6 +77,15 @@ function RepeatIcon() {
   );
 }
 
+function FutureIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
 export default function IncomeTable({ monthIndex }: IncomeTableProps) {
   const { months, recurringIncomes } = useActiveBoardData();
   const monthData = months[monthIndex];
@@ -84,7 +101,6 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
   const defaultMemberId = familyMembers[0]?.id ?? '';
   const monthlyEntries = monthData?.income ?? [];
   const allEntries = [...recurringIncomes, ...monthlyEntries];
-  const totalIncome = sumAmounts(allEntries);
 
   const [showForm, setShowForm] = useState(false);
   const [newEntry, setNewEntry] = useState<FormData>(() => emptyForm(defaultMemberId));
@@ -167,7 +183,9 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
           )}
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <div>
-              <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תאריך</label>
+              <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">
+                  {newEntry.isFuture ? 'תאריך צפוי' : 'תאריך'}
+                </label>
               <input type="date" value={newEntry.date} onChange={(e) => setNewEntry({ ...newEntry, date: e.target.value })} className={inputCls} />
             </div>
             <div>
@@ -193,13 +211,35 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
           </div>
 
           {/* Recurring toggle */}
-          <label className="flex items-center gap-2 mt-3 cursor-pointer w-fit" onClick={() => setNewEntry({ ...newEntry, isRecurring: !newEntry.isRecurring })}>
+          <label className="flex items-center gap-2 mt-3 cursor-pointer w-fit" onClick={() => {
+            const next = !newEntry.isRecurring;
+            setNewEntry({ ...newEntry, isRecurring: next, isFuture: next ? false : newEntry.isFuture });
+          }}>
             <div className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${newEntry.isRecurring ? 'bg-sage-dark' : 'bg-gray-200'}`}>
               <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${newEntry.isRecurring ? 'translate-x-4' : 'translate-x-0'}`} />
             </div>
             <span className="text-sm text-[#4A4A60] flex items-center gap-1.5">
               <RepeatIcon />
               הכנסה קבועה (תופיע בכל חודש)
+            </span>
+          </label>
+
+          {/* Future toggle */}
+          <label className="flex items-center gap-2 mt-2 cursor-pointer w-fit" onClick={() => {
+            const next = !newEntry.isFuture;
+            setNewEntry({
+              ...newEntry,
+              isFuture: next,
+              isRecurring: next ? false : newEntry.isRecurring,
+              date: next ? sevenDaysLater() : today(),
+            });
+          }}>
+            <div className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${newEntry.isFuture ? 'bg-amber-500' : 'bg-gray-200'}`}>
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${newEntry.isFuture ? 'translate-x-4' : 'translate-x-0'}`} />
+            </div>
+            <span className="text-sm text-[#4A4A60] flex items-center gap-1.5">
+              <FutureIcon />
+              הכנסה עתידית (צפויה בתאריך זה)
             </span>
           </label>
 
@@ -238,7 +278,11 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
             {allEntries.map((entry, idx) => {
               const isRecurring = !!entry.isRecurring;
               return (
-                <tr key={entry.id} className={`border-b border-gray-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-lavender-light/30`}>
+                <tr key={entry.id} className={`border-b border-gray-50 transition-colors ${
+                  isEntryFuture(entry)
+                    ? 'bg-amber-50'
+                    : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                } hover:bg-lavender-light/30`}>
                   {editingId === entry.id ? (
                     <>
                       <td className="px-4 py-2"><input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} className={inputCls} /></td>
@@ -271,10 +315,16 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
                               קבוע
                             </span>
                           )}
+                          {isEntryFuture(entry) && (
+                            <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                              <FutureIcon />
+                              צפוי
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-2.5 text-[#4A4A60]">{getMemberName(entry.memberId)}</td>
-                      <td className="px-4 py-2.5 font-semibold text-[#1E1E2E]">{formatCurrency(entry.amount)}</td>
+                      <td className={`px-4 py-2.5 font-semibold ${isEntryFuture(entry) ? 'text-amber-700' : 'text-[#1E1E2E]'}`}>{formatCurrency(entry.amount)}</td>
                       <td className="px-4 py-2.5 text-[#9090A8] text-xs">{entry.notes}</td>
                       <td className="px-4 py-2.5 text-center">
                         <div className="flex items-center justify-center gap-1">
@@ -311,8 +361,18 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
           </tbody>
           <tfoot>
             <tr className="bg-sage-light/50 font-semibold border-t border-gray-200">
-              <td className="px-4 py-2.5 text-[#4A4A60] text-sm" colSpan={3}>סה&quot;כ הכנסות</td>
-              <td className="px-4 py-2.5 text-[#1E1E2E] font-bold">{formatCurrency(totalIncome)}</td>
+              <td className="px-4 py-2.5 text-[#4A4A60] text-sm" colSpan={3}>
+                סה&quot;כ הכנסות
+                {(() => {
+                  const futureSum = sumAmounts(allEntries.filter((e) => isEntryFuture(e)));
+                  return futureSum > 0 ? (
+                    <span className="text-[10px] font-normal text-amber-600 mr-2">+ {formatCurrency(futureSum)} צפוי</span>
+                  ) : null;
+                })()}
+              </td>
+              <td className="px-4 py-2.5 text-[#1E1E2E] font-bold">
+                {formatCurrency(sumAmounts(allEntries.filter((e) => !isEntryFuture(e))))}
+              </td>
               <td className="px-4 py-2.5" colSpan={2} />
             </tr>
           </tfoot>
