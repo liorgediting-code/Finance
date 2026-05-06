@@ -62,7 +62,7 @@ const ALL_MODULES = [
 
 const DEFAULT_DATA: CloudData = {
   settings: {
-    year: 2026,
+    year: new Date().getFullYear(),
     savingsGoal: { monthlyTarget: 0, vacationGoal: 0, vacationSaved: 0 },
     hiddenDashboardSections: [],
     customCategories: [],
@@ -1110,6 +1110,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         activityLog: [],
         rolloverCategories: [],
         savingsChallenges: [],
+        netWorthHistory: [],
         extraBoards: [],
       });
       sync();

@@ -59,9 +59,13 @@ function exportMonthCSV(
   const allIncome = [...boardRecurringIncomes, ...(md?.income ?? [])];
 
   const BOM = '\uFEFF';
+  const f = (v: string | number) => {
+    const s = String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+  };
   const lines: string[] = [];
 
-  lines.push(`ייצוא ${monthName} ${year}`);
+  lines.push(f(`ייצוא ${monthName} ${year}`));
   lines.push('');
 
   // Income
@@ -69,9 +73,9 @@ function exportMonthCSV(
   lines.push('תאריך,מקור,בן משפחה,סכום,סוג');
   allIncome.forEach((e) => {
     const member = state.familyMembers.find((m) => m.id === e.memberId)?.name ?? '';
-    lines.push(`${e.date},${e.source},${member},${e.amount},${e.isRecurring ? 'קבוע' : 'חד פעמי'}`);
+    lines.push([e.date, f(e.source), f(member), e.amount, e.isRecurring ? 'קבוע' : 'חד פעמי'].join(','));
   });
-  lines.push(`,,סה"כ הכנסות,${sumAmounts(allIncome)},`);
+  lines.push(`,,${f('סה"כ הכנסות')},${sumAmounts(allIncome)},`);
   lines.push('');
 
   // Expenses
@@ -83,9 +87,9 @@ function exportMonthCSV(
       ? e.customCategory.trim()
       : CATEGORIES.find((c) => c.id === e.categoryId)?.subcategories.find((s) => s.id === e.subcategoryId)?.nameHe ?? '';
     const pay = PAYMENT_METHODS.find((m) => m.id === e.paymentMethod)?.nameHe ?? e.paymentMethod;
-    lines.push(`${e.date},${catName},${subCat},${e.description},${e.amount},${pay},${e.isRecurring ? 'קבוע' : 'חד פעמי'}`);
+    lines.push([e.date, f(catName), f(subCat), f(e.description), e.amount, f(pay), e.isRecurring ? 'קבוע' : 'חד פעמי'].join(','));
   });
-  lines.push(`,,,סה"כ הוצאות,${sumAmounts(allExpenses)},,`);
+  lines.push(`,,,${f('סה"כ הוצאות')},${sumAmounts(allExpenses)},,`);
 
   const csv = BOM + lines.join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

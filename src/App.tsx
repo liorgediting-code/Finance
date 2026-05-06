@@ -71,7 +71,6 @@ export default function App() {
               <Route path="/subscriptions" element={<SubscriptionAuditPage />} />
               <Route path="/upcoming-payments" element={<UpcomingPaymentsPage />} />
               <Route path="/tax-refund" element={<TaxRefundPage />} />
-              <Route path="/subscription-audit" element={<SubscriptionAuditPage />} />
               <Route path="/report-card" element={<MonthlyReportCardPage />} />
               <Route path="/spending-trends" element={<SpendingTrendsPage />} />
               <Route path="/emergency-fund" element={<EmergencyFundPage />} />

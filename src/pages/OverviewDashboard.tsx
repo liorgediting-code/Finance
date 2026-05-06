@@ -123,7 +123,6 @@ export default function OverviewDashboard() {
   const showBudgetRule    = enabledModules.includes('budget-rule');
   const showReportCard    = enabledModules.includes('report-card');
   const showSpendingTips  = enabledModules.includes('spending-tips');
-  const showSubAudit        = enabledModules.includes('subscription-audit');
   const showEmergencyFund   = enabledModules.includes('emergency-fund');
   const showMemberAnalysis  = enabledModules.includes('member-analysis');
   const showGoalSimulator   = enabledModules.includes('goal-simulator');
@@ -197,20 +196,6 @@ export default function OverviewDashboard() {
         </div>
       )}
 
-      {/* Subscription audit shortcut */}
-      {showSubAudit && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <NavLink to="/subscriptions" className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow block">
-            <div className="h-1 w-full" style={{ backgroundColor: '#7B6DC8' }} />
-            <div className="p-4">
-              <div className="text-2xl mb-2">🔍</div>
-              <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider">ביקורת מנויים</p>
-              <p className="text-sm text-[#1E1E2E] font-medium mt-1">ניתוח עלויות</p>
-              <p className="text-xs text-[#9090A8] mt-0.5">חשוף מנויים מיותרים →</p>
-            </div>
-          </NavLink>
-        </div>
-      )}
     </div>
   );
 }

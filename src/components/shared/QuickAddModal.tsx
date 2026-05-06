@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
@@ -26,6 +26,11 @@ export default function QuickAddModal({ onClose }: Props) {
   const [memberId, setMemberId] = useState('');
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => { if (resetTimerRef.current) clearTimeout(resetTimerRef.current); };
+  }, []);
 
   const selectedCat = CATEGORIES.find((c) => c.id === categoryId);
   const subcategoryId = selectedCat?.subcategories[0]?.id ?? '';
@@ -53,8 +58,8 @@ export default function QuickAddModal({ onClose }: Props) {
     });
 
     setSaved(true);
-    setTimeout(() => {
-      // Reset for another quick add
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = setTimeout(() => {
       setSaved(false);
       setAmount('');
       setDescription('');

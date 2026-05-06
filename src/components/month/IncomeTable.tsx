@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { sumAmounts } from '../../utils/calculations';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 import type { IncomeEntry } from '../../types';
 
 interface IncomeTableProps {
@@ -261,7 +261,7 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
                     </>
                   ) : (
                     <>
-                      <td className="px-4 py-2.5 text-[#4A4A60]">{entry.date}</td>
+                      <td className="px-4 py-2.5 text-[#4A4A60]">{formatDate(entry.date)}</td>
                       <td className="px-4 py-2.5 font-medium text-[#1E1E2E]">
                         <div className="flex items-center gap-2">
                           {entry.source}

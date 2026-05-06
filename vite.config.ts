@@ -20,6 +20,9 @@ export default defineConfig({
           if (id.includes('node_modules/@supabase')) {
             return 'vendor-supabase';
           }
+          if (id.includes('node_modules/xlsx')) {
+            return 'vendor-xlsx';
+          }
         },
       },
     },

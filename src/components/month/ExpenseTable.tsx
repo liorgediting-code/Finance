@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { sumAmounts } from '../../utils/calculations';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
 import CategorySelect from '../shared/CategorySelect';
 import type { ExpenseEntry } from '../../types';
@@ -211,7 +211,7 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
                   </>
                 ) : (
                   <>
-                    <td className="px-3 py-2">{entry.date}</td>
+                    <td className="px-3 py-2">{formatDate(entry.date)}</td>
                     <td className="px-3 py-2">
                       {getCategoryName(entry.categoryId)}
                       {entry.subcategoryId && (
