@@ -21,6 +21,7 @@ import type {
   ActivityEntry,
   CustomCategory,
   SavingsChallenge,
+  NetWorthSnapshot,
 } from '../types';
 
 // ── Cloud-synced fields ───────────────────────────────────────────────────────
@@ -44,6 +45,8 @@ interface CloudData {
   rolloverCategories: string[];
   // Savings Challenges
   savingsChallenges: SavingsChallenge[];
+  // Net Worth History
+  netWorthHistory: NetWorthSnapshot[];
 }
 
 const ALL_MODULES = [
@@ -53,6 +56,8 @@ const ALL_MODULES = [
   'year-review', 'achievements', 'smart-budget', 'payday-countdown', 'budget-alerts',
   'daily-budget', 'subscription-audit', 'budget-rule', 'report-card', 'spending-tips',
   'monthly-report', 'spending-trends', 'data-export', 'quick-add',
+  // New value-adding modules
+  'emergency-fund', 'member-analysis', 'goal-simulator', 'net-worth-tracker',
 ];
 
 const DEFAULT_DATA: CloudData = {
@@ -78,6 +83,7 @@ const DEFAULT_DATA: CloudData = {
   activityLog: [],
   rolloverCategories: [],
   savingsChallenges: [],
+  netWorthHistory: [],
 };
 
 // ── Debounced save ────────────────────────────────────────────────────────────
@@ -282,6 +288,10 @@ interface FinanceStore extends CloudData {
   deleteSavingsChallenge: (id: string) => void;
   toggleChallengeWeek: (id: string, weekNumber: number) => void;
 
+  // Net Worth History
+  addNetWorthSnapshot: (snapshot: Omit<NetWorthSnapshot, 'id'>) => void;
+  deleteNetWorthSnapshot: (id: string) => void;
+
   // Demo data
   loadDemoData: () => void;
 
@@ -319,6 +329,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         activityLog: s.activityLog,
         rolloverCategories: s.rolloverCategories,
         savingsChallenges: s.savingsChallenges,
+        netWorthHistory: s.netWorthHistory,
       };
     }
   );
@@ -395,6 +406,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           activityLog: d.activityLog ?? [],
           rolloverCategories: d.rolloverCategories ?? [],
           savingsChallenges: d.savingsChallenges ?? [],
+          netWorthHistory: d.netWorthHistory ?? [],
         });
       }
     },
@@ -410,7 +422,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         savingsVehicles: s.savingsVehicles, debts: s.debts,
         lifeGoals: s.lifeGoals, chagBudgets: s.chagBudgets,
         activityLog: s.activityLog, rolloverCategories: s.rolloverCategories,
-        savingsChallenges: s.savingsChallenges,
+        savingsChallenges: s.savingsChallenges, netWorthHistory: s.netWorthHistory,
       };
       await supabase.from('user_data').upsert({ user_id: s._userId, data, updated_at: new Date().toISOString() });
     },
@@ -1015,6 +1027,17 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           return { ...c, completedWeeks: done };
         }),
       }));
+      sync();
+    },
+
+    addNetWorthSnapshot: (snapshot) => {
+      const entry: NetWorthSnapshot = { ...snapshot, id: uuidv4() };
+      set((s) => ({ netWorthHistory: [...s.netWorthHistory, entry].sort((a, b) => a.date.localeCompare(b.date)) }));
+      sync();
+    },
+
+    deleteNetWorthSnapshot: (id) => {
+      set((s) => ({ netWorthHistory: s.netWorthHistory.filter((snap) => snap.id !== id) }));
       sync();
     },
 

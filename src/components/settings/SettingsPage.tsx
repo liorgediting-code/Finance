@@ -105,6 +105,11 @@ const ALL_TOGGLEABLE_MODULES: Array<{ id: string; label: string; desc: string }>
   { id: 'monthly-report', label: 'כרטיס ציון פיננסי', desc: 'ציונים A–F לכל מדד פיננסי — חיסכון, חובות, מטרות ועוד' },
   { id: 'data-export', label: 'ייצוא נתונים', desc: 'הורדת הנתונים שלך כקבצי CSV — הוצאות, הכנסות, חסכונות וחובות' },
   { id: 'quick-add', label: 'הוספה מהירה', desc: 'כפתור + צף בפינת המסך להוספת הוצאה מהירה ללא ניווט' },
+  // New value-adding modules
+  { id: 'emergency-fund', label: 'קרן חירום 🛡️', desc: 'מעקב אחר קרן החירום שלך — כמה חודשי הוצאות מכוסים? המלצות לחיסכון' },
+  { id: 'member-analysis', label: 'הוצאות לפי אדם 👨‍👩‍👧', desc: 'ניתוח מי מוציא כמה בבית — עוגיות, גרפים ופירוט קטגוריות לכל חבר משפחה' },
+  { id: 'goal-simulator', label: 'סימולטור יעדים 🧮', desc: 'חשב מתי תגיע ליעד החיסכון שלך — ומה ישנה אם תחסוך קצת יותר כל חודש' },
+  { id: 'net-worth-tracker', label: 'מעקב שווי נטו 📈', desc: 'תיעוד שווי נטו לאורך זמן עם גרף מגמה — עקוב אחר הצמיחה הפיננסית שלך' },
 ];
 
 export default function SettingsPage() {

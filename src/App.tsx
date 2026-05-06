@@ -31,6 +31,10 @@ import UpcomingPaymentsPage from './components/modules/UpcomingPaymentsPage'
 import TaxRefundPage from './components/modules/TaxRefundPage'
 import MonthlyReportCardPage from './components/modules/MonthlyReportCardPage'
 import SpendingTrendsPage from './components/modules/SpendingTrendsPage'
+import EmergencyFundPage from './components/modules/EmergencyFundPage'
+import MemberAnalysisPage from './components/modules/MemberAnalysisPage'
+import GoalSimulatorPage from './components/modules/GoalSimulatorPage'
+import NetWorthTrackerPage from './components/modules/NetWorthTrackerPage'
 
 export default function App() {
   return (
@@ -70,6 +74,10 @@ export default function App() {
               <Route path="/subscription-audit" element={<SubscriptionAuditPage />} />
               <Route path="/report-card" element={<MonthlyReportCardPage />} />
               <Route path="/spending-trends" element={<SpendingTrendsPage />} />
+              <Route path="/emergency-fund" element={<EmergencyFundPage />} />
+              <Route path="/member-analysis" element={<MemberAnalysisPage />} />
+              <Route path="/goal-simulator" element={<GoalSimulatorPage />} />
+              <Route path="/net-worth-tracker" element={<NetWorthTrackerPage />} />
             </Routes>
           </AppShell>
         </AuthGuard>

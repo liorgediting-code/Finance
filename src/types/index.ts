@@ -80,6 +80,17 @@ export interface AppSettings {
   hasCompletedOnboarding?: boolean;
   enabledModules?: string[];
   primaryGoal?: string;
+  emergencyFundId?: string; // which savings fund is the emergency fund
+}
+
+// ── Net Worth History (#NEW) ──────────────────────────────────────────────────
+export interface NetWorthSnapshot {
+  id: string;
+  date: string; // YYYY-MM-DD
+  assets: number;
+  liabilities: number;
+  netWorth: number;
+  notes: string;
 }
 
 export interface SubCategory {

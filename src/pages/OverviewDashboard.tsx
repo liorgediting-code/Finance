@@ -23,6 +23,10 @@ import OverviewDailyBudgetCard from '../components/overview/OverviewDailyBudgetC
 import OverviewBudgetRuleCard from '../components/overview/OverviewBudgetRuleCard';
 import OverviewReportCardCard from '../components/overview/OverviewReportCardCard';
 import OverviewSpendingTipsCard from '../components/overview/OverviewSpendingTipsCard';
+import OverviewEmergencyFundCard from '../components/overview/OverviewEmergencyFundCard';
+import OverviewMemberAnalysisCard from '../components/overview/OverviewMemberAnalysisCard';
+import OverviewGoalSimulatorCard from '../components/overview/OverviewGoalSimulatorCard';
+import OverviewNetWorthTrackerCard from '../components/overview/OverviewNetWorthTrackerCard';
 
 function SavingsChallengeCard() {
   return (
@@ -119,7 +123,11 @@ export default function OverviewDashboard() {
   const showBudgetRule    = enabledModules.includes('budget-rule');
   const showReportCard    = enabledModules.includes('report-card');
   const showSpendingTips  = enabledModules.includes('spending-tips');
-  const showSubAudit      = enabledModules.includes('subscription-audit');
+  const showSubAudit        = enabledModules.includes('subscription-audit');
+  const showEmergencyFund   = enabledModules.includes('emergency-fund');
+  const showMemberAnalysis  = enabledModules.includes('member-analysis');
+  const showGoalSimulator   = enabledModules.includes('goal-simulator');
+  const showNetWorthTracker = enabledModules.includes('net-worth-tracker');
 
   const middleGridClass = showNetWorth
     ? 'grid grid-cols-1 md:grid-cols-4 gap-4'
@@ -170,6 +178,16 @@ export default function OverviewDashboard() {
       {/* Spending tips */}
       {showSpendingTips && (
         <OverviewSpendingTipsCard />
+      )}
+
+      {/* New value-adding module cards */}
+      {(showEmergencyFund || showMemberAnalysis || showGoalSimulator || showNetWorthTracker) && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {showEmergencyFund   && <OverviewEmergencyFundCard />}
+          {showMemberAnalysis  && <OverviewMemberAnalysisCard />}
+          {showGoalSimulator   && <OverviewGoalSimulatorCard />}
+          {showNetWorthTracker && <OverviewNetWorthTrackerCard />}
+        </div>
       )}
 
       {/* Achievements card — full width */}
