@@ -24,12 +24,12 @@ interface Props {
   monthIndex: number;
 }
 
-const today = () => new Date().toISOString().split('T')[0];
+const today = () => new Date().toLocaleDateString('sv');
 
 const sevenDaysLater = () => {
   const d = new Date();
   d.setDate(d.getDate() + 7);
-  return d.toISOString().split('T')[0];
+  return d.toLocaleDateString('sv');
 };
 
 const emptyForm = (): Omit<ExpenseEntry, 'id'> => ({

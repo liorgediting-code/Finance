@@ -9,12 +9,12 @@ interface IncomeTableProps {
   monthIndex: number;
 }
 
-const today = () => new Date().toISOString().split('T')[0];
+const today = () => new Date().toLocaleDateString('sv');
 
 const sevenDaysLater = () => {
   const d = new Date();
   d.setDate(d.getDate() + 7);
-  return d.toISOString().split('T')[0];
+  return d.toLocaleDateString('sv');
 };
 
 interface FormData {
@@ -121,7 +121,7 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
 
     const entry = { ...newEntry, date: newEntry.date || today() };
     if (newEntry.isRecurring) {
-      addRecurringIncome(entry);
+      addRecurringIncome({ ...entry, isFuture: false });
     } else {
       addIncome(monthIndex, entry);
     }
