@@ -407,7 +407,14 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
 
     loadFromCloud: async (userId) => {
       set({ _userId: userId });
-      const { data } = await supabase.from('user_data').select('data').eq('user_id', userId).single();
+      let data: { data: unknown } | null = null;
+      try {
+        const result = await supabase.from('user_data').select('data').eq('user_id', userId).single();
+        data = result.data as { data: unknown } | null;
+      } catch {
+        // Network failure — app starts with default data and will sync when connection is restored
+        return;
+      }
       if (data?.data) {
         const d = data.data as Partial<CloudData>;
         // Merge any newly-added modules into the saved enabledModules list

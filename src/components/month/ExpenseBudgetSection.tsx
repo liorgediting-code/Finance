@@ -532,10 +532,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
     );
   });
 
-  let totalActual = 0;
-  let totalPending = 0;
-  let totalFuture = 0;
-
   type RowData = {
     cat: { id: string; nameHe: string; color: string; subcategories: { id: string; nameHe: string }[] };
     catExpenses: typeof expenses;
@@ -558,9 +554,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
     const overBudget = budgetAmt > 0 && actual > budgetAmt;
     const pct = budgetAmt > 0 ? Math.min(100, Math.round((actual / budgetAmt) * 100)) : 0;
     const nearBudget = budgetAmt > 0 && pct >= 80 && pct < 100;
-    totalActual += actual;
-    totalPending += pending;
-    totalFuture += future;
     return { cat, catExpenses, actual, pending, future, budgetAmt, overBudget, pct, nearBudget };
   };
 
@@ -568,6 +561,10 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
     ...CATEGORIES.map(buildRow),
     ...customCategories.map((cc) => buildRow({ ...cc, subcategories: [] })),
   ];
+
+  const totalActual = rows.reduce((s, r) => s + r.actual, 0);
+  const totalPending = rows.reduce((s, r) => s + r.pending, 0);
+  const totalFuture = rows.reduce((s, r) => s + r.future, 0);
 
   const visibleRows = rows.filter((r) => r.actual > 0 || r.pending > 0 || r.future > 0);
   const overBudgetCount = rows.filter((r) => r.overBudget).length;
@@ -746,7 +743,9 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
 
         {visibleRows.length === 0 && (
           <div className="text-center text-[#9090A8] py-12 bg-white text-sm">
-            אין הוצאות עדיין — לחץ על &quot;הוסף הוצאה&quot; כדי להתחיל
+            {q || memberFilter
+              ? 'לא נמצאו הוצאות התואמות לחיפוש'
+              : 'אין הוצאות עדיין — לחץ על "הוסף הוצאה" כדי להתחיל'}
           </div>
         )}
 

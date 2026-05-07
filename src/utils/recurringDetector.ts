@@ -48,6 +48,7 @@ export function detectRecurringSuggestions(
     // Check amounts are similar (within 30% of the average)
     const amounts = entries.map((e) => e.expense.amount);
     const avg = amounts.reduce((s, a) => s + a, 0) / amounts.length;
+    if (avg === 0) continue;
     const allSimilar = amounts.every((a) => Math.abs(a - avg) / avg < 0.3);
     if (!allSimilar) continue;
 

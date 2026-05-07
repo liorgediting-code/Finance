@@ -100,7 +100,9 @@ function exportMonthCSV(
   const a = document.createElement('a');
   a.href = url;
   a.download = `finance_${monthName}_${year}.csv`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 

@@ -23,13 +23,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   loading: true,
 
   init: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const profile = await get().fetchProfile(session.user.id);
-      set({ user: session.user, profile });
-      if (profile?.is_approved) {
-        await useFinanceStore.getState().loadFromCloud(session.user.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const profile = await get().fetchProfile(session.user.id);
+        set({ user: session.user, profile });
+        if (profile?.is_approved) {
+          await useFinanceStore.getState().loadFromCloud(session.user.id);
+        }
       }
+    } catch {
+      // Auth or network failure on startup — proceed with unauthenticated state
     }
     set({ loading: false });
 
