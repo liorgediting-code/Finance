@@ -105,11 +105,17 @@ const ALL_TOGGLEABLE_MODULES: Array<{ id: string; label: string; desc: string }>
   { id: 'monthly-report', label: 'כרטיס ציון פיננסי', desc: 'ציונים A–F לכל מדד פיננסי — חיסכון, חובות, מטרות ועוד' },
   { id: 'data-export', label: 'ייצוא נתונים', desc: 'הורדת הנתונים שלך כקבצי CSV — הוצאות, הכנסות, חסכונות וחובות' },
   { id: 'quick-add', label: 'הוספה מהירה', desc: 'כפתור + צף בפינת המסך להוספת הוצאה מהירה ללא ניווט' },
-  // New value-adding modules
+  // New value-adding modules (batch 1)
   { id: 'emergency-fund', label: 'קרן חירום 🛡️', desc: 'מעקב אחר קרן החירום שלך — כמה חודשי הוצאות מכוסים? המלצות לחיסכון' },
   { id: 'member-analysis', label: 'הוצאות לפי אדם 👨‍👩‍👧', desc: 'ניתוח מי מוציא כמה בבית — עוגיות, גרפים ופירוט קטגוריות לכל חבר משפחה' },
   { id: 'goal-simulator', label: 'סימולטור יעדים 🧮', desc: 'חשב מתי תגיע ליעד החיסכון שלך — ומה ישנה אם תחסוך קצת יותר כל חודש' },
   { id: 'net-worth-tracker', label: 'מעקב שווי נטו 📈', desc: 'תיעוד שווי נטו לאורך זמן עם גרף מגמה — עקוב אחר הצמיחה הפיננסית שלך' },
+  // New premium features
+  { id: 'month-journal', label: 'יומן חודשי 📓', desc: 'הוסף הערות אישיות לכל חודש — מה קרה, הוצאות מיוחדות, אירועים ותובנות' },
+  { id: 'wishlist', label: 'רשימת רצונות 🛍️', desc: 'תכנן רכישות גדולות עם מחשבון זמן חיסכון — מתי תוכל להרשות לעצמך?' },
+  { id: 'recurring-detector', label: 'גלאי הוצאות קבועות 🔁', desc: 'מזהה אוטומטית הוצאות שחוזרות 3+ חודשים ומציע להפוך אותן לקבועות' },
+  { id: 'budget-envelopes', label: 'תצוגת מעטפות תקציב 📦', desc: 'תצוגת כרטיסים ויזואלית לתקציב — ראה כמה נותר בכל קטגוריה במבט אחד' },
+  { id: 'smart-alerts', label: 'מרכז התראות 🔔', desc: 'התראות חכמות על חריגות תקציב, יעדים שהושגו, חודשים ירוקים ואבני דרך' },
 ];
 
 export default function SettingsPage() {

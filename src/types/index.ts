@@ -50,6 +50,22 @@ export interface MonthData {
   income: IncomeEntry[];
   expenses: ExpenseEntry[];
   budget: MonthBudget;
+  note?: string; // Feature: month-journal
+}
+
+// ── Wishlist (#NEW) ───────────────────────────────────────────────────────────
+export type WishlistPriority = 'low' | 'medium' | 'high';
+
+export interface WishlistItem {
+  id: string;
+  name: string;
+  cost: number;
+  emoji: string;
+  priority: WishlistPriority;
+  notes: string;
+  targetDate?: string; // YYYY-MM
+  purchased: boolean;
+  purchasedDate?: string; // YYYY-MM-DD
 }
 
 export interface SavingsGoal {

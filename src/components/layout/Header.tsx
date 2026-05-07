@@ -1,4 +1,6 @@
 import { useLocation } from 'react-router-dom';
+import { useFinanceStore } from '../../store/useFinanceStore';
+import NotificationCenter from '../shared/NotificationCenter';
 
 function getPageTitle(pathname: string): string {
   if (pathname === '/') return 'מבט-על';
@@ -31,17 +33,26 @@ function getPageTitle(pathname: string): string {
   if (pathname === '/net-worth-tracker') return 'מעקב שווי נטו';
   if (pathname === '/salary-slip') return 'ניתוח תלוש';
   if (pathname === '/admin') return 'פאנל ניהול';
+  if (pathname === '/wishlist') return 'רשימת רצונות';
   return 'ניהול פיננסי';
 }
 
 export default function Header() {
   const { pathname } = useLocation();
+  const enabledModules = useFinanceStore((s) => s.settings.enabledModules ?? []);
+  const showAlerts = enabledModules.includes('smart-alerts');
 
   return (
-    <header className="flex items-center gap-3 border-b border-gray-200 bg-white/90 backdrop-blur-sm px-4 py-3 md:px-6 shadow-sm">
+    <header className="flex items-center justify-between border-b border-gray-200 bg-white/90 backdrop-blur-sm px-4 py-3 md:px-6 shadow-sm">
       <h2 className="text-base font-semibold text-[#1E1E2E] tracking-tight md:hidden">
         {getPageTitle(pathname)}
       </h2>
+      {showAlerts && (
+        <div className="flex items-center">
+          <NotificationCenter />
+        </div>
+      )}
     </header>
   );
 }
+

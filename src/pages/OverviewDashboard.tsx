@@ -27,6 +27,7 @@ import OverviewEmergencyFundCard from '../components/overview/OverviewEmergencyF
 import OverviewMemberAnalysisCard from '../components/overview/OverviewMemberAnalysisCard';
 import OverviewGoalSimulatorCard from '../components/overview/OverviewGoalSimulatorCard';
 import OverviewNetWorthTrackerCard from '../components/overview/OverviewNetWorthTrackerCard';
+import OverviewWishlistCard from '../components/overview/OverviewWishlistCard';
 
 function SavingsChallengeCard() {
   return (
@@ -127,6 +128,7 @@ export default function OverviewDashboard() {
   const showMemberAnalysis  = enabledModules.includes('member-analysis');
   const showGoalSimulator   = enabledModules.includes('goal-simulator');
   const showNetWorthTracker = enabledModules.includes('net-worth-tracker');
+  const showWishlist = enabledModules.includes('wishlist');
 
   const middleGridClass = showNetWorth
     ? 'grid grid-cols-1 md:grid-cols-4 gap-4'
@@ -180,12 +182,13 @@ export default function OverviewDashboard() {
       )}
 
       {/* New value-adding module cards */}
-      {(showEmergencyFund || showMemberAnalysis || showGoalSimulator || showNetWorthTracker) && (
+      {(showEmergencyFund || showMemberAnalysis || showGoalSimulator || showNetWorthTracker || showWishlist) && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {showEmergencyFund   && <OverviewEmergencyFundCard />}
           {showMemberAnalysis  && <OverviewMemberAnalysisCard />}
           {showGoalSimulator   && <OverviewGoalSimulatorCard />}
           {showNetWorthTracker && <OverviewNetWorthTrackerCard />}
+          {showWishlist        && <OverviewWishlistCard />}
         </div>
       )}
 

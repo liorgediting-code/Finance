@@ -514,6 +514,12 @@ export default function Sidebar({ isOpen, onClose }: Props) {
                 ביקורת מנויים
               </NavLink>
             )}
+            {enabledModules.includes('wishlist') && (
+              <NavLink to="/wishlist" className={navLinkClass} onClick={onClose}>
+                <StarIcon />
+                רשימת רצונות
+              </NavLink>
+            )}
           </div>
 
           {/* Settings pinned to bottom */}

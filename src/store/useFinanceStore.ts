@@ -22,6 +22,7 @@ import type {
   CustomCategory,
   SavingsChallenge,
   NetWorthSnapshot,
+  WishlistItem,
 } from '../types';
 
 // ── Cloud-synced fields ───────────────────────────────────────────────────────
@@ -47,6 +48,10 @@ interface CloudData {
   savingsChallenges: SavingsChallenge[];
   // Net Worth History
   netWorthHistory: NetWorthSnapshot[];
+  // Wishlist (#NEW)
+  wishlist: WishlistItem[];
+  // Dismissed alert IDs for notification center (#NEW)
+  dismissedAlertIds: string[];
 }
 
 const ALL_MODULES = [
@@ -56,8 +61,10 @@ const ALL_MODULES = [
   'year-review', 'achievements', 'smart-budget', 'payday-countdown', 'budget-alerts',
   'daily-budget', 'subscription-audit', 'budget-rule', 'report-card', 'spending-tips',
   'monthly-report', 'spending-trends', 'data-export', 'quick-add',
-  // New value-adding modules
+  // Value-adding modules (batch 1)
   'emergency-fund', 'member-analysis', 'goal-simulator', 'net-worth-tracker',
+  // New premium features
+  'month-journal', 'wishlist', 'recurring-detector', 'budget-envelopes', 'smart-alerts',
 ];
 
 const DEFAULT_DATA: CloudData = {
@@ -84,6 +91,8 @@ const DEFAULT_DATA: CloudData = {
   rolloverCategories: [],
   savingsChallenges: [],
   netWorthHistory: [],
+  wishlist: [],
+  dismissedAlertIds: [],
 };
 
 // ── Debounced save ────────────────────────────────────────────────────────────
@@ -292,6 +301,19 @@ interface FinanceStore extends CloudData {
   addNetWorthSnapshot: (snapshot: Omit<NetWorthSnapshot, 'id'>) => void;
   deleteNetWorthSnapshot: (id: string) => void;
 
+  // Month Journal (#NEW)
+  updateMonthNote: (monthIndex: number, note: string) => void;
+
+  // Wishlist (#NEW)
+  addWishlistItem: (item: Omit<WishlistItem, 'id'>) => void;
+  updateWishlistItem: (id: string, partial: Partial<Omit<WishlistItem, 'id'>>) => void;
+  deleteWishlistItem: (id: string) => void;
+  markWishlistPurchased: (id: string) => void;
+
+  // Notification center (#NEW)
+  dismissAlert: (alertId: string) => void;
+  clearDismissedAlerts: () => void;
+
   // Demo data
   loadDemoData: () => void;
 
@@ -330,6 +352,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         rolloverCategories: s.rolloverCategories,
         savingsChallenges: s.savingsChallenges,
         netWorthHistory: s.netWorthHistory,
+        wishlist: s.wishlist,
+        dismissedAlertIds: s.dismissedAlertIds,
       };
     }
   );
@@ -407,6 +431,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           rolloverCategories: d.rolloverCategories ?? [],
           savingsChallenges: d.savingsChallenges ?? [],
           netWorthHistory: d.netWorthHistory ?? [],
+          wishlist: d.wishlist ?? [],
+          dismissedAlertIds: d.dismissedAlertIds ?? [],
         });
       }
     },
@@ -423,6 +449,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         lifeGoals: s.lifeGoals, chagBudgets: s.chagBudgets,
         activityLog: s.activityLog, rolloverCategories: s.rolloverCategories,
         savingsChallenges: s.savingsChallenges, netWorthHistory: s.netWorthHistory,
+        wishlist: s.wishlist, dismissedAlertIds: s.dismissedAlertIds,
       };
       await supabase.from('user_data').upsert({ user_id: s._userId, data, updated_at: new Date().toISOString() });
     },
@@ -1041,6 +1068,44 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
+    // ── Month Journal ────────────────────────────────────────────────────────
+    updateMonthNote: (monthIndex, note) => {
+      set((s) => {
+        const md = ensureMonth(s.months, monthIndex);
+        return { months: { ...s.months, [monthIndex]: { ...md, note } } };
+      });
+      sync();
+    },
+
+    // ── Wishlist ─────────────────────────────────────────────────────────────
+    addWishlistItem: (item) => {
+      set((s) => ({ wishlist: [...s.wishlist, { ...item, id: uuidv4() }] }));
+      sync();
+    },
+    updateWishlistItem: (id, partial) => {
+      set((s) => ({ wishlist: s.wishlist.map((w) => w.id === id ? { ...w, ...partial } : w) }));
+      sync();
+    },
+    deleteWishlistItem: (id) => {
+      set((s) => ({ wishlist: s.wishlist.filter((w) => w.id !== id) }));
+      sync();
+    },
+    markWishlistPurchased: (id) => {
+      const today = new Date().toISOString().slice(0, 10);
+      set((s) => ({ wishlist: s.wishlist.map((w) => w.id === id ? { ...w, purchased: true, purchasedDate: today } : w) }));
+      sync();
+    },
+
+    // ── Notification Center ──────────────────────────────────────────────────
+    dismissAlert: (alertId) => {
+      set((s) => ({ dismissedAlertIds: [...new Set([...s.dismissedAlertIds, alertId])] }));
+      sync();
+    },
+    clearDismissedAlerts: () => {
+      set({ dismissedAlertIds: [] });
+      sync();
+    },
+
     resetStore: () => {
       if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
       set({ ...DEFAULT_DATA, _userId: null, activeBoardId: 'personal' });
@@ -1112,6 +1177,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         savingsChallenges: [],
         netWorthHistory: [],
         extraBoards: [],
+        wishlist: [],
+        dismissedAlertIds: [],
       });
       sync();
     },

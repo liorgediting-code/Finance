@@ -17,6 +17,9 @@ import AnnualSummary from './AnnualSummary';
 import OverallDashboard from './OverallDashboard';
 import MonthComparison from '../month/MonthComparison';
 import SpendingPaceCard from '../month/SpendingPaceCard';
+import MonthJournalWidget from '../month/MonthJournalWidget';
+import RecurringDetectorBanner from '../month/RecurringDetectorBanner';
+import BudgetEnvelopeView from '../month/BudgetEnvelopeView';
 
 function ChevronLeftIcon() {
   return (
@@ -105,6 +108,7 @@ export default function MonthDashboard() {
   const today = new Date();
   const currentMonthIndex = today.getMonth();
   const [monthIndex, setMonthIndex] = useState(currentMonthIndex);
+  const [envelopeView, setEnvelopeView] = useState(false);
   const year = useFinanceStore((s) => s.settings.year);
   const activeBoardId = useFinanceStore((s) => s.activeBoardId);
   const hiddenSections = useFinanceStore(useShallow((s) => s.settings.hiddenDashboardSections ?? []));
@@ -200,6 +204,13 @@ export default function MonthDashboard() {
             </button>
           </div>
 
+          {/* Month Journal — feature: month-journal */}
+          {enabledModules.includes('month-journal') && (
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <MonthJournalWidget monthIndex={monthIndex} />
+            </div>
+          )}
+
           {/* Month dots indicator */}
           <div className="flex justify-center gap-1.5 mt-4" dir="ltr">
             {HEBREW_MONTHS.map((_, idx) => (
@@ -234,6 +245,13 @@ export default function MonthDashboard() {
             </div>
           )}
 
+          {/* ── Recurring Detector — feature: recurring-detector ── */}
+          {enabledModules.includes('recurring-detector') && (
+            <div className="mb-4">
+              <RecurringDetectorBanner />
+            </div>
+          )}
+
           {/* ── Expenses ── */}
           {visible('expenses') && (
             <>
@@ -241,7 +259,35 @@ export default function MonthDashboard() {
               <div className="mb-6">
                 <ExpenseCategoryBarChart monthIndex={monthIndex} showToggle={false} />
               </div>
-              <ExpenseBudgetSection monthIndex={monthIndex} />
+
+              {/* Budget Envelope toggle — feature: budget-envelopes */}
+              {enabledModules.includes('budget-envelopes') && (
+                <div className="flex justify-end mb-3">
+                  <button
+                    onClick={() => setEnvelopeView((v) => !v)}
+                    className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors cursor-pointer ${
+                      envelopeView
+                        ? 'border-lavender-dark bg-lavender-light text-lavender-dark'
+                        : 'border-gray-200 bg-white text-[#9090A8] hover:border-lavender hover:text-lavender-dark'
+                    }`}
+                    title="תצוגת מעטפות תקציב"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" />
+                      <path d="M8 21h8M12 17v4" />
+                    </svg>
+                    {envelopeView ? 'תצוגת טבלה' : 'תצוגת מעטפות'}
+                  </button>
+                </div>
+              )}
+
+              {envelopeView && enabledModules.includes('budget-envelopes') ? (
+                <div className="mb-6">
+                  <BudgetEnvelopeView monthIndex={monthIndex} />
+                </div>
+              ) : (
+                <ExpenseBudgetSection monthIndex={monthIndex} />
+              )}
             </>
           )}
 
