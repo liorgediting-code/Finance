@@ -34,6 +34,7 @@ const severityStyle = {
 export default function NotificationCenter() {
   const data = useFinanceStore(useShallow((s) => ({
     months: s.months,
+    recurringIncomes: s.recurringIncomes,
     recurringExpenses: s.recurringExpenses,
     savingsFunds: s.savingsFunds,
     debts: s.debts,
@@ -49,6 +50,7 @@ export default function NotificationCenter() {
   const currentMonthIndex = new Date().getMonth();
   const allAlerts = computeAlerts({
     months: data.months,
+    recurringIncomes: data.recurringIncomes,
     recurringExpenses: data.recurringExpenses,
     savingsFunds: data.savingsFunds,
     debts: data.debts,

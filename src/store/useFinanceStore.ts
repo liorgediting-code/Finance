@@ -868,16 +868,23 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       if (!s.rolloverCategories.includes(categoryId) || monthIndex === 0) return 0;
       // Read from whichever board is currently active
       let boardMonths: Record<number, MonthData>;
+      let boardRecurring: ExpenseEntry[];
       if (s.activeBoardId === 'personal' || s.activeBoardId === 'overall') {
         boardMonths = s.months;
+        boardRecurring = s.recurringExpenses;
       } else {
-        boardMonths = s.extraBoards.find((b) => b.id === s.activeBoardId)?.months ?? {};
+        const board = s.extraBoards.find((b) => b.id === s.activeBoardId);
+        boardMonths = board?.months ?? {};
+        boardRecurring = board?.recurringExpenses ?? [];
       }
       const prevMonth = boardMonths[monthIndex - 1];
       if (!prevMonth) return 0;
       const prevBudget = prevMonth.budget[categoryId] ?? 0;
       if (prevBudget === 0) return 0;
-      const prevSpent = prevMonth.expenses
+      const recurringSpent = boardRecurring
+        .filter((e) => e.categoryId === categoryId)
+        .reduce((sum, e) => sum + e.amount, 0);
+      const prevSpent = recurringSpent + prevMonth.expenses
         .filter((e) => e.categoryId === categoryId)
         .reduce((sum, e) => sum + e.amount, 0);
       return Math.max(0, prevBudget - prevSpent);
@@ -1137,28 +1144,29 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       const m1 = uuidv4();
       const m2 = uuidv4();
       const { settings } = get();
+      const demoYear = new Date().getFullYear();
       set({
         familyMembers: [{ id: m1, name: 'יוסי' }, { id: m2, name: 'רונית' }],
         months: {
           0: {
             income: [
-              { id: uuidv4(), date: '2026-01-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
-              { id: uuidv4(), date: '2026-01-01', source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
+              { id: uuidv4(), date: `${demoYear}-01-01`, source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
+              { id: uuidv4(), date: `${demoYear}-01-01`, source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
             ],
             expenses: [
-              { id: uuidv4(), date: '2026-01-05', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
-              { id: uuidv4(), date: '2026-01-08', categoryId: 'food', subcategoryId: 'food-grocery', description: 'קניות', amount: 1200, paymentMethod: 'credit', notes: '' },
+              { id: uuidv4(), date: `${demoYear}-01-05`, categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
+              { id: uuidv4(), date: `${demoYear}-01-08`, categoryId: 'food', subcategoryId: 'food-grocery', description: 'קניות', amount: 1200, paymentMethod: 'credit', notes: '' },
             ],
             budget: { home: 7000, food: 3000, transport: 1500 },
           },
           3: {
             income: [
-              { id: uuidv4(), date: '2026-04-01', source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
-              { id: uuidv4(), date: '2026-04-01', source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
+              { id: uuidv4(), date: `${demoYear}-04-01`, source: 'משכורת', memberId: m1, amount: 15000, notes: '' },
+              { id: uuidv4(), date: `${demoYear}-04-01`, source: 'משכורת', memberId: m2, amount: 12000, notes: '' },
             ],
             expenses: [
-              { id: uuidv4(), date: '2026-04-02', categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
-              { id: uuidv4(), date: '2026-04-05', categoryId: 'food', subcategoryId: 'food-grocery', description: 'קניות', amount: 1400, paymentMethod: 'credit', notes: '' },
+              { id: uuidv4(), date: `${demoYear}-04-02`, categoryId: 'home', subcategoryId: 'home-rent', description: 'שכירות', amount: 5500, paymentMethod: 'transfer', notes: '' },
+              { id: uuidv4(), date: `${demoYear}-04-05`, categoryId: 'food', subcategoryId: 'food-grocery', description: 'קניות', amount: 1400, paymentMethod: 'credit', notes: '' },
             ],
             budget: { home: 7000, food: 3000 },
           },
@@ -1166,7 +1174,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         // Preserve existing module/section/category settings; only override data-related settings
         settings: {
           ...settings,
-          year: 2026,
+          year: new Date().getFullYear(),
           savingsGoal: { monthlyTarget: 3000, vacationGoal: 15000, vacationSaved: 4500 },
         },
         savingsFunds: [

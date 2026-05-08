@@ -1,4 +1,5 @@
 import type { SavingsFund, Mortgage, Debt, LifeGoal, MonthData, IncomeEntry, ExpenseEntry } from '../types';
+import { isEntryFuture } from './calculations';
 
 export interface HealthBreakdown {
   savingsRate: number;       // 0-30
@@ -42,8 +43,8 @@ export function computeHealthScore(input: ScoreInput): HealthScoreResult {
 
   const currentMonth = currentMonthOverride !== undefined ? currentMonthOverride : new Date().getMonth();
   const currentMonthData = months[currentMonth];
-  const monthlyIncome = recurringIncome + (currentMonthData?.income ?? []).reduce((s, e) => s + e.amount, 0);
-  const monthlyExpense = recurringExpense + (currentMonthData?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
+  const monthlyIncome = recurringIncome + (currentMonthData?.income ?? []).filter((e) => !isEntryFuture(e)).reduce((s, e) => s + e.amount, 0);
+  const monthlyExpense = recurringExpense + (currentMonthData?.expenses ?? []).filter((e) => !isEntryFuture(e) && !e.isPending).reduce((s, e) => s + e.amount, 0);
   const net = monthlyIncome - monthlyExpense;
 
   // 1. Savings rate (0-30): net/income * 100, clamped to 0-30
@@ -67,8 +68,8 @@ export function computeHealthScore(input: ScoreInput): HealthScoreResult {
 
   // 4. Budget adherence (0-15): fraction of year's months where income > expenses
   const positiveMonths = Object.values(months).filter((md) => {
-    const inc = recurringIncome + md.income.reduce((s, e) => s + e.amount, 0);
-    const exp = recurringExpense + md.expenses.reduce((s, e) => s + e.amount, 0);
+    const inc = recurringIncome + md.income.filter((e) => !isEntryFuture(e)).reduce((s, e) => s + e.amount, 0);
+    const exp = recurringExpense + md.expenses.filter((e) => !isEntryFuture(e) && !e.isPending).reduce((s, e) => s + e.amount, 0);
     return inc > exp;
   }).length;
   const budgetAdherence = (positiveMonths / 12) * 15;

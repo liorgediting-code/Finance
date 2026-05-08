@@ -48,13 +48,14 @@ export default function HealthScoreHero() {
   const now = new Date();
   const currentMonthName = MONTH_NAMES[now.getMonth()];
   const year = now.getFullYear();
+  const currentMonth = now.getMonth();
 
   const { result, delta } = useMemo(() => {
     const r = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds });
-    const prevMonth = (now.getMonth() - 1 + 12) % 12;
+    const prevMonth = (currentMonth - 1 + 12) % 12;
     const prev = computeHealthScore({ months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds, currentMonthOverride: prevMonth });
     return { result: r, delta: r.score - prev.score };
-  }, [months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [months, recurringIncomes, recurringExpenses, mortgages, debts, lifeGoals, savingsFunds, currentMonth]);
 
   const scoreColor = result.score >= 70 ? 'text-sage-dark' : result.score >= 40 ? 'text-almond-dark' : 'text-blush-dark';
 

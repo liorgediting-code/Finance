@@ -1,4 +1,4 @@
-import type { MonthData, SavingsFund, Debt, LifeGoal, ExpenseEntry } from '../types';
+import type { MonthData, SavingsFund, Debt, LifeGoal, ExpenseEntry, IncomeEntry } from '../types';
 
 export interface AppAlert {
   id: string;
@@ -11,6 +11,7 @@ export interface AppAlert {
 
 interface AlertInput {
   months: Record<number, MonthData>;
+  recurringIncomes: IncomeEntry[];
   recurringExpenses: ExpenseEntry[];
   savingsFunds: SavingsFund[];
   debts: Debt[];
@@ -20,7 +21,7 @@ interface AlertInput {
 
 export function computeAlerts(input: AlertInput): AppAlert[] {
   const alerts: AppAlert[] = [];
-  const { months, recurringExpenses, savingsFunds, debts, lifeGoals, currentMonthIndex } = input;
+  const { months, recurringIncomes, recurringExpenses, savingsFunds, debts, lifeGoals, currentMonthIndex } = input;
 
   // 1. Budget overspend in current month
   const md = months[currentMonthIndex];
@@ -106,7 +107,8 @@ export function computeAlerts(input: AlertInput): AppAlert[] {
 
   // 5. Green month (income > expenses in current month)
   if (md) {
-    const totalIncome = (md.income ?? []).filter((e) => !e.isFuture).reduce((s, e) => s + e.amount, 0);
+    const recurringIncomeTotal = recurringIncomes.reduce((s, e) => s + e.amount, 0);
+    const totalIncome = recurringIncomeTotal + (md.income ?? []).filter((e) => !e.isFuture).reduce((s, e) => s + e.amount, 0);
     const totalExpenses = [...(md.expenses ?? []), ...recurringExpenses.filter((e) => e.isRecurring)]
       .filter((e) => !e.isFuture && !e.isPending)
       .reduce((s, e) => s + e.amount, 0);

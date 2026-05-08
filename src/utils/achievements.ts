@@ -1,5 +1,5 @@
 import type { AppSettings, MonthData, Debt, LifeGoal, SavingsChallenge } from '../types';
-import { sumAmounts } from './calculations';
+import { sumAmounts, isEntryFuture } from './calculations';
 
 export interface Achievement {
   id: string;
@@ -31,18 +31,18 @@ export function computeAchievements(s: StoreSnapshot): Achievement[] {
   // Total expenses across all months
   const totalExpenses = monthEntries.reduce((sum, { data }) => sum + sumAmounts(data.expenses), 0);
 
-  // Months where income > expenses
+  // Months where income > expenses (excluding future/pending entries)
   const greenMonths = monthEntries.filter(({ data }) => {
-    const inc = sumAmounts([...s.recurringIncomes, ...data.income]);
-    const exp = sumAmounts([...s.recurringExpenses, ...data.expenses]);
+    const inc = sumAmounts([...s.recurringIncomes, ...data.income.filter((e) => !isEntryFuture(e))]);
+    const exp = sumAmounts([...s.recurringExpenses, ...data.expenses.filter((e) => !isEntryFuture(e) && !e.isPending)]);
     return inc > exp && inc > 0;
   });
 
   // Longest consecutive green streak
   const sortedIndices = monthEntries
     .filter(({ data }) => {
-      const inc = sumAmounts([...s.recurringIncomes, ...data.income]);
-      const exp = sumAmounts([...s.recurringExpenses, ...data.expenses]);
+      const inc = sumAmounts([...s.recurringIncomes, ...data.income.filter((e) => !isEntryFuture(e))]);
+      const exp = sumAmounts([...s.recurringExpenses, ...data.expenses.filter((e) => !isEntryFuture(e) && !e.isPending)]);
       return inc > exp && inc > 0;
     })
     .map(({ index }) => index)
@@ -61,8 +61,8 @@ export function computeAchievements(s: StoreSnapshot): Achievement[] {
 
   // Best savings rate
   const savingsRates = monthEntries.map(({ data }) => {
-    const inc = sumAmounts([...s.recurringIncomes, ...data.income]);
-    const exp = sumAmounts([...s.recurringExpenses, ...data.expenses]);
+    const inc = sumAmounts([...s.recurringIncomes, ...data.income.filter((e) => !isEntryFuture(e))]);
+    const exp = sumAmounts([...s.recurringExpenses, ...data.expenses.filter((e) => !isEntryFuture(e) && !e.isPending)]);
     return inc > 0 ? ((inc - exp) / inc) * 100 : 0;
   });
   const bestRate = savingsRates.length > 0 ? Math.max(...savingsRates) : 0;

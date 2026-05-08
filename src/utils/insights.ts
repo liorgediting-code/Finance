@@ -1,5 +1,6 @@
 import type { MonthData, IncomeEntry, ExpenseEntry, SavingsFund, Mortgage, Debt, LifeGoal, Installment } from '../types';
 import { CATEGORIES } from '../config/categories';
+import { isEntryFuture } from './calculations';
 
 export type InsightSeverity = 'success' | 'info' | 'warning' | 'danger';
 
@@ -48,8 +49,8 @@ export function generateInsights(input: InsightInput): Insight[] {
   const recurringIncome = recurringIncomes.reduce((s, e) => s + e.amount, 0);
   const recurringExpense = recurringExpenses.reduce((s, e) => s + e.amount, 0);
 
-  const monthIncome = recurringIncome + (currentMd?.income ?? []).reduce((s, e) => s + e.amount, 0);
-  const monthExpense = recurringExpense + (currentMd?.expenses ?? []).reduce((s, e) => s + e.amount, 0);
+  const monthIncome = recurringIncome + (currentMd?.income ?? []).filter((e) => !isEntryFuture(e)).reduce((s, e) => s + e.amount, 0);
+  const monthExpense = recurringExpense + (currentMd?.expenses ?? []).filter((e) => !isEntryFuture(e) && !e.isPending).reduce((s, e) => s + e.amount, 0);
   const net = monthIncome - monthExpense;
   const savingsRate = monthIncome > 0 ? (net / monthIncome) * 100 : 0;
 
@@ -113,14 +114,14 @@ export function generateInsights(input: InsightInput): Insight[] {
   }
 
   // 3. Month-over-month category changes
-  if (currentMd && prevMd) {
+  if (currentMd && prevMd && currentMonth > 0) {
     const catTotals: Record<string, { cur: number; prev: number }> = {};
 
-    for (const exp of currentMd.expenses) {
+    for (const exp of currentMd.expenses.filter((e) => !isEntryFuture(e) && !e.isPending)) {
       if (!catTotals[exp.categoryId]) catTotals[exp.categoryId] = { cur: 0, prev: 0 };
       catTotals[exp.categoryId].cur += exp.amount;
     }
-    for (const exp of prevMd.expenses) {
+    for (const exp of prevMd.expenses.filter((e) => !isEntryFuture(e) && !e.isPending)) {
       if (!catTotals[exp.categoryId]) catTotals[exp.categoryId] = { cur: 0, prev: 0 };
       catTotals[exp.categoryId].prev += exp.amount;
     }
@@ -166,7 +167,7 @@ export function generateInsights(input: InsightInput): Insight[] {
     for (const [catId, budgetAmt] of Object.entries(currentMd.budget)) {
       if (budgetAmt <= 0) continue;
       const spent = (currentMd.expenses ?? [])
-        .filter((e) => e.categoryId === catId)
+        .filter((e) => e.categoryId === catId && !isEntryFuture(e) && !e.isPending)
         .reduce((s, e) => s + e.amount, 0);
       if (spent > budgetAmt) {
         overBudgetCats.push({ name: getCategoryName(catId), over: spent - budgetAmt });
@@ -295,8 +296,8 @@ export function generateInsights(input: InsightInput): Insight[] {
   // 10. Savings vehicles
   if (monthIncome > 0) {
     const posMonths = Object.values(months).filter((md) => {
-      const inc = recurringIncome + md.income.reduce((s, e) => s + e.amount, 0);
-      const exp = recurringExpense + md.expenses.reduce((s, e) => s + e.amount, 0);
+      const inc = recurringIncome + md.income.filter((e) => !isEntryFuture(e)).reduce((s, e) => s + e.amount, 0);
+      const exp = recurringExpense + md.expenses.filter((e) => !isEntryFuture(e) && !e.isPending).reduce((s, e) => s + e.amount, 0);
       return inc > exp;
     }).length;
     if (posMonths >= 9) {

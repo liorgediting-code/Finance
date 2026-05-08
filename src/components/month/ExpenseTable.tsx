@@ -234,7 +234,11 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
                         עריכה
                       </button>
                       <button
-                        onClick={() => deleteExpense(monthIndex, entry.id)}
+                        onClick={() => {
+                          if (window.confirm(`למחוק את "${entry.description || getCategoryName(entry.categoryId)}"?`)) {
+                            deleteExpense(monthIndex, entry.id);
+                          }
+                        }}
                         className="text-blush-dark hover:underline text-xs"
                       >
                         מחיקה
