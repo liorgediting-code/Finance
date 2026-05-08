@@ -28,6 +28,8 @@ import OverviewMemberAnalysisCard from '../components/overview/OverviewMemberAna
 import OverviewGoalSimulatorCard from '../components/overview/OverviewGoalSimulatorCard';
 import OverviewNetWorthTrackerCard from '../components/overview/OverviewNetWorthTrackerCard';
 import OverviewWishlistCard from '../components/overview/OverviewWishlistCard';
+import OverviewBenchmarksCard from '../components/overview/OverviewBenchmarksCard';
+import OverviewStreakCard from '../components/overview/OverviewStreakCard';
 
 function SavingsChallengeCard() {
   return (
@@ -129,6 +131,8 @@ export default function OverviewDashboard() {
   const showGoalSimulator   = enabledModules.includes('goal-simulator');
   const showNetWorthTracker = enabledModules.includes('net-worth-tracker');
   const showWishlist = enabledModules.includes('wishlist');
+  const showBenchmarks = enabledModules.includes('spending-benchmarks');
+  const showStreak = enabledModules.includes('budget-streak');
 
   const middleGridClass = showNetWorth
     ? 'grid grid-cols-1 md:grid-cols-4 gap-4'
@@ -189,6 +193,14 @@ export default function OverviewDashboard() {
           {showGoalSimulator   && <OverviewGoalSimulatorCard />}
           {showNetWorthTracker && <OverviewNetWorthTrackerCard />}
           {showWishlist        && <OverviewWishlistCard />}
+        </div>
+      )}
+
+      {/* Batch-2 value cards */}
+      {(showBenchmarks || showStreak) && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {showBenchmarks && <OverviewBenchmarksCard />}
+          {showStreak     && <OverviewStreakCard />}
         </div>
       )}
 

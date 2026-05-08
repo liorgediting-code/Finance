@@ -36,6 +36,7 @@ import MemberAnalysisPage from './components/modules/MemberAnalysisPage'
 import GoalSimulatorPage from './components/modules/GoalSimulatorPage'
 import NetWorthTrackerPage from './components/modules/NetWorthTrackerPage'
 import WishlistPage from './components/modules/WishlistPage'
+import SpendingBenchmarksPage from './components/modules/SpendingBenchmarksPage'
 
 export default function App() {
   return (
@@ -79,6 +80,7 @@ export default function App() {
               <Route path="/goal-simulator" element={<GoalSimulatorPage />} />
               <Route path="/net-worth-tracker" element={<NetWorthTrackerPage />} />
               <Route path="/wishlist" element={<WishlistPage />} />
+              <Route path="/spending-benchmarks" element={<SpendingBenchmarksPage />} />
             </Routes>
           </AppShell>
         </AuthGuard>

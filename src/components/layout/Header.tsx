@@ -34,6 +34,7 @@ function getPageTitle(pathname: string): string {
   if (pathname === '/salary-slip') return 'ניתוח תלוש';
   if (pathname === '/admin') return 'פאנל ניהול';
   if (pathname === '/wishlist') return 'רשימת רצונות';
+  if (pathname === '/spending-benchmarks') return 'השוואה לממוצע ישראלי';
   return 'ניהול פיננסי';
 }
 

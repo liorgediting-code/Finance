@@ -114,6 +114,10 @@ const ALL_TOGGLEABLE_MODULES: Array<{ id: string; label: string; desc: string }>
   { id: 'recurring-detector', label: 'גלאי הוצאות קבועות 🔁', desc: 'מזהה אוטומטית הוצאות שחוזרות 3+ חודשים ומציע להפוך אותן לקבועות' },
   { id: 'budget-envelopes', label: 'תצוגת מעטפות תקציב 📦', desc: 'תצוגת כרטיסים ויזואלית לתקציב — ראה כמה נותר בכל קטגוריה במבט אחד' },
   { id: 'smart-alerts', label: 'מרכז התראות 🔔', desc: 'התראות חכמות על חריגות תקציב, יעדים שהושגו, חודשים ירוקים ואבני דרך' },
+  // Value features (batch 2)
+  { id: 'spending-benchmarks', label: 'בנצ\'מארק ישראלי 📊', desc: 'השווה את ההוצאות שלך לממוצע משק הבית הישראלי לפי נתוני הלמ"ס — ראה היכן אתה מעל או מתחת לממוצע' },
+  { id: 'budget-streak', label: 'סטריק חסכוני 🔥', desc: 'מעקב גיימיפיקציה — כמה חודשים ירוקים רצופים השגת? (הכנסות ≥ הוצאות)' },
+  { id: 'share-summary', label: 'שיתוף חודשי 📤', desc: 'צור סיכום חודשי בפורמט וואטסאפ עם לחיצה אחת — שתף עם בן/בת הזוג או שמור לעצמך' },
 ];
 
 export default function SettingsPage() {

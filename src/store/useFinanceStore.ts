@@ -65,6 +65,8 @@ const ALL_MODULES = [
   'emergency-fund', 'member-analysis', 'goal-simulator', 'net-worth-tracker',
   // New premium features
   'month-journal', 'wishlist', 'recurring-detector', 'budget-envelopes', 'smart-alerts',
+  // New value features (batch 2)
+  'spending-benchmarks', 'budget-streak', 'share-summary',
 ];
 
 const DEFAULT_DATA: CloudData = {
