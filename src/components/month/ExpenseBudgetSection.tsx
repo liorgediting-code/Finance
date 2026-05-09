@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
@@ -8,6 +8,7 @@ import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
 import { computeBudgetSuggestions } from '../../utils/budgetSuggestions';
 import type { ExpenseEntry } from '../../types';
 import { isEntryFuture } from '../../utils/calculations';
+import BudgetRingsView from './BudgetRingsView';
 
 function linkedSourceRoute(type: ExpenseEntry['linkedSourceType']): string {
   switch (type) {
@@ -151,6 +152,10 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
   const addRecurringExpense = useFinanceStore((s) => s.addRecurringExpense);
   const familyMembers = useFinanceStore((s) => s.familyMembers);
   const customCategories = useFinanceStore(useShallow((s) => s.settings.customCategories ?? []));
+  const allMonthsData = useFinanceStore(useShallow((s) => s.months));
+  const allRecurringExpenses = useFinanceStore(useShallow((s) => s.recurringExpenses));
+  const enabledModules = useFinanceStore(useShallow((s) => s.settings.enabledModules ?? []));
+  const showAutocomplete = enabledModules.includes('smart-autocomplete');
 
   const [form, setForm] = useState<Omit<ExpenseEntry, 'id'>>({
     ...emptyForm(),
@@ -162,6 +167,36 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
   const [isRecurring, setIsRecurring] = useState(initialCategoryId === 'subscriptions');
   const [isFuture, setIsFuture] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const suggestionMap = useMemo(() => {
+    if (!showAutocomplete) return new Map<string, { categoryId: string; subcategoryId: string; amount: number; count: number }>();
+    const counts = new Map<string, { categoryId: string; subcategoryId: string; amount: number; count: number }>();
+    const allExpenses = [
+      ...Object.values(allMonthsData).flatMap((m) => m.expenses),
+      ...allRecurringExpenses,
+    ];
+    for (const e of allExpenses) {
+      const desc = e.description?.trim();
+      if (!desc || e.linkedSourceId) continue;
+      const existing = counts.get(desc);
+      if (existing) {
+        existing.count++;
+      } else {
+        counts.set(desc, { categoryId: e.categoryId, subcategoryId: e.subcategoryId, amount: e.amount, count: 1 });
+      }
+    }
+    return counts;
+  }, [showAutocomplete, allMonthsData, allRecurringExpenses]);
+
+  const filteredSuggestions = useMemo(() => {
+    if (!showAutocomplete || !form.description.trim()) return [];
+    const q = form.description.toLowerCase();
+    return Array.from(suggestionMap.keys())
+      .filter((desc) => desc.toLowerCase().includes(q) && desc.toLowerCase() !== q)
+      .sort((a, b) => (suggestionMap.get(b)!.count) - (suggestionMap.get(a)!.count))
+      .slice(0, 6);
+  }, [showAutocomplete, form.description, suggestionMap]);
 
   const selectedCat = CATEGORIES.find((c) => c.id === form.categoryId);
   const subcategories = selectedCat?.subcategories ?? [];
@@ -211,7 +246,7 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
         <div>
           <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">קטגוריה</label>
           <select value={form.categoryId} onChange={(e) => handleCatChange(e.target.value)} className={`${inputCls} cursor-pointer`}>
-            <option value="">-- בחר --</option>
+            <option value="">—— בחר ——</option>
             {CATEGORIES.map((c) => (
               <option key={c.id} value={c.id}>{c.nameHe}</option>
             ))}
@@ -236,15 +271,56 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
           <div>
             <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תת-קטגוריה</label>
             <select value={form.subcategoryId} onChange={(e) => setForm({ ...form, subcategoryId: e.target.value })} className={`${inputCls} cursor-pointer`} disabled={!form.categoryId}>
-              <option value="">-- בחר --</option>
+              <option value="">—— בחר ——</option>
               {subcategories.map((s) => <option key={s.id} value={s.id}>{s.nameHe}</option>)}
             </select>
           </div>
         )}
 
-        <div>
+        <div className="relative">
           <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תיאור</label>
-          <input type="text" placeholder="תיאור קצר" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={inputCls} />
+          <input
+            type="text"
+            placeholder="תיאור קצר"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 160)}
+            className={inputCls}
+          />
+          {showAutocomplete && showSuggestions && filteredSuggestions.length > 0 && (
+            <div className="absolute top-full right-0 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 mt-0.5 overflow-hidden">
+              {filteredSuggestions.map((desc) => {
+                const s = suggestionMap.get(desc)!;
+                const catName = CATEGORIES.find((c) => c.id === s.categoryId)?.nameHe ?? s.categoryId;
+                return (
+                  <button
+                    key={desc}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      const cat = CATEGORIES.find((c) => c.id === s.categoryId);
+                      setForm((f) => ({
+                        ...f,
+                        description: desc,
+                        categoryId: s.categoryId,
+                        subcategoryId: s.subcategoryId ?? (cat?.subcategories[0]?.id ?? ''),
+                        amount: s.amount,
+                      }));
+                      setShowSuggestions(false);
+                    }}
+                    className="w-full text-right px-3 py-2 hover:bg-lavender-light/60 flex items-center justify-between gap-2 text-sm border-b border-gray-100 last:border-0 cursor-pointer"
+                  >
+                    <span className="text-[#1E1E2E] truncate">{desc}</span>
+                    <span className="text-xs text-[#9090A8] flex-shrink-0 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: CATEGORIES.find((c) => c.id === s.categoryId)?.color ?? '#ccc' }} />
+                      {catName} · ₪{s.amount.toLocaleString('he-IL', { maximumFractionDigits: 0 })}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div>
@@ -287,7 +363,6 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
         )}
       </div>
 
-      {/* Recurring toggle */}
       <div className="flex flex-wrap gap-4 mt-3">
         <label className="flex items-center gap-2 cursor-pointer w-fit" onClick={() => {
           const next = !isRecurring;
@@ -466,6 +541,8 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const [showBudgetSettings, setShowBudgetSettings] = useState(false);
   const [memberFilter, setMemberFilter] = useState<string>('');
   const [splittingId, setSplittingId] = useState<string | null>(null);
+  const showBudgetRings = enabledModules.includes('budget-rings');
+  const [viewMode, setViewMode] = useState<'table' | 'rings'>('table');
 
   const toggleCat = (catId: string) => {
     setExpandedCats((prev) => {
@@ -588,6 +665,24 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
             </svg>
             תקציב
           </button>
+          {showBudgetRings && (
+            <div className="flex items-center bg-gray-100 rounded-lg p-0.5 gap-0.5">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`text-xs px-2 py-0.5 rounded-md transition-colors cursor-pointer ${viewMode === 'table' ? 'bg-white text-[#5B52A0] shadow-sm font-medium' : 'text-[#9090A8] hover:text-[#4A4A60]'}`}
+                title="תצוגת טבלה"
+              >
+                רשימה
+              </button>
+              <button
+                onClick={() => setViewMode('rings')}
+                className={`text-xs px-2 py-0.5 rounded-md transition-colors cursor-pointer ${viewMode === 'rings' ? 'bg-white text-[#5B52A0] shadow-sm font-medium' : 'text-[#9090A8] hover:text-[#4A4A60]'}`}
+                title="תצוגת טבעות תקציב"
+              >
+                ⭕ טבעות
+              </button>
+            </div>
+          )}
           {familyMembers.length > 0 && (
             <select
               value={memberFilter}
@@ -608,7 +703,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
         </button>
       </div>
 
-      {/* Budget alerts */}
       {overBudgetCount > 0 && !showBudgetSettings && (
         <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-2 text-xs text-red-700">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -628,7 +722,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
         </div>
       )}
 
-      {/* Budget settings panel */}
       {showBudgetSettings && (
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
@@ -697,7 +790,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
         </div>
       )}
 
-      {/* Search bar */}
       <div className="mb-3">
         <div className="relative">
           <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9090A8] pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -723,7 +815,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
         </div>
       </div>
 
-      {/* Add form */}
       {showAddForm && (
         <AddExpenseForm
           initialCategoryId={addFormCatId}
@@ -732,9 +823,22 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
         />
       )}
 
-      {/* Main table */}
-      <div className="rounded-xl shadow-sm overflow-hidden border border-gray-100">
-        {/* Header */}
+      {showBudgetRings && viewMode === 'rings' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-3 pb-2">
+          <BudgetRingsView
+            rows={rows.map((r) => ({
+              id: r.cat.id,
+              nameHe: r.cat.nameHe,
+              color: r.cat.color,
+              actual: r.actual,
+              budgetAmt: r.budgetAmt,
+              pct: r.pct,
+            }))}
+          />
+        </div>
+      )}
+
+      {viewMode === 'table' && <div className="rounded-xl shadow-sm overflow-hidden border border-gray-100">
         <div className="grid grid-cols-[1fr_120px_40px] bg-lavender-light text-[#4A4A60] text-xs font-semibold px-4 py-2.5">
           <span>קטגוריה</span>
           <span className="text-right">סכום / תקציב</span>
@@ -754,7 +858,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
 
           return (
             <div key={cat.id}>
-              {/* Category row */}
               <div
                 className={`grid grid-cols-[1fr_120px_40px] items-center px-4 py-2.5 border-b border-gray-100 transition-colors ${rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-lavender-light/20`}
               >
@@ -823,7 +926,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                 </button>
               </div>
 
-              {/* Expanded: individual transactions */}
               {isExpanded && (
                 <div className="bg-gray-50/80 border-b border-gray-100">
                   {catExpenses.length === 0 ? (
@@ -1020,7 +1122,6 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
           );
         })}
 
-        {/* Totals footer */}
         <div className="grid grid-cols-[1fr_120px_40px] bg-lavender-light/50 font-bold text-sm px-4 py-3 border-t border-gray-200">
           <span className="text-[#1E1E2E]">
             סה&quot;כ
@@ -1034,7 +1135,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
           <span className="text-right text-[#1E1E2E]">{formatCurrency(totalActual)}</span>
           <span />
         </div>
-      </div>
+      </div>}
     </section>
   );
 }
