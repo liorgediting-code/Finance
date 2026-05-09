@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../lib/supabase';
-import { CATEGORIES } from '../config/categories';
+import { computeBudgetSuggestions } from '../utils/budgetSuggestions';
 import type {
   AppSettings,
   MonthData,
@@ -25,7 +25,7 @@ import type {
   WishlistItem,
 } from '../types';
 
-// ── Cloud-synced fields ────────────────────────────────────────────────────
+// ── Cloud-synced fields ─────────────────────────────────────────────
 interface CloudData {
   settings: AppSettings;
   months: Record<number, MonthData>;
@@ -99,7 +99,7 @@ const DEFAULT_DATA: CloudData = {
   dismissedAlertIds: [],
 };
 
-// ── Debounced save ─────────────────────────────────────────────────────────────
+// ── Debounced save ────────────────────────────────────────────────────────
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleSync(getUserId: () => string | null, getState: () => CloudData) {
@@ -128,7 +128,7 @@ function updateExtraBoard(
   return { extraBoards: next };
 }
 
-// ── Linked recurring expense helpers ─────────────────────────────────────────────────
+// ── Linked recurring expense helpers ──────────────────────────────────────────────────
 // These manage auto-generated recurring expenses that mirror financial commitments.
 // They operate on the global recurringExpenses (not board-scoped) since the source
 // items (installments, debts, etc.) are also global.
@@ -192,7 +192,7 @@ function makeActivityEntry(
   return { id: uuidv4(), timestamp: new Date().toISOString(), action, entityType, description, amount, monthIndex };
 }
 
-// ── Store interface ────────────────────────────────────────────────────────────
+// ── Store interface ─────────────────────────────────────────────────────────────
 interface FinanceStore extends CloudData {
   _userId: string | null;
 
@@ -332,7 +332,7 @@ function ensureMonth(months: Record<number, MonthData>, monthIndex: number): Mon
   return months[monthIndex] ?? { income: [], expenses: [], budget: {} };
 }
 
-// ── Store ─────────────────────────────────────────────────────────────────────────────
+// ── Store ────────────────────────────────────────────────────────────────────────────────────
 export const useFinanceStore = create<FinanceStore>()((set, get) => {
   const sync = () => scheduleSync(
     () => get()._userId,
@@ -465,12 +465,12 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       await supabase.from('user_data').upsert({ user_id: s._userId, data, updated_at: new Date().toISOString() });
     },
 
-    // ── Family members ─────────────────────────────────────────────────────────────────
+    // ── Family members ─────────────────────────────────────────────────────────────────────────────────────
 addFamilyMember: (name) => { set((s) => ({ familyMembers: [...s.familyMembers, { id: uuidv4(), name }] })); sync(); },
     updateFamilyMember: (id, name) => { set((s) => ({ familyMembers: s.familyMembers.map((m) => m.id === id ? { ...m, name } : m) })); sync(); },
     deleteFamilyMember: (id) => { set((s) => ({ familyMembers: s.familyMembers.filter((m) => m.id !== id) })); sync(); },
 
-    // ── Income ─────────────────────────────────────────────────────────────────────
+    // ── Income ──────────────────────────────────────────────────────────────────────────────────
 addIncome: (monthIndex, entry) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
@@ -574,7 +574,7 @@ addIncome: (monthIndex, entry) => {
       sync();
     },
 
-    // ── Recurring expenses ────────────────────────────────────────────────────────────
+    // ── Recurring expenses ─────────────────────────────────────────────────────────────────────────────
 addRecurringExpense: (entry) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
@@ -612,7 +612,7 @@ addRecurringExpense: (entry) => {
       sync();
     },
 
-    // ── Expenses ──────────────────────────────────────────────────────────────────────
+    // ── Expenses ──────────────────────────────────────────────────────────────────────────────────────
 addExpense: (monthIndex, entry) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
@@ -739,22 +739,8 @@ addExpense: (monthIndex, entry) => {
         if (activeBoardId === 'personal' || activeBoardId === 'overall') return s.months;
         return s.extraBoards.find((b) => b.id === activeBoardId)?.months ?? {};
       };
-      const allMonths = getMonths();
-      // Collect up to 3 past months that have expense data
-      const pastMonths: MonthData[] = [];
-      for (let i = monthIndex - 1; i >= 0 && pastMonths.length < 3; i--) {
-        const md = allMonths[i];
-        if (md && md.expenses.length > 0) pastMonths.push(md);
-      }
-      if (pastMonths.length === 0) return;
-      const suggested: Record<string, number> = {};
-      for (const cat of CATEGORIES) {
-        const totals = pastMonths.map((md) =>
-          md.expenses.filter((e) => e.categoryId === cat.id).reduce((s, e) => s + e.amount, 0)
-        );
-        const avg = totals.reduce((a, b) => a + b, 0) / totals.length;
-        if (avg > 0) suggested[cat.id] = Math.round(avg / 100) * 100;
-      }
+      const suggested = computeBudgetSuggestions(getMonths(), monthIndex);
+      if (Object.keys(suggested).length === 0) return;
       if (activeBoardId === 'personal') {
         set((s) => {
           const md = ensureMonth(s.months, monthIndex);
@@ -769,7 +755,7 @@ addExpense: (monthIndex, entry) => {
       sync();
     },
 
-    // ── Savings ──────────────────────────────────────────────────────────────────────
+    // ── Savings ──────────────────────────────────────────────────────────────────────────────────────
 addSavingsFund: (fund) => { set((s) => ({ savingsFunds: [...s.savingsFunds, { ...fund, id: uuidv4() }] })); sync(); },
     updateSavingsFund: (id, updates) => { set((s) => ({ savingsFunds: s.savingsFunds.map((f) => f.id === id ? { ...f, ...updates } : f) })); sync(); },
     deleteSavingsFund: (id) => { set((s) => ({ savingsFunds: s.savingsFunds.filter((f) => f.id !== id) })); sync(); },
@@ -892,7 +878,7 @@ addSavingsFund: (fund) => { set((s) => ({ savingsFunds: [...s.savingsFunds, { ..
       return Math.max(0, prevBudget - prevSpent);
     },
 
-    // ── Installments ──────────────────────────────────────────────────────────────────
+    // ── Installments ──────────────────────────────────────────────────────────────────────────────────
 addInstallment: (entry) => {
       const newId = uuidv4();
       const monthly = entry.numPayments > 0 ? entry.totalAmount / entry.numPayments : 0;
@@ -927,7 +913,7 @@ addInstallment: (entry) => {
       sync();
     },
 
-    // ── Mortgage ────────────────────────────────────────────────────────────────────
+    // ── Mortgage ──────────────────────────────────────────────────────────────────────────────────────
 addMortgage: (mortgage) => { set((s) => ({ mortgages: [...s.mortgages, { ...mortgage, id: uuidv4() }] })); sync(); },
     updateMortgage: (id, partial) => { set((s) => ({ mortgages: s.mortgages.map((m) => m.id === id ? { ...m, ...partial } : m) })); sync(); },
     deleteMortgage: (id) => { set((s) => ({ mortgages: s.mortgages.filter((m) => m.id !== id) })); sync(); },
@@ -962,7 +948,7 @@ addMortgage: (mortgage) => { set((s) => ({ mortgages: [...s.mortgages, { ...mort
       sync();
     },
 
-    // ── Savings Vehicles ────────────────────────────────────────────────────────────────
+    // ── Savings Vehicles ────────────────────────────────────────────────────────────────────────────────────
 addSavingsVehicle: (vehicle) => {
       const newId = uuidv4();
       set((s) => ({
@@ -990,7 +976,7 @@ addSavingsVehicle: (vehicle) => {
       sync();
     },
 
-    // ── Debts ───────────────────────────────────────────────────────────────────────────
+    // ── Debts ───────────────────────────────────────────────────────────────────────────────────────────
 addDebt: (debt) => {
       const newId = uuidv4();
       set((s) => ({
@@ -1018,7 +1004,7 @@ addDebt: (debt) => {
       sync();
     },
 
-    // ── Life Goals ───────────────────────────────────────────────────────────────────
+    // ── Life Goals ──────────────────────────────────────────────────────────────────────────────────────
 addLifeGoal: (goal) => {
       const newId = uuidv4();
       const monthly = goal.monthlyContribution ?? 0;
@@ -1053,12 +1039,12 @@ addLifeGoal: (goal) => {
       sync();
     },
 
-    // ── Chag Budgets ───────────────────────────────────────────────────────────────────
+    // ── Chag Budgets ──────────────────────────────────────────────────────────────────────────────────────
 addChagBudget: (budget) => { set((s) => ({ chagBudgets: [...s.chagBudgets, { ...budget, id: uuidv4() }] })); sync(); },
     updateChagBudget: (id, partial) => { set((s) => ({ chagBudgets: s.chagBudgets.map((b) => b.id === id ? { ...b, ...partial } : b) })); sync(); },
     deleteChagBudget: (id) => { set((s) => ({ chagBudgets: s.chagBudgets.filter((b) => b.id !== id) })); sync(); },
 
-    // ── Savings Challenges ──────────────────────────────────────────────────────────────────
+    // ── Savings Challenges ──────────────────────────────────────────────────────────────────────────────────────────
 addSavingsChallenge: (challenge) => { set((s) => ({ savingsChallenges: [...s.savingsChallenges, { ...challenge, id: uuidv4() }] })); sync(); },
     updateSavingsChallenge: (id, partial) => { set((s) => ({ savingsChallenges: s.savingsChallenges.map((c) => c.id === id ? { ...c, ...partial } : c) })); sync(); },
     deleteSavingsChallenge: (id) => { set((s) => ({ savingsChallenges: s.savingsChallenges.filter((c) => c.id !== id) })); sync(); },
@@ -1086,7 +1072,7 @@ addSavingsChallenge: (challenge) => { set((s) => ({ savingsChallenges: [...s.sav
       sync();
     },
 
-    // ── Month Journal ────────────────────────────────────────────────────────────────────
+    // ── Month Journal ────────────────────────────────────────────────────────────────────────────────────────
 updateMonthNote: (monthIndex, note) => {
       set((s) => {
         const md = ensureMonth(s.months, monthIndex);
@@ -1095,7 +1081,7 @@ updateMonthNote: (monthIndex, note) => {
       sync();
     },
 
-    // ── Wishlist ─────────────────────────────────────────────────────────────────────────────
+    // ── Wishlist ───────────────────────────────────────────────────────────────────────────────────────────────
 addWishlistItem: (item) => {
       set((s) => ({ wishlist: [...s.wishlist, { ...item, id: uuidv4() }] }));
       sync();
@@ -1114,7 +1100,7 @@ addWishlistItem: (item) => {
       sync();
     },
 
-    // ── Notification Center ────────────────────────────────────────────────────────────────────
+    // ── Notification Center ─────────────────────────────────────────────────────────────────────────────────────────
 dismissAlert: (alertId) => {
       set((s) => ({ dismissedAlertIds: [...new Set([...s.dismissedAlertIds, alertId])] }));
       sync();
