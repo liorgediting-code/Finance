@@ -25,7 +25,7 @@ import type {
   WishlistItem,
 } from '../types';
 
-// ── Cloud-synced fields ───────────────────────────────────────────────────────
+// ── Cloud-synced fields ────────────────────────────────────────────────────
 interface CloudData {
   settings: AppSettings;
   months: Record<number, MonthData>;
@@ -67,6 +67,8 @@ const ALL_MODULES = [
   'month-journal', 'wishlist', 'recurring-detector', 'budget-envelopes', 'smart-alerts',
   // New value features (batch 2)
   'spending-benchmarks', 'budget-streak', 'share-summary',
+  // New value features (batch 3)
+  'health-score-history', 'smart-autocomplete', 'budget-rings', 'spending-heatmap',
 ];
 
 const DEFAULT_DATA: CloudData = {
@@ -97,7 +99,7 @@ const DEFAULT_DATA: CloudData = {
   dismissedAlertIds: [],
 };
 
-// ── Debounced save ────────────────────────────────────────────────────────────
+// ── Debounced save ─────────────────────────────────────────────────────────────
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleSync(getUserId: () => string | null, getState: () => CloudData) {
@@ -126,7 +128,7 @@ function updateExtraBoard(
   return { extraBoards: next };
 }
 
-// ── Linked recurring expense helpers ─────────────────────────────────────────
+// ── Linked recurring expense helpers ─────────────────────────────────────────────────
 // These manage auto-generated recurring expenses that mirror financial commitments.
 // They operate on the global recurringExpenses (not board-scoped) since the source
 // items (installments, debts, etc.) are also global.
@@ -190,7 +192,7 @@ function makeActivityEntry(
   return { id: uuidv4(), timestamp: new Date().toISOString(), action, entityType, description, amount, monthIndex };
 }
 
-// ── Store interface ───────────────────────────────────────────────────────────
+// ── Store interface ────────────────────────────────────────────────────────────
 interface FinanceStore extends CloudData {
   _userId: string | null;
 
@@ -330,7 +332,7 @@ function ensureMonth(months: Record<number, MonthData>, monthIndex: number): Mon
   return months[monthIndex] ?? { income: [], expenses: [], budget: {} };
 }
 
-// ── Store ─────────────────────────────────────────────────────────────────────
+// ── Store ─────────────────────────────────────────────────────────────────────────────
 export const useFinanceStore = create<FinanceStore>()((set, get) => {
   const sync = () => scheduleSync(
     () => get()._userId,
@@ -463,13 +465,13 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       await supabase.from('user_data').upsert({ user_id: s._userId, data, updated_at: new Date().toISOString() });
     },
 
-    // ── Family members ──────────────────────────────────────────────────────
-    addFamilyMember: (name) => { set((s) => ({ familyMembers: [...s.familyMembers, { id: uuidv4(), name }] })); sync(); },
+    // ── Family members ─────────────────────────────────────────────────────────────────
+addFamilyMember: (name) => { set((s) => ({ familyMembers: [...s.familyMembers, { id: uuidv4(), name }] })); sync(); },
     updateFamilyMember: (id, name) => { set((s) => ({ familyMembers: s.familyMembers.map((m) => m.id === id ? { ...m, name } : m) })); sync(); },
     deleteFamilyMember: (id) => { set((s) => ({ familyMembers: s.familyMembers.filter((m) => m.id !== id) })); sync(); },
 
-    // ── Income ─────────────────────────────────────────────────────────────
-    addIncome: (monthIndex, entry) => {
+    // ── Income ─────────────────────────────────────────────────────────────────────
+addIncome: (monthIndex, entry) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
         set((s) => {
@@ -572,8 +574,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
-    // ── Recurring expenses ──────────────────────────────────────────────────
-    addRecurringExpense: (entry) => {
+    // ── Recurring expenses ────────────────────────────────────────────────────────────
+addRecurringExpense: (entry) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
         set((s) => ({ recurringExpenses: [...s.recurringExpenses, { ...entry, id: uuidv4(), isRecurring: true }] }));
@@ -610,8 +612,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
-    // ── Expenses ────────────────────────────────────────────────────────────
-    addExpense: (monthIndex, entry) => {
+    // ── Expenses ──────────────────────────────────────────────────────────────────────
+addExpense: (monthIndex, entry) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
         set((s) => {
@@ -767,8 +769,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
-    // ── Savings ─────────────────────────────────────────────────────────────
-    addSavingsFund: (fund) => { set((s) => ({ savingsFunds: [...s.savingsFunds, { ...fund, id: uuidv4() }] })); sync(); },
+    // ── Savings ──────────────────────────────────────────────────────────────────────
+addSavingsFund: (fund) => { set((s) => ({ savingsFunds: [...s.savingsFunds, { ...fund, id: uuidv4() }] })); sync(); },
     updateSavingsFund: (id, updates) => { set((s) => ({ savingsFunds: s.savingsFunds.map((f) => f.id === id ? { ...f, ...updates } : f) })); sync(); },
     deleteSavingsFund: (id) => { set((s) => ({ savingsFunds: s.savingsFunds.filter((f) => f.id !== id) })); sync(); },
 
@@ -890,8 +892,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       return Math.max(0, prevBudget - prevSpent);
     },
 
-    // ── Installments ────────────────────────────────────────────────────────
-    addInstallment: (entry) => {
+    // ── Installments ──────────────────────────────────────────────────────────────────
+addInstallment: (entry) => {
       const newId = uuidv4();
       const monthly = entry.numPayments > 0 ? entry.totalAmount / entry.numPayments : 0;
       set((s) => ({
@@ -925,8 +927,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
-    // ── Mortgage ────────────────────────────────────────────────────────────
-    addMortgage: (mortgage) => { set((s) => ({ mortgages: [...s.mortgages, { ...mortgage, id: uuidv4() }] })); sync(); },
+    // ── Mortgage ────────────────────────────────────────────────────────────────────
+addMortgage: (mortgage) => { set((s) => ({ mortgages: [...s.mortgages, { ...mortgage, id: uuidv4() }] })); sync(); },
     updateMortgage: (id, partial) => { set((s) => ({ mortgages: s.mortgages.map((m) => m.id === id ? { ...m, ...partial } : m) })); sync(); },
     deleteMortgage: (id) => { set((s) => ({ mortgages: s.mortgages.filter((m) => m.id !== id) })); sync(); },
     addMortgageTrack: (mortgageId, track) => {
@@ -960,8 +962,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
-    // ── Savings Vehicles ────────────────────────────────────────────────────
-    addSavingsVehicle: (vehicle) => {
+    // ── Savings Vehicles ────────────────────────────────────────────────────────────────
+addSavingsVehicle: (vehicle) => {
       const newId = uuidv4();
       set((s) => ({
         savingsVehicles: [...s.savingsVehicles, { ...vehicle, id: newId }],
@@ -988,8 +990,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
-    // ── Debts ────────────────────────────────────────────────────────────────
-    addDebt: (debt) => {
+    // ── Debts ───────────────────────────────────────────────────────────────────────────
+addDebt: (debt) => {
       const newId = uuidv4();
       set((s) => ({
         debts: [...s.debts, { ...debt, id: newId }],
@@ -1016,8 +1018,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
-    // ── Life Goals ──────────────────────────────────────────────────────────
-    addLifeGoal: (goal) => {
+    // ── Life Goals ───────────────────────────────────────────────────────────────────
+addLifeGoal: (goal) => {
       const newId = uuidv4();
       const monthly = goal.monthlyContribution ?? 0;
       set((s) => ({
@@ -1051,13 +1053,13 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
-    // ── Chag Budgets ────────────────────────────────────────────────────────
-    addChagBudget: (budget) => { set((s) => ({ chagBudgets: [...s.chagBudgets, { ...budget, id: uuidv4() }] })); sync(); },
+    // ── Chag Budgets ───────────────────────────────────────────────────────────────────
+addChagBudget: (budget) => { set((s) => ({ chagBudgets: [...s.chagBudgets, { ...budget, id: uuidv4() }] })); sync(); },
     updateChagBudget: (id, partial) => { set((s) => ({ chagBudgets: s.chagBudgets.map((b) => b.id === id ? { ...b, ...partial } : b) })); sync(); },
     deleteChagBudget: (id) => { set((s) => ({ chagBudgets: s.chagBudgets.filter((b) => b.id !== id) })); sync(); },
 
-    // ── Savings Challenges ──────────────────────────────────────────────────
-    addSavingsChallenge: (challenge) => { set((s) => ({ savingsChallenges: [...s.savingsChallenges, { ...challenge, id: uuidv4() }] })); sync(); },
+    // ── Savings Challenges ──────────────────────────────────────────────────────────────────
+addSavingsChallenge: (challenge) => { set((s) => ({ savingsChallenges: [...s.savingsChallenges, { ...challenge, id: uuidv4() }] })); sync(); },
     updateSavingsChallenge: (id, partial) => { set((s) => ({ savingsChallenges: s.savingsChallenges.map((c) => c.id === id ? { ...c, ...partial } : c) })); sync(); },
     deleteSavingsChallenge: (id) => { set((s) => ({ savingsChallenges: s.savingsChallenges.filter((c) => c.id !== id) })); sync(); },
     toggleChallengeWeek: (id, weekNumber) => {
@@ -1084,8 +1086,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
-    // ── Month Journal ────────────────────────────────────────────────────────
-    updateMonthNote: (monthIndex, note) => {
+    // ── Month Journal ────────────────────────────────────────────────────────────────────
+updateMonthNote: (monthIndex, note) => {
       set((s) => {
         const md = ensureMonth(s.months, monthIndex);
         return { months: { ...s.months, [monthIndex]: { ...md, note } } };
@@ -1093,8 +1095,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
-    // ── Wishlist ─────────────────────────────────────────────────────────────
-    addWishlistItem: (item) => {
+    // ── Wishlist ─────────────────────────────────────────────────────────────────────────────
+addWishlistItem: (item) => {
       set((s) => ({ wishlist: [...s.wishlist, { ...item, id: uuidv4() }] }));
       sync();
     },
@@ -1112,8 +1114,8 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       sync();
     },
 
-    // ── Notification Center ──────────────────────────────────────────────────
-    dismissAlert: (alertId) => {
+    // ── Notification Center ────────────────────────────────────────────────────────────────────
+dismissAlert: (alertId) => {
       set((s) => ({ dismissedAlertIds: [...new Set([...s.dismissedAlertIds, alertId])] }));
       sync();
     },
