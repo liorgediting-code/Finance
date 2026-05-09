@@ -76,6 +76,21 @@ const BANK_FORMATS: Record<BankFormat, BankFormatConfig> = {
   },
 };
 
+// Normalise date strings to YYYY-MM-DD. Handles:
+//   DD/MM/YYYY  →  YYYY-MM-DD  (Israeli bank format)
+//   DD-MM-YYYY  →  YYYY-MM-DD
+//   Already-ISO YYYY-MM-DD passes through unchanged.
+function normalizeDate(raw: string): string {
+  const s = raw.trim();
+  // DD/MM/YYYY or DD-MM-YYYY
+  const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (dmy) return `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
+  // YYYY/MM/DD
+  const ymd = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (ymd) return `${ymd[1]}-${ymd[2].padStart(2, '0')}-${ymd[3].padStart(2, '0')}`;
+  return s;
+}
+
 // Normalise raw currency string to a short code
 function normCurrency(raw: string): string {
   const s = raw.trim();
@@ -132,7 +147,7 @@ function parseRows(matrix: (string | number)[][], format: BankFormat): ParsedRow
     if (cfg.skipHeaderCol !== undefined &&
         String(cols[cfg.skipHeaderCol] ?? '').trim() === cfg.skipHeaderValue) continue;
 
-    const dateStr = String(cols[cfg.dateCol]  ?? '').trim();
+    const dateStr = normalizeDate(String(cols[cfg.dateCol] ?? '').trim());
     const desc    = String(cols[cfg.descCol]  ?? '').trim();
 
     // Original-column amount (may be in foreign currency)
