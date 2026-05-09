@@ -40,6 +40,7 @@ const GoalSimulatorPage     = lazy(() => import('./components/modules/GoalSimula
 const NetWorthTrackerPage   = lazy(() => import('./components/modules/NetWorthTrackerPage'))
 const WishlistPage          = lazy(() => import('./components/modules/WishlistPage'))
 const SpendingBenchmarksPage = lazy(() => import('./components/modules/SpendingBenchmarksPage'))
+const SpendingHeatmapPage    = lazy(() => import('./components/modules/SpendingHeatmapPage'))
 
 function PageLoader() {
   return (
@@ -93,6 +94,7 @@ export default function App() {
                 <Route path="/net-worth-tracker" element={<NetWorthTrackerPage />} />
                 <Route path="/wishlist" element={<WishlistPage />} />
                 <Route path="/spending-benchmarks" element={<SpendingBenchmarksPage />} />
+                <Route path="/spending-heatmap" element={<SpendingHeatmapPage />} />
               </Routes>
             </Suspense>
           </AppShell>
