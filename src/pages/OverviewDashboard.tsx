@@ -30,6 +30,7 @@ import OverviewNetWorthTrackerCard from '../components/overview/OverviewNetWorth
 import OverviewWishlistCard from '../components/overview/OverviewWishlistCard';
 import OverviewBenchmarksCard from '../components/overview/OverviewBenchmarksCard';
 import OverviewStreakCard from '../components/overview/OverviewStreakCard';
+import OverviewHeatmapCard from '../components/overview/OverviewHeatmapCard';
 
 function SavingsChallengeCard() {
   return (
@@ -65,7 +66,7 @@ function TaxRefundCard() {
     <NavLink to="/tax-refund" className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow block">
       <div className="h-1 w-full" style={{ backgroundColor: '#C8D0B8' }} />
       <div className="p-4">
-        <div className="text-2xl mb-2">🧾</div>
+        <div className="text-2xl mb-2">🧻</div>
         <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider">החזר מס</p>
         <p className="text-sm text-[#1E1E2E] font-medium mt-1">מחשבון מס שנתי</p>
         <p className="text-xs text-[#9090A8] mt-0.5">חשב החזר צפוי →</p>
@@ -133,6 +134,7 @@ export default function OverviewDashboard() {
   const showWishlist = enabledModules.includes('wishlist');
   const showBenchmarks = enabledModules.includes('spending-benchmarks');
   const showStreak = enabledModules.includes('budget-streak');
+  const showHeatmap = enabledModules.includes('spending-heatmap');
 
   const middleGridClass = showNetWorth
     ? 'grid grid-cols-1 md:grid-cols-4 gap-4'
@@ -197,10 +199,11 @@ export default function OverviewDashboard() {
       )}
 
       {/* Batch-2 value cards */}
-      {(showBenchmarks || showStreak) && (
+      {(showBenchmarks || showStreak || showHeatmap) && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {showBenchmarks && <OverviewBenchmarksCard />}
           {showStreak     && <OverviewStreakCard />}
+          {showHeatmap    && <OverviewHeatmapCard />}
         </div>
       )}
 
