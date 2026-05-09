@@ -1,4 +1,6 @@
 import type { MonthData, SavingsFund, Debt, LifeGoal, ExpenseEntry, IncomeEntry } from '../types';
+import { CATEGORIES } from '../config/categories';
+import { isEntryFuture } from './calculations';
 
 export interface AppAlert {
   id: string;
@@ -34,12 +36,13 @@ export function computeAlerts(input: AlertInput): AppAlert[] {
         .reduce((s, e) => s + e.amount, 0);
       const pct = spent / budgeted;
       if (pct >= 1.0) {
+        const catName = CATEGORIES.find((c) => c.id === catId)?.nameHe ?? catId;
         alerts.push({
           id: `overspend-${catId}`,
           type: 'budget-overspend',
           severity: 'warning',
-          title: 'חריגה מהתקציב',
-          message: `חרגת מהתקציב בקטגוריה — ${Math.round((pct - 1) * 100)}% מעל המגבלה`,
+          title: `חריגה מהתקציב: ${catName}`,
+          message: `חרגת בקטגוריית ${catName} — ${Math.round((pct - 1) * 100)}% מעל המגבלה`,
           monthIndex: currentMonthIndex,
         });
       }
@@ -108,7 +111,7 @@ export function computeAlerts(input: AlertInput): AppAlert[] {
   // 5. Green month (income > expenses in current month)
   if (md) {
     const recurringIncomeTotal = recurringIncomes.reduce((s, e) => s + e.amount, 0);
-    const totalIncome = recurringIncomeTotal + (md.income ?? []).filter((e) => !e.isFuture).reduce((s, e) => s + e.amount, 0);
+    const totalIncome = recurringIncomeTotal + (md.income ?? []).filter((e) => !isEntryFuture(e)).reduce((s, e) => s + e.amount, 0);
     const totalExpenses = [...(md.expenses ?? []), ...recurringExpenses.filter((e) => e.isRecurring)]
       .filter((e) => !e.isFuture && !e.isPending)
       .reduce((s, e) => s + e.amount, 0);

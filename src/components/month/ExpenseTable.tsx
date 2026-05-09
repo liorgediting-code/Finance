@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
+import { useActiveBoardData } from '../../store/useActiveBoardData';
 import { sumAmounts } from '../../utils/calculations';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
@@ -34,7 +35,8 @@ function getPaymentMethodName(method: string): string {
 }
 
 export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
-  const monthData = useFinanceStore((s) => s.months[monthIndex]);
+  const { months } = useActiveBoardData();
+  const monthData = months[monthIndex];
   const addExpense = useFinanceStore((s) => s.addExpense);
   const updateExpense = useFinanceStore((s) => s.updateExpense);
   const deleteExpense = useFinanceStore((s) => s.deleteExpense);

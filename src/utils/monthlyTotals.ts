@@ -11,6 +11,6 @@ export function computeMonthTotals(
     (monthData?.income ?? []).filter((e) => !isEntryFuture(e)).reduce((s, e) => s + e.amount, 0);
   const totalExpenses =
     recurringExpenses.reduce((s, e) => s + e.amount, 0) +
-    (monthData?.expenses ?? []).filter((e) => !isEntryFuture(e)).reduce((s, e) => s + e.amount, 0);
+    (monthData?.expenses ?? []).filter((e) => !isEntryFuture(e) && !e.isPending).reduce((s, e) => s + e.amount, 0);
   return { totalIncome, totalExpenses, net: totalIncome - totalExpenses };
 }

@@ -45,6 +45,19 @@ export function detectRecurringSuggestions(
     const monthIndices = [...new Set(entries.map((e) => e.monthIndex))].sort((a, b) => a - b);
     if (monthIndices.length < 3) continue;
 
+    // Require at least 3 consecutive months to avoid flagging sporadic purchases
+    let maxRun = 1;
+    let run = 1;
+    for (let i = 1; i < monthIndices.length; i++) {
+      if (monthIndices[i] === monthIndices[i - 1] + 1) {
+        run++;
+        if (run > maxRun) maxRun = run;
+      } else {
+        run = 1;
+      }
+    }
+    if (maxRun < 3) continue;
+
     // Check amounts are similar (within 30% of the average)
     const amounts = entries.map((e) => e.expense.amount);
     const avg = amounts.reduce((s, a) => s + a, 0) / amounts.length;
