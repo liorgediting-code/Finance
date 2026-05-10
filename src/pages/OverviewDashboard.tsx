@@ -31,6 +31,9 @@ import OverviewWishlistCard from '../components/overview/OverviewWishlistCard';
 import OverviewBenchmarksCard from '../components/overview/OverviewBenchmarksCard';
 import OverviewStreakCard from '../components/overview/OverviewStreakCard';
 import OverviewHeatmapCard from '../components/overview/OverviewHeatmapCard';
+import OverviewInvestmentCard from '../components/overview/OverviewInvestmentCard';
+import OverviewFIRECard from '../components/overview/OverviewFIRECard';
+import OverviewSpendingDNACard from '../components/overview/OverviewSpendingDNACard';
 
 function SavingsChallengeCard() {
   return (
@@ -135,6 +138,11 @@ export default function OverviewDashboard() {
   const showBenchmarks = enabledModules.includes('spending-benchmarks');
   const showStreak = enabledModules.includes('budget-streak');
   const showHeatmap = enabledModules.includes('spending-heatmap');
+  const showInvestment = enabledModules.includes('investment-portfolio');
+  const showFIRE = enabledModules.includes('fire-calculator');
+  const showSpendingDNA = enabledModules.includes('spending-dna');
+  const showAnnualBudgetPlan = enabledModules.includes('annual-budget-plan');
+  const showCurrencyConverter = enabledModules.includes('currency-converter');
 
   const middleGridClass = showNetWorth
     ? 'grid grid-cols-1 md:grid-cols-4 gap-4'
@@ -211,6 +219,37 @@ export default function OverviewDashboard() {
       {showAchievements && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <OverviewAchievementsCard />
+        </div>
+      )}
+
+      {/* Batch-4 premium cards */}
+      {(showInvestment || showFIRE || showSpendingDNA || showAnnualBudgetPlan || showCurrencyConverter) && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {showInvestment      && <OverviewInvestmentCard />}
+          {showFIRE            && <OverviewFIRECard />}
+          {showSpendingDNA     && <OverviewSpendingDNACard />}
+          {showAnnualBudgetPlan && (
+            <NavLink to="/annual-budget-plan" className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow block">
+              <div className="h-1 w-full" style={{ backgroundColor: '#4A90C0' }} />
+              <div className="p-4">
+                <div className="text-2xl mb-2">📅</div>
+                <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider">תכנון שנתי</p>
+                <p className="text-sm text-[#1E1E2E] font-medium mt-1">12 חודשים בטבלה</p>
+                <p className="text-xs text-[#4A90C0] mt-1">ראה תמונה שנתית →</p>
+              </div>
+            </NavLink>
+          )}
+          {showCurrencyConverter && (
+            <NavLink to="/currency-converter" className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow block">
+              <div className="h-1 w-full" style={{ backgroundColor: '#5AADE0' }} />
+              <div className="p-4">
+                <div className="text-2xl mb-2">💱</div>
+                <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider">ממיר מטבעות</p>
+                <p className="text-sm text-[#1E1E2E] font-medium mt-1">USD, EUR, GBP ועוד</p>
+                <p className="text-xs text-[#5AADE0] mt-1">המר מטבעות →</p>
+              </div>
+            </NavLink>
+          )}
         </div>
       )}
 

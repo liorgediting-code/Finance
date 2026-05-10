@@ -39,8 +39,13 @@ const MemberAnalysisPage    = lazy(() => import('./components/modules/MemberAnal
 const GoalSimulatorPage     = lazy(() => import('./components/modules/GoalSimulatorPage'))
 const NetWorthTrackerPage   = lazy(() => import('./components/modules/NetWorthTrackerPage'))
 const WishlistPage          = lazy(() => import('./components/modules/WishlistPage'))
-const SpendingBenchmarksPage = lazy(() => import('./components/modules/SpendingBenchmarksPage'))
-const SpendingHeatmapPage    = lazy(() => import('./components/modules/SpendingHeatmapPage'))
+const SpendingBenchmarksPage  = lazy(() => import('./components/modules/SpendingBenchmarksPage'))
+const SpendingHeatmapPage     = lazy(() => import('./components/modules/SpendingHeatmapPage'))
+const InvestmentPortfolioPage = lazy(() => import('./components/modules/InvestmentPortfolioPage'))
+const FIRECalculatorPage      = lazy(() => import('./components/modules/FIRECalculatorPage'))
+const AnnualBudgetPlanPage    = lazy(() => import('./components/modules/AnnualBudgetPlanPage'))
+const SpendingDNAPage         = lazy(() => import('./components/modules/SpendingDNAPage'))
+const CurrencyConverterPage   = lazy(() => import('./components/modules/CurrencyConverterPage'))
 
 function PageLoader() {
   return (
@@ -95,6 +100,11 @@ export default function App() {
                 <Route path="/wishlist" element={<WishlistPage />} />
                 <Route path="/spending-benchmarks" element={<SpendingBenchmarksPage />} />
                 <Route path="/spending-heatmap" element={<SpendingHeatmapPage />} />
+                <Route path="/investments" element={<InvestmentPortfolioPage />} />
+                <Route path="/fire-calculator" element={<FIRECalculatorPage />} />
+                <Route path="/annual-budget-plan" element={<AnnualBudgetPlanPage />} />
+                <Route path="/spending-dna" element={<SpendingDNAPage />} />
+                <Route path="/currency-converter" element={<CurrencyConverterPage />} />
               </Routes>
             </Suspense>
           </AppShell>

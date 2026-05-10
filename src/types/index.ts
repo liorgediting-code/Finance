@@ -252,3 +252,20 @@ export interface ActivityEntry {
   amount?: number;
   monthIndex?: number;
 }
+
+// ── Investment Portfolio ───────────────────────────────────────────────────────
+
+export type PortfolioItemType = 'stocks' | 'bonds' | 'real_estate' | 'crypto' | 'mutual_fund' | 'etf' | 'other';
+
+export interface PortfolioItem {
+  id: string;
+  name: string;
+  type: PortfolioItemType;
+  ticker?: string;
+  quantity?: number;
+  purchasePrice?: number; // total original investment (not per unit)
+  currentValue: number;   // current total value in the chosen currency
+  purchaseDate?: string;  // YYYY-MM-DD
+  currency: string;       // 'ILS' | 'USD' | 'EUR' etc.
+  notes: string;
+}
