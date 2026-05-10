@@ -281,6 +281,7 @@ export default function SavingsVehiclesPage() {
   const deleteSavingsVehicle = useFinanceStore((s) => s.deleteSavingsVehicle);
 
   const [activeTab, setActiveTab] = useState<'manage' | 'forecast'>('manage');
+  const [globalYears, setGlobalYears] = useState(10);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<Omit<SavingsVehicle, 'id'>>(emptyForm());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -445,8 +446,50 @@ export default function SavingsVehiclesPage() {
       )}
 
       {activeTab === 'forecast' && (
-        <div className="text-center py-8 text-[#9090A8] text-sm">
-          בקרוב...
+        <div className="space-y-5">
+          {/* Global years slider */}
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-semibold text-[#1E1E2E]">צפי ל-{globalYears} שנים</p>
+              <span className="text-xs text-[#9090A8]">ניתן לשנות לכל השקעה בנפרד</span>
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={40}
+              step={1}
+              value={globalYears}
+              onChange={(e) => setGlobalYears(Number(e.target.value))}
+              className="w-full accent-lavender-dark cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-[#9090A8] mt-1">
+              <span>1 שנה</span>
+              <span>10 שנים</span>
+              <span>20 שנים</span>
+              <span>40 שנים</span>
+            </div>
+          </div>
+
+          {/* Per-vehicle forecast cards */}
+          {savingsVehicles.length === 0 ? (
+            <div className="text-center py-10 text-[#9090A8] bg-white rounded-xl border border-gray-100">
+              <p className="text-sm mb-1">אין השקעות להציג</p>
+              <p className="text-xs">הוסף השקעות בטאב ניהול כדי לראות צפי</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {savingsVehicles.map((vehicle) => (
+                <ForecastCard
+                  key={vehicle.id}
+                  vehicle={vehicle}
+                  globalYears={globalYears}
+                  color={TYPE_COLORS[vehicle.type]}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Compound interest calculator placeholder — Task 5 will add it here */}
         </div>
       )}
     </div>
