@@ -181,6 +181,7 @@ export interface SavingsVehicle {
   notes: string;
   lockDate?: string;      // keren hishtalmut - eligible withdrawal date
   childName?: string;     // child savings - child name
+  annualRate?: number;    // annual return %, e.g. 6.5
 }
 
 // ── Debt Planner (#23) ────────────────────────────────────────────────────────

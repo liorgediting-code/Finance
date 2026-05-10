@@ -35,6 +35,7 @@ const emptyForm = (): Omit<SavingsVehicle, 'id'> => ({
   notes: '',
   lockDate: '',
   childName: '',
+  annualRate: 0,
 });
 
 interface VehicleFormProps { f: Omit<SavingsVehicle, 'id'>; setF: (v: Omit<SavingsVehicle, 'id'>) => void; }
@@ -63,6 +64,10 @@ function VehicleForm({ f, setF }: VehicleFormProps) {
       <div>
         <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הפקדת מעסיק חודשית (₪)</label>
         <input type="number" value={f.employerMonthlyDeposit || ''} onChange={(e) => setF({ ...f, employerMonthlyDeposit: Number(e.target.value) })} placeholder="0" min={0} className={INPUT_CLS} />
+      </div>
+      <div>
+        <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תשואה שנתית (%)</label>
+        <input type="number" value={f.annualRate ?? 0} onChange={(e) => setF({ ...f, annualRate: Number(e.target.value) })} placeholder="0" min={0} max={30} step={0.1} className={INPUT_CLS} />
       </div>
       {f.type === 'keren_hishtalmut' && (
         <div>
@@ -215,7 +220,7 @@ export default function SavingsVehiclesPage() {
                               </div>
                             </div>
                             <div className="flex gap-2 mt-3 pt-2 border-t border-gray-100">
-                              <button onClick={() => { setEditingId(vehicle.id); setEditForm({ type: vehicle.type, name: vehicle.name, balance: vehicle.balance, employeeMonthlyDeposit: vehicle.employeeMonthlyDeposit, employerMonthlyDeposit: vehicle.employerMonthlyDeposit, notes: vehicle.notes, lockDate: vehicle.lockDate, childName: vehicle.childName }); }} className="text-xs text-[#9090A8] hover:text-[#4A4A60] px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">עריכה</button>
+                              <button onClick={() => { setEditingId(vehicle.id); setEditForm({ type: vehicle.type, name: vehicle.name, balance: vehicle.balance, employeeMonthlyDeposit: vehicle.employeeMonthlyDeposit, employerMonthlyDeposit: vehicle.employerMonthlyDeposit, notes: vehicle.notes, lockDate: vehicle.lockDate, childName: vehicle.childName, annualRate: vehicle.annualRate ?? 0 }); }} className="text-xs text-[#9090A8] hover:text-[#4A4A60] px-2 py-1 rounded hover:bg-gray-100 cursor-pointer">עריכה</button>
                               <button onClick={() => { if (window.confirm('למחוק?')) deleteSavingsVehicle(vehicle.id); }} className="text-xs text-[#9090A8] hover:text-red-500 px-2 py-1 rounded hover:bg-red-50 cursor-pointer">מחיקה</button>
                             </div>
                           </div>
