@@ -146,7 +146,7 @@ export function ForecastCard({ vehicle, globalYears, color }: ForecastCardProps)
         </div>
 
         {/* KPI row */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className={`grid ${showInterestLine ? 'grid-cols-3' : 'grid-cols-2'} gap-2 mb-4`}>
           <div className="bg-gray-50 rounded-lg p-2 text-center">
             <p className="text-[10px] text-[#9090A8]">צפי סופי</p>
             <p className="text-sm font-bold text-[#1E1E2E]">{formatCurrency(finalWithInterest)}</p>
