@@ -70,11 +70,11 @@ function buildChartData(
   monthlyDeposit: number,
   annualRate: number,
   years: number
-): Array<{ year: number; עם_ריבית: number; ללא_ריבית: number }> {
+): Array<{ year: number; withInterest: number; withoutInterest: number }> {
   const r = annualRate / 100 / 12;
   let balWith = initialBalance;
   let balWithout = initialBalance;
-  const data = [{ year: 0, עם_ריבית: Math.round(initialBalance), ללא_ריבית: Math.round(initialBalance) }];
+  const data = [{ year: 0, withInterest: Math.round(initialBalance), withoutInterest: Math.round(initialBalance) }];
 
   for (let y = 1; y <= years; y++) {
     for (let m = 0; m < 12; m++) {
@@ -83,8 +83,8 @@ function buildChartData(
     }
     data.push({
       year: y,
-      עם_ריבית: Math.round(balWith),
-      ללא_ריבית: Math.round(balWithout),
+      withInterest: Math.round(balWith),
+      withoutInterest: Math.round(balWithout),
     });
   }
   return data;
@@ -98,7 +98,8 @@ interface ForecastCardProps {
 
 export function ForecastCard({ vehicle, globalYears, color }: ForecastCardProps) {
   const [yearsInput, setYearsInput] = useState('');
-  const years = yearsInput ? Math.max(1, Math.min(40, Number(yearsInput))) : globalYears;
+  const parsed = Number(yearsInput);
+  const years = yearsInput && !isNaN(parsed) ? Math.max(1, Math.min(40, parsed)) : globalYears;
   const monthly = vehicle.employeeMonthlyDeposit + vehicle.employerMonthlyDeposit;
   const rate = vehicle.annualRate ?? 0;
 
@@ -112,8 +113,8 @@ export function ForecastCard({ vehicle, globalYears, color }: ForecastCardProps)
   );
 
   const showInterestLine = rate > 0;
-  const finalWithInterest = chartData[chartData.length - 1]?.עם_ריבית ?? 0;
-  const finalWithout = chartData[chartData.length - 1]?.ללא_ריבית ?? 0;
+  const finalWithInterest = chartData[chartData.length - 1]?.withInterest ?? 0;
+  const finalWithout = chartData[chartData.length - 1]?.withoutInterest ?? 0;
   const interestBonus = finalWithInterest - finalWithout;
 
   return (
@@ -151,8 +152,8 @@ export function ForecastCard({ vehicle, globalYears, color }: ForecastCardProps)
             <p className="text-sm font-bold text-[#1E1E2E]">{formatCurrency(finalWithInterest)}</p>
           </div>
           <div className="bg-gray-50 rounded-lg p-2 text-center">
-            <p className="text-[10px] text-[#9090A8]">סה&quot;כ הופקד</p>
-            <p className="text-sm font-bold text-[#1E1E2E]">{formatCurrency(vehicle.balance + monthly * 12 * years)}</p>
+            <p className="text-[10px] text-[#9090A8]">הפקדות עתידיות</p>
+            <p className="text-sm font-bold text-[#1E1E2E]">{formatCurrency(monthly * 12 * years)}</p>
           </div>
           {showInterestLine && (
             <div className="bg-green-50 rounded-lg p-2 text-center">
@@ -173,9 +174,9 @@ export function ForecastCard({ vehicle, globalYears, color }: ForecastCardProps)
               labelFormatter={(label) => `שנה ${label}`}
             />
             {showInterestLine && <Legend wrapperStyle={{ fontSize: 11 }} />}
-            <Line type="monotone" dataKey="עם_ריבית" stroke={color} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="withInterest" name="עם ריבית" stroke={color} strokeWidth={2} dot={false} />
             {showInterestLine && (
-              <Line type="monotone" dataKey="ללא_ריבית" stroke="#D1D5DB" strokeWidth={1.5} strokeDasharray="4 2" dot={false} />
+              <Line type="monotone" dataKey="withoutInterest" name="ללא ריבית" stroke="#D1D5DB" strokeWidth={1.5} strokeDasharray="4 2" dot={false} />
             )}
           </LineChart>
         </ResponsiveContainer>
