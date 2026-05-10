@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { formatCurrency } from '../../utils/formatters';
 import type { SavingsVehicle, SavingsVehicleType } from '../../types';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const TYPE_NAMES: Record<SavingsVehicleType, string> = {
   keren_hishtalmut: 'קרן השתלמות',
@@ -25,6 +26,189 @@ const TYPE_DESCRIPTIONS: Record<SavingsVehicleType, string> = {
 };
 
 const INPUT_CLS = 'border border-gray-200 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white';
+
+interface ForecastRow {
+  year: number;
+  openingBalance: number;
+  annualDeposits: number;
+  interestEarned: number;
+  closingBalance: number;
+}
+
+function buildForecastRows(
+  initialBalance: number,
+  monthlyDeposit: number,
+  annualRate: number,
+  years: number
+): ForecastRow[] {
+  const r = annualRate / 100 / 12;
+  let bal = initialBalance;
+  const rows: ForecastRow[] = [];
+
+  for (let y = 1; y <= years; y++) {
+    const opening = bal;
+    const annualDeposits = monthlyDeposit * 12;
+    let closing = bal;
+    for (let m = 0; m < 12; m++) {
+      closing = closing * (1 + r) + monthlyDeposit;
+    }
+    const interestEarned = closing - opening - annualDeposits;
+    rows.push({
+      year: y,
+      openingBalance: Math.round(opening),
+      annualDeposits: Math.round(annualDeposits),
+      interestEarned: Math.round(interestEarned),
+      closingBalance: Math.round(closing),
+    });
+    bal = closing;
+  }
+  return rows;
+}
+
+function buildChartData(
+  initialBalance: number,
+  monthlyDeposit: number,
+  annualRate: number,
+  years: number
+): Array<{ year: number; עם_ריבית: number; ללא_ריבית: number }> {
+  const r = annualRate / 100 / 12;
+  let balWith = initialBalance;
+  let balWithout = initialBalance;
+  const data = [{ year: 0, עם_ריבית: Math.round(initialBalance), ללא_ריבית: Math.round(initialBalance) }];
+
+  for (let y = 1; y <= years; y++) {
+    for (let m = 0; m < 12; m++) {
+      balWith = balWith * (1 + r) + monthlyDeposit;
+      balWithout = balWithout + monthlyDeposit;
+    }
+    data.push({
+      year: y,
+      עם_ריבית: Math.round(balWith),
+      ללא_ריבית: Math.round(balWithout),
+    });
+  }
+  return data;
+}
+
+interface ForecastCardProps {
+  vehicle: SavingsVehicle;
+  globalYears: number;
+  color: string;
+}
+
+export function ForecastCard({ vehicle, globalYears, color }: ForecastCardProps) {
+  const [yearsInput, setYearsInput] = useState('');
+  const years = yearsInput ? Math.max(1, Math.min(40, Number(yearsInput))) : globalYears;
+  const monthly = vehicle.employeeMonthlyDeposit + vehicle.employerMonthlyDeposit;
+  const rate = vehicle.annualRate ?? 0;
+
+  const chartData = useMemo(
+    () => buildChartData(vehicle.balance, monthly, rate, years),
+    [vehicle.balance, monthly, rate, years]
+  );
+  const tableRows = useMemo(
+    () => buildForecastRows(vehicle.balance, monthly, rate, years),
+    [vehicle.balance, monthly, rate, years]
+  );
+
+  const showInterestLine = rate > 0;
+  const finalWithInterest = chartData[chartData.length - 1]?.עם_ריבית ?? 0;
+  const finalWithout = chartData[chartData.length - 1]?.ללא_ריבית ?? 0;
+  const interestBonus = finalWithInterest - finalWithout;
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="h-1" style={{ backgroundColor: color }} />
+      <div className="p-4">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h4 className="font-semibold text-[#1E1E2E]">{vehicle.name || TYPE_NAMES[vehicle.type]}</h4>
+            <p className="text-xs text-[#9090A8]">
+              יתרה: {formatCurrency(vehicle.balance)}
+              {monthly > 0 && ` · +${formatCurrency(monthly)}/חודש`}
+              {rate > 0 && ` · ${rate}% שנתי`}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs text-[#9090A8]">שנים:</label>
+            <input
+              type="number"
+              value={yearsInput}
+              onChange={(e) => setYearsInput(e.target.value)}
+              placeholder={String(globalYears)}
+              min={1}
+              max={40}
+              className="w-14 border border-gray-200 rounded-lg px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-lavender-dark bg-white"
+            />
+          </div>
+        </div>
+
+        {/* KPI row */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="bg-gray-50 rounded-lg p-2 text-center">
+            <p className="text-[10px] text-[#9090A8]">צפי סופי</p>
+            <p className="text-sm font-bold text-[#1E1E2E]">{formatCurrency(finalWithInterest)}</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-2 text-center">
+            <p className="text-[10px] text-[#9090A8]">סה&quot;כ הופקד</p>
+            <p className="text-sm font-bold text-[#1E1E2E]">{formatCurrency(vehicle.balance + monthly * 12 * years)}</p>
+          </div>
+          {showInterestLine && (
+            <div className="bg-green-50 rounded-lg p-2 text-center">
+              <p className="text-[10px] text-[#9090A8]">בונוס ריבית</p>
+              <p className="text-sm font-bold text-green-600">{formatCurrency(interestBonus)}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Chart */}
+        <ResponsiveContainer width="100%" height={180}>
+          <LineChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+            <XAxis dataKey="year" tick={{ fontSize: 10 }} tickFormatter={(v) => `${v}י`} />
+            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} width={40} />
+            <Tooltip
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(value: any, name: any) => [formatCurrency(Number(value)), name]}
+              labelFormatter={(label) => `שנה ${label}`}
+            />
+            {showInterestLine && <Legend wrapperStyle={{ fontSize: 11 }} />}
+            <Line type="monotone" dataKey="עם_ריבית" stroke={color} strokeWidth={2} dot={false} />
+            {showInterestLine && (
+              <Line type="monotone" dataKey="ללא_ריבית" stroke="#D1D5DB" strokeWidth={1.5} strokeDasharray="4 2" dot={false} />
+            )}
+          </LineChart>
+        </ResponsiveContainer>
+
+        {/* Annual table */}
+        <div className="mt-3 overflow-x-auto max-h-48 overflow-y-auto">
+          <table className="w-full text-xs">
+            <thead className="sticky top-0 bg-white">
+              <tr className="border-b border-gray-100">
+                <th className="text-right py-1.5 font-semibold text-[#6B6B8A] pr-1">שנה</th>
+                <th className="text-right py-1.5 font-semibold text-[#6B6B8A]">פתיחה</th>
+                <th className="text-right py-1.5 font-semibold text-[#6B6B8A]">הפקדות</th>
+                {showInterestLine && <th className="text-right py-1.5 font-semibold text-[#6B6B8A]">ריבית</th>}
+                <th className="text-right py-1.5 font-semibold text-[#6B6B8A]">סגירה</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tableRows.map((row) => (
+                <tr key={row.year} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="py-1 pr-1 text-[#6B6B8A]">{row.year}</td>
+                  <td className="py-1 text-[#4A4A60]">{formatCurrency(row.openingBalance)}</td>
+                  <td className="py-1 text-[#4A4A60]">{formatCurrency(row.annualDeposits)}</td>
+                  {showInterestLine && <td className="py-1 text-green-600 font-medium">{formatCurrency(row.interestEarned)}</td>}
+                  <td className="py-1 font-semibold text-[#1E1E2E]">{formatCurrency(row.closingBalance)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const emptyForm = (): Omit<SavingsVehicle, 'id'> => ({
   type: 'keren_hishtalmut',
