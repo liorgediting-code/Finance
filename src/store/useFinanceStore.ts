@@ -23,6 +23,7 @@ import type {
   SavingsChallenge,
   NetWorthSnapshot,
   WishlistItem,
+  PortfolioItem,
 } from '../types';
 
 // ── Cloud-synced fields ─────────────────────────────────────────────
@@ -52,6 +53,8 @@ interface CloudData {
   wishlist: WishlistItem[];
   // Dismissed alert IDs for notification center (#NEW)
   dismissedAlertIds: string[];
+  // Investment portfolio
+  portfolioItems: PortfolioItem[];
 }
 
 const ALL_MODULES = [
@@ -97,6 +100,7 @@ const DEFAULT_DATA: CloudData = {
   netWorthHistory: [],
   wishlist: [],
   dismissedAlertIds: [],
+  portfolioItems: [],
 };
 
 // ── Debounced save ────────────────────────────────────────────────────────
@@ -318,6 +322,11 @@ interface FinanceStore extends CloudData {
   dismissAlert: (alertId: string) => void;
   clearDismissedAlerts: () => void;
 
+  // Investment portfolio
+  addPortfolioItem: (item: Omit<PortfolioItem, 'id'>) => void;
+  updatePortfolioItem: (id: string, partial: Partial<Omit<PortfolioItem, 'id'>>) => void;
+  deletePortfolioItem: (id: string) => void;
+
   // Demo data
   loadDemoData: () => void;
 
@@ -358,6 +367,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         netWorthHistory: s.netWorthHistory,
         wishlist: s.wishlist,
         dismissedAlertIds: s.dismissedAlertIds,
+        portfolioItems: s.portfolioItems,
       };
     }
   );
@@ -444,6 +454,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
           netWorthHistory: d.netWorthHistory ?? [],
           wishlist: d.wishlist ?? [],
           dismissedAlertIds: d.dismissedAlertIds ?? [],
+          portfolioItems: d.portfolioItems ?? [],
         });
       }
     },
@@ -461,6 +472,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         activityLog: s.activityLog, rolloverCategories: s.rolloverCategories,
         savingsChallenges: s.savingsChallenges, netWorthHistory: s.netWorthHistory,
         wishlist: s.wishlist, dismissedAlertIds: s.dismissedAlertIds,
+        portfolioItems: s.portfolioItems,
       };
       await supabase.from('user_data').upsert({ user_id: s._userId, data, updated_at: new Date().toISOString() });
     },
@@ -873,7 +885,7 @@ addSavingsFund: (fund) => { set((s) => ({ savingsFunds: [...s.savingsFunds, { ..
         .filter((e) => e.categoryId === categoryId)
         .reduce((sum, e) => sum + e.amount, 0);
       const prevSpent = recurringSpent + prevMonth.expenses
-        .filter((e) => e.categoryId === categoryId)
+        .filter((e) => e.categoryId === categoryId && !e.isPending)
         .reduce((sum, e) => sum + e.amount, 0);
       return Math.max(0, prevBudget - prevSpent);
     },
@@ -1110,6 +1122,11 @@ dismissAlert: (alertId) => {
       sync();
     },
 
+    // ── Investment Portfolio ────────────────────────────────────────────────────────────────────────────────
+addPortfolioItem: (item) => { set((s) => ({ portfolioItems: [...s.portfolioItems, { ...item, id: uuidv4() }] })); sync(); },
+    updatePortfolioItem: (id, partial) => { set((s) => ({ portfolioItems: s.portfolioItems.map((p) => p.id === id ? { ...p, ...partial } : p) })); sync(); },
+    deletePortfolioItem: (id) => { set((s) => ({ portfolioItems: s.portfolioItems.filter((p) => p.id !== id) })); sync(); },
+
     resetStore: () => {
       if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
       set({ ...DEFAULT_DATA, _userId: null, activeBoardId: 'personal' });
@@ -1184,6 +1201,7 @@ dismissAlert: (alertId) => {
         extraBoards: [],
         wishlist: [],
         dismissedAlertIds: [],
+        portfolioItems: [],
       });
       sync();
     },

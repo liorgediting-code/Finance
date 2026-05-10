@@ -1,5 +1,6 @@
 import type { MonthData } from '../types';
 import { CATEGORIES } from '../config/categories';
+import { isEntryFuture } from './calculations';
 
 /**
  * Compute budget suggestions for each category based on average spending
@@ -24,7 +25,7 @@ export function computeBudgetSuggestions(
       if (!monthData?.expenses) continue;
 
       const total = monthData.expenses
-        .filter((e) => e.categoryId === cat.id && !e.isPending && !e.isRecurring)
+        .filter((e) => e.categoryId === cat.id && !e.isPending && !e.isRecurring && !isEntryFuture(e))
         .reduce((s, e) => s + e.amount, 0);
 
       if (total > 0) totals.push(total);

@@ -5,10 +5,13 @@ import { HEBREW_MONTHS } from '../config/months';
 function escapeCsv(val: string | number | undefined): string {
   if (val === undefined || val === null) return '';
   if (typeof val === 'number') return String(val);
-  if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-    return `"${val.replace(/"/g, '""')}"`;
+  // Prefix formula-injection characters so spreadsheet apps don't execute them
+  let s = val;
+  if (/^[=+\-@]/.test(s)) s = `'${s}`;
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return `"${s.replace(/"/g, '""')}"`;
   }
-  return val;
+  return s;
 }
 
 function row(...cells: (string | number | undefined)[]): string {

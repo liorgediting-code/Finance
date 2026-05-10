@@ -28,11 +28,11 @@ export function computeAlerts(input: AlertInput): AppAlert[] {
   // 1. Budget overspend in current month
   const md = months[currentMonthIndex];
   if (md) {
-    const allExpenses = [...(md.expenses ?? []), ...recurringExpenses.filter((e) => e.isRecurring)];
+    const allExpenses = [...(md.expenses ?? []), ...recurringExpenses];
     for (const [catId, budgeted] of Object.entries(md.budget ?? {})) {
       if (!budgeted || budgeted <= 0) continue;
       const spent = allExpenses
-        .filter((e) => e.categoryId === catId && !e.isFuture && !e.isPending)
+        .filter((e) => e.categoryId === catId && !isEntryFuture(e) && !e.isPending)
         .reduce((s, e) => s + e.amount, 0);
       const pct = spent / budgeted;
       if (pct >= 1.0) {
@@ -95,8 +95,7 @@ export function computeAlerts(input: AlertInput): AppAlert[] {
     }
   }
 
-  // 4. Debt under control (balance < 20% of original would require original tracking; skip for now)
-  // Instead: alert if total debt is decreasing relative to last month
+  // 4. Debt under control
   const totalDebt = debts.reduce((s, d) => s + d.balance, 0);
   if (totalDebt > 0 && totalDebt < 10000) {
     alerts.push({
@@ -112,8 +111,8 @@ export function computeAlerts(input: AlertInput): AppAlert[] {
   if (md) {
     const recurringIncomeTotal = recurringIncomes.reduce((s, e) => s + e.amount, 0);
     const totalIncome = recurringIncomeTotal + (md.income ?? []).filter((e) => !isEntryFuture(e)).reduce((s, e) => s + e.amount, 0);
-    const totalExpenses = [...(md.expenses ?? []), ...recurringExpenses.filter((e) => e.isRecurring)]
-      .filter((e) => !e.isFuture && !e.isPending)
+    const totalExpenses = [...(md.expenses ?? []), ...recurringExpenses]
+      .filter((e) => !isEntryFuture(e) && !e.isPending)
       .reduce((s, e) => s + e.amount, 0);
     if (totalIncome > 0 && totalExpenses < totalIncome) {
       const surplus = totalIncome - totalExpenses;

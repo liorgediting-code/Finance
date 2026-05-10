@@ -53,7 +53,7 @@ export function computeHealthScore(input: ScoreInput): HealthScoreResult {
 
   // 2. Debt-to-income ratio (0-25): lower monthly debt payments = better
   const totalMonthlyDebt = [
-    ...mortgages.flatMap((m) => m.tracks.map((t) => t.monthlyPayment)),
+    ...mortgages.flatMap((m) => (m.tracks ?? []).map((t) => t.monthlyPayment)),
     ...debts.map((d) => d.minimumPayment),
   ].reduce((s, v) => s + v, 0);
   const debtRatioPct = monthlyIncome > 0 ? (totalMonthlyDebt / monthlyIncome) * 100 : 0;

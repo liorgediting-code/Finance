@@ -267,7 +267,7 @@ export function generateInsights(input: InsightInput): Insight[] {
 
   // 8. Mortgage-to-income ratio
   if (mortgages.length > 0 && monthIncome > 0) {
-    const totalMortgagePayment = mortgages.flatMap((m) => m.tracks).reduce((s, t) => s + t.monthlyPayment, 0);
+    const totalMortgagePayment = mortgages.flatMap((m) => m.tracks ?? []).reduce((s, t) => s + t.monthlyPayment, 0);
     const mortgageRatio = (totalMortgagePayment / monthIncome) * 100;
     if (mortgageRatio > 35) {
       insights.push({

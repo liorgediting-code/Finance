@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   build: {
+    target: 'esnext',
     rollupOptions: {
       output: {
         manualChunks: (id: string) => {
