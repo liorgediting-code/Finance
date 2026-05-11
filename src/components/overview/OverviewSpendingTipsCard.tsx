@@ -38,7 +38,7 @@ function buildTips(
   }
 
   if (foodPct > 30) {
-    tips.push({ emoji: '🛒', text: 'הוצאות אוכל הן מעל 30% מהתקציב — תכנן ארוחות שבועיות לחיסכון', severity: 'info' });
+    tips.push({ emoji: '🛍', text: 'הוצאות אוכל הן מעל 30% מהתקציב — תכנן ארוחות שבועיות לחיסכון', severity: 'info' });
   }
 
   if (transportPct > 20) {

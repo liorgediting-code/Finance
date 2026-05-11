@@ -75,15 +75,13 @@ export default function OverviewBudgetRuleCard() {
     ? 'דורש שיפור'
     : 'סביר';
 
-  const unusedYear = settings.year;
-
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden" dir="rtl">
       <div className="h-1 w-full bg-gradient-to-r from-[#4A90C0] via-[#7B6DC8] to-[#22C55E]" />
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider">
-            ⚖️ כלל 50/30/20 — {unusedYear}
+            ⚖️ כלל 50/30/20 — {settings.year}
           </p>
           <span
             className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${

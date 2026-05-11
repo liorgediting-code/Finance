@@ -7,7 +7,7 @@ export default function OverviewWishlistCard() {
   const wishlist = useFinanceStore(useShallow((s) => s.wishlist));
   const pending = wishlist.filter((w) => !w.purchased);
   const totalCost = pending.reduce((s, w) => s + w.cost, 0);
-  const topItem = pending.sort((a, b) => {
+  const topItem = pending.slice().sort((a, b) => {
     const order = { high: 0, medium: 1, low: 2 };
     return order[a.priority] - order[b.priority];
   })[0];
