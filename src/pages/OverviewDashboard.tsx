@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { NavLink } from 'react-router-dom';
 import { useFinanceStore } from '../store/useFinanceStore';
@@ -109,42 +110,44 @@ function SpendingTrendsCard() {
 
 export default function OverviewDashboard() {
   const enabledModules = useFinanceStore(useShallow((s) => s.settings.enabledModules ?? []));
+  const moduleSet = useMemo(() => new Set(enabledModules), [enabledModules]);
+  const has = (m: string) => moduleSet.has(m);
 
-  const showNetWorth      = enabledModules.includes('net-worth');
-  const showInsights      = enabledModules.includes('insights');
-  const showCalendar      = enabledModules.includes('financial-calendar');
-  const showCashflow      = enabledModules.includes('cashflow');
-  const showInstall       = enabledModules.includes('installments');
-  const showSalary        = enabledModules.includes('salary-slip');
-  const showChag          = enabledModules.includes('chag-budget');
-  const showChallenge     = enabledModules.includes('savings-challenge');
-  const showYearReview    = enabledModules.includes('year-review');
-  const showAchievements  = enabledModules.includes('achievements');
-  const showPayday        = enabledModules.includes('payday-countdown');
-  const showUpcoming      = enabledModules.includes('upcoming-payments');
-  const showBudgetAlerts  = enabledModules.includes('budget-alerts');
-  const showTaxRefund     = enabledModules.includes('tax-refund');
-  const showSubscriptions = enabledModules.includes('subscription-audit');
-  const showTrends        = enabledModules.includes('spending-trends');
-  const showMonthlyReport = enabledModules.includes('monthly-report');
-  const showDailyBudget   = enabledModules.includes('daily-budget');
-  const showBudgetRule    = enabledModules.includes('budget-rule');
-  const showReportCard    = enabledModules.includes('report-card');
-  const showSpendingTips  = enabledModules.includes('spending-tips');
-  const showEmergencyFund   = enabledModules.includes('emergency-fund');
-  const showMemberAnalysis  = enabledModules.includes('member-analysis');
-  const showGoalSimulator   = enabledModules.includes('goal-simulator');
-  const showNetWorthTracker = enabledModules.includes('net-worth-tracker');
-  const showWishlist = enabledModules.includes('wishlist');
-  const showBenchmarks = enabledModules.includes('spending-benchmarks');
-  const showStreak = enabledModules.includes('budget-streak');
-  const showHeatmap = enabledModules.includes('spending-heatmap');
-  const showInvestment = enabledModules.includes('investment-portfolio');
-  const showFIRE = enabledModules.includes('fire-calculator');
-  const showSpendingDNA = enabledModules.includes('spending-dna');
-  const showAnnualBudgetPlan = enabledModules.includes('annual-budget-plan');
-  const showCurrencyConverter = enabledModules.includes('currency-converter');
-  const showRecentExpenses = enabledModules.includes('recent-expenses');
+  const showNetWorth      = has('net-worth');
+  const showInsights      = has('insights');
+  const showCalendar      = has('financial-calendar');
+  const showCashflow      = has('cashflow');
+  const showInstall       = has('installments');
+  const showSalary        = has('salary-slip');
+  const showChag          = has('chag-budget');
+  const showChallenge     = has('savings-challenge');
+  const showYearReview    = has('year-review');
+  const showAchievements  = has('achievements');
+  const showPayday        = has('payday-countdown');
+  const showUpcoming      = has('upcoming-payments');
+  const showBudgetAlerts  = has('budget-alerts');
+  const showTaxRefund     = has('tax-refund');
+  const showSubscriptions = has('subscription-audit');
+  const showTrends        = has('spending-trends');
+  const showMonthlyReport = has('monthly-report');
+  const showDailyBudget   = has('daily-budget');
+  const showBudgetRule    = has('budget-rule');
+  const showReportCard    = has('report-card');
+  const showSpendingTips  = has('spending-tips');
+  const showEmergencyFund   = has('emergency-fund');
+  const showMemberAnalysis  = has('member-analysis');
+  const showGoalSimulator   = has('goal-simulator');
+  const showNetWorthTracker = has('net-worth-tracker');
+  const showWishlist        = has('wishlist');
+  const showBenchmarks      = has('spending-benchmarks');
+  const showStreak          = has('budget-streak');
+  const showHeatmap         = has('spending-heatmap');
+  const showInvestment      = has('investment-portfolio');
+  const showFIRE            = has('fire-calculator');
+  const showSpendingDNA     = has('spending-dna');
+  const showAnnualBudgetPlan  = has('annual-budget-plan');
+  const showCurrencyConverter = has('currency-converter');
+  const showRecentExpenses    = has('recent-expenses');
 
   const middleGridClass = showNetWorth
     ? 'grid grid-cols-1 md:grid-cols-4 gap-4'
