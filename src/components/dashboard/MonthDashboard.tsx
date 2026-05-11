@@ -72,6 +72,7 @@ function exportMonthCSV(
   lines.push(f(`ייצוא ${monthName} ${year}`));
   lines.push('');
 
+  // Income
   lines.push('--- הכנסות ---');
   lines.push('תאריך,מקור,בן משפחה,סכום,סוג');
   allIncome.forEach((e) => {
@@ -81,6 +82,7 @@ function exportMonthCSV(
   lines.push(`,,${f('סה"כ הכנסות')},${sumAmounts(allIncome)},`);
   lines.push('');
 
+  // Expenses
   lines.push('--- הוצאות ---');
   lines.push('תאריך,קטגוריה,תת-קטגוריה,תיאור,סכום,אמצעי תשלום,סוג');
   allExpenses.forEach((e) => {
@@ -131,6 +133,7 @@ export default function MonthDashboard() {
   const user = useAuthStore((s) => s.user);
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
 
+  // When viewing the current year, cap at the current month; past years allow all 12; future years allow none.
   const maxAllowedMonth = year < today.getFullYear() ? 11 : year === today.getFullYear() ? currentMonthIndex : -1;
 
   const prevMonth = () => setMonthIndex((i) => Math.max(0, i - 1));
@@ -138,22 +141,26 @@ export default function MonthDashboard() {
 
   return (
     <div className="p-4 md:p-6 max-w-5xl mx-auto" dir="rtl">
+      {/* Back to overview */}
       <div className="mb-3 flex justify-end">
         <NavLink to="/" className="text-xs text-[#9090A8] hover:text-[#5B52A0] transition-colors flex items-center gap-1 cursor-pointer">
           מבט-על ←
         </NavLink>
       </div>
 
+      {/* ── Greeting ── */}
       {displayName && (
         <p className="text-lg font-semibold text-[#1E1E2E] mb-4">
           היי {displayName} 👋
         </p>
       )}
 
+      {/* ── Month Navigator ── */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
         <div className="h-1 w-full bg-lavender-dark" />
         <div className="px-6 py-5" dir="ltr">
           <div className="flex items-center justify-center gap-6">
+            {/* Previous month */}
             <button
               onClick={prevMonth}
               disabled={monthIndex === 0}
@@ -163,6 +170,7 @@ export default function MonthDashboard() {
               <ChevronLeftIcon />
             </button>
 
+            {/* Month label */}
             <div className="text-center min-w-[180px]">
               <h1 className="text-2xl font-bold text-[#1E1E2E] tracking-tight" dir="rtl">
                 {HEBREW_MONTHS[monthIndex]} {year}
@@ -172,6 +180,7 @@ export default function MonthDashboard() {
               )}
             </div>
 
+            {/* Next month */}
             <button
               onClick={nextMonth}
               disabled={monthIndex >= maxAllowedMonth}
@@ -182,6 +191,7 @@ export default function MonthDashboard() {
             </button>
           </div>
 
+          {/* Export button */}
           <div className="flex justify-center mt-3">
             <button
               onClick={() => exportMonthCSV(monthIndex, boardMonths, boardRecurringIncomes, boardRecurringExpenses)}
@@ -197,12 +207,14 @@ export default function MonthDashboard() {
             </button>
           </div>
 
+          {/* Month Journal — feature: month-journal */}
           {enabledModules.includes('month-journal') && (
             <div className="mt-4 border-t border-gray-100 pt-4">
               <MonthJournalWidget monthIndex={monthIndex} />
             </div>
           )}
 
+          {/* Month dots indicator */}
           <div className="flex justify-center gap-1.5 mt-4" dir="ltr">
             {HEBREW_MONTHS.map((_, idx) => (
               <button
@@ -226,20 +238,24 @@ export default function MonthDashboard() {
         <OverallDashboard monthIndex={monthIndex} />
       ) : (
         <>
+          {/* ── Summary Cards ── */}
           {visible('summary') && <MonthSummary monthIndex={monthIndex} />}
 
+          {/* ── Spending Pace ── */}
           {enabledModules.includes('spending-pace') && (
             <div className="mb-2">
               <SpendingPaceCard monthIndex={monthIndex} />
             </div>
           )}
 
+          {/* ── Recurring Detector — feature: recurring-detector ── */}
           {enabledModules.includes('recurring-detector') && (
             <div className="mb-4">
               <RecurringDetectorBanner />
             </div>
           )}
 
+          {/* ── Expenses ── */}
           {visible('expenses') && (
             <>
               <SectionDivider label="הוצאות" />
@@ -247,6 +263,7 @@ export default function MonthDashboard() {
                 <ExpenseCategoryBarChart monthIndex={monthIndex} showToggle={false} />
               </div>
 
+              {/* Budget Envelope toggle — feature: budget-envelopes */}
               {enabledModules.includes('budget-envelopes') && (
                 <div className="flex justify-end mb-3">
                   <button
@@ -277,6 +294,7 @@ export default function MonthDashboard() {
             </>
           )}
 
+          {/* ── Income ── */}
           {visible('income') && (
             <>
               <SectionDivider label="הכנסות" />
@@ -284,6 +302,7 @@ export default function MonthDashboard() {
             </>
           )}
 
+          {/* ── Annual Summary ── */}
           {visible('annual') && (
             <>
               <SectionDivider label="סיכום שנתי" />
@@ -293,6 +312,7 @@ export default function MonthDashboard() {
             </>
           )}
 
+          {/* ── Savings ── */}
           {visible('savings') && (
             <>
               <SectionDivider label="חסכונות" />
@@ -300,6 +320,7 @@ export default function MonthDashboard() {
             </>
           )}
 
+          {/* ── Month Comparison ── */}
           {enabledModules.includes('month-comparison') && monthIndex > 0 && (
             <>
               <SectionDivider label="השוואה חודשית" />
