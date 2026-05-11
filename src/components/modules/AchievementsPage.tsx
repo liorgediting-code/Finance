@@ -42,13 +42,11 @@ export default function AchievementsPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6" dir="rtl">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-[#1E1E2E] tracking-tight">הישגים</h1>
         <p className="text-sm text-[#9090A8] mt-1">מעקב אחר אבני הדרך הפיננסיים שלך</p>
       </div>
 
-      {/* Progress bar */}
       <div className="bg-white rounded-xl shadow-sm p-5">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-semibold text-[#1E1E2E]">
@@ -67,7 +65,6 @@ export default function AchievementsPage() {
         </div>
       </div>
 
-      {/* Unlocked */}
       {unlocked.length > 0 && (
         <div>
           <h2 className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider mb-3">
@@ -90,7 +87,6 @@ export default function AchievementsPage() {
         </div>
       )}
 
-      {/* Locked */}
       {locked.length > 0 && (
         <div>
           <h2 className="text-xs font-semibold text-[#9090A8] uppercase tracking-wider mb-3">

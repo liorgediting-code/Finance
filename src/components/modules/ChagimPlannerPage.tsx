@@ -3,7 +3,6 @@ import { formatCurrency } from '../../utils/formatters';
 
 const MONTH_NAMES = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
 
-// Approximate month indices for Israeli holidays (0-based, Gregorian)
 const CHAGIM_BY_MONTH: Record<number, { name: string; emoji: string }[]> = {
   2: [{ name: 'פורים', emoji: '🎭' }],
   3: [{ name: 'פסח', emoji: '🫓' }],
@@ -43,7 +42,6 @@ export default function ChagimPlannerPage() {
         <p className="text-xs text-[#9090A8] mt-0.5">סקירה שנתית של הכנסות והוצאות עם סימון חגים ישראליים</p>
       </div>
 
-      {/* Annual summary */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="h-1 bg-sage-dark" />
@@ -70,7 +68,6 @@ export default function ChagimPlannerPage() {
         </div>
       </div>
 
-      {/* Monthly grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
         {monthlyData.map((data, i) => {
           const isCurrentMonth = i === currentMonth;
@@ -98,7 +95,6 @@ export default function ChagimPlannerPage() {
                   <span className="text-xs text-[#9090A8]">{currentYear}</span>
                 </div>
 
-                {/* Chag badges */}
                 {data.chagim.length > 0 && (
                   <div className="flex gap-1 flex-wrap mb-2">
                     {data.chagim.map((c) => (
@@ -143,7 +139,6 @@ export default function ChagimPlannerPage() {
         })}
       </div>
 
-      {/* Chag expense insights */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
         <h3 className="text-sm font-semibold text-[#1E1E2E] mb-3">חודשי חגים — השוואה</h3>
         <div className="space-y-2">
@@ -185,11 +180,10 @@ export default function ChagimPlannerPage() {
         </div>
       </div>
 
-      {/* Category breakdown hint */}
       <div className="mt-4 bg-amber-50 border border-amber-100 rounded-xl p-3">
         <p className="text-xs text-[#B08A40]">
           💡 <strong>טיפ:</strong> בחודשי חגים (ספטמבר-אוקטובר, מרץ-אפריל) מומלץ לתכנן תקציב מיוחד לקטגוריות
-          <span className="font-medium"> מזון, קניות ובידור</span>. השתמש ב"תקציב חגים" לפירוט.
+          <span className="font-medium"> מזון, קניות ובידור</span>. השתמש ב-"תקציב חגים" לפירוט.
         </p>
       </div>
     </div>

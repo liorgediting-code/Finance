@@ -26,12 +26,10 @@ export default function CashflowPage() {
     const yr = currentYear + Math.floor(absMonthIndex / 12);
     const monthData = months[absMonthIndex];
     const recurringIncome = recurringIncomes.reduce((s, inc) => s + inc.amount, 0);
-    // Exclude installment-linked entries — handled separately with date-awareness below
     const recurringExpense = recurringExpenses
       .filter((e) => e.linkedSourceType !== 'installment')
       .reduce((s, exp) => s + exp.amount, 0);
     const manualIncome = (monthData?.income ?? []).reduce((s, inc) => s + inc.amount, 0);
-    // No isRecurring filter — subscriptions live only in months[x].expenses, not in recurringExpenses
     const manualExpense = (monthData?.expenses ?? []).reduce((s, exp) => s + exp.amount, 0);
 
     const targetLinear = currentYear * 12 + absMonthIndex;
@@ -101,7 +99,6 @@ export default function CashflowPage() {
         </div>
       </div>
 
-      {/* Summary alerts */}
       {firstNegative !== -1 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 flex items-start gap-3">
           <span className="text-xl flex-shrink-0">⚠️</span>
@@ -126,7 +123,6 @@ export default function CashflowPage() {
         </div>
       )}
 
-      {/* Monthly projection table */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 grid grid-cols-4 gap-2 text-xs font-semibold text-[#6B6B8A]">
           <span>חודש</span>

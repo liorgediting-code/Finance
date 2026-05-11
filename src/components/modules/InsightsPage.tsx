@@ -90,7 +90,6 @@ export default function InsightsPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 md:p-6 flex flex-col gap-6" dir="rtl">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-[#1E1E2E]">תובנות חכמות</h1>
         <p className="text-sm text-[#9090A8] mt-1">ניתוח אוטומטי של המצב הפיננסי שלך עם המלצות לפעולה</p>
@@ -100,7 +99,7 @@ export default function InsightsPage() {
         <div className="bg-white rounded-2xl shadow-sm p-10 text-center">
           <div className="text-4xl mb-3">📊</div>
           <p className="text-sm font-medium text-[#4A4A60]">אין מספיק נתונים עדיין</p>
-          <p className="text-xs text-[#9090A8] mt-1">הוסף הכנסות והוצאות כדי לקבל תובנות מותאמות אישית</p>
+          <p className="text-xs text-[#9090A8] mt-1">הוסף הכנסות והוצאות כדי לקבל תובנות מותאמות אישיות</p>
         </div>
       )}
 
@@ -112,7 +111,6 @@ export default function InsightsPage() {
         </div>
       )}
 
-      {/* Summary strip */}
       {hasAny && (
         <div className="bg-white rounded-xl shadow-sm p-4 flex items-center justify-between">
           <span className="text-xs text-[#9090A8]">סה"כ תובנות</span>
