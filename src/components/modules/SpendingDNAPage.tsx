@@ -110,18 +110,18 @@ export default function SpendingDNAPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl shadow-sm p-4">
-          <p className="text-xs text-[#9090A8] mb-1">סה"כ הוצאות מנותחות</p>
+          <p className="text-xs text-[#9090A8] mb-1">סה&quot;כ הוצאות מנותחות</p>
           <p className="text-xl font-bold text-[#1E1E2E]">{formatCurrency(Math.round(totalSpending))}</p>
           <p className="text-xs text-[#9090A8] mt-0.5">{allExpenses.length} עסקאות</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-4">
-          <p className="text-xs text-[#9090A8] mb-1">ממוצע לעסקה</p>
+          <p className="text-xs text-[#9090A8] mb-1">ממוצע לעסקאה</p>
           <p className="text-xl font-bold text-[#1E1E2E]">{formatCurrency(Math.round(avgPerExpense))}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-4">
           <p className="text-xs text-[#9090A8] mb-1">יום שיא בהוצאות</p>
           <p className="text-xl font-bold text-[#1E1E2E]">{peakDow.total > 0 ? peakDow.name : '—'}</p>
-          {peakDow.total > 0 && <p className="text-xs text-[#9090A8] mt-0.5">{formatCurrency(peakDow.total)} סה"כ</p>}
+          {peakDow.total > 0 && <p className="text-xs text-[#9090A8] mt-0.5">{formatCurrency(peakDow.total)} סה&quot;כ</p>}
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export default function SpendingDNAPage() {
         <p className="text-sm font-semibold text-lavender-dark mb-2">💡 תובנות</p>
         <ul className="flex flex-col gap-1.5 text-sm text-[#1E1E2E]">
           {peakDow.total > 0 && (
-            <li>• יום <strong>{peakDow.name}</strong> הוא יום ההוצאה הגדול שלך ({formatCurrency(peakDow.total)} סה"כ)</li>
+            <li>• יום <strong>{peakDow.name}</strong> הוא יום ההוצאה הגדול שלך ({formatCurrency(peakDow.total)} סה&quot;כ)</li>
           )}
           {peakWom.total > 0 && (
             <li>• <strong>{peakWom.name}</strong> בחודש הוא השבוע היקר ביותר ({formatCurrency(peakWom.total)})</li>
@@ -151,7 +151,7 @@ export default function SpendingDNAPage() {
             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
             <YAxis tickFormatter={(v) => `₪${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={50} />
             <Tooltip formatter={(v: unknown) => typeof v === 'number' ? formatCurrency(v) : ''} labelFormatter={(l) => `יום ${l}`} />
-            <Bar dataKey="total" name={'סה"כ הוצאות'} radius={[4, 4, 0, 0]}>
+            <Bar dataKey="total" name={'סה&quot;כ הוצאות'} radius={[4, 4, 0, 0]}>
               {byDow.map((entry, i) => (
                 <Cell key={i} fill={entry.total === maxDowTotal ? LAVENDER : LAVENDER_LIGHT} />
               ))}
