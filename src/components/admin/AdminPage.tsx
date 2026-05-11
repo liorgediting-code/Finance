@@ -37,7 +37,6 @@ export default function AdminPage() {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
 
-  // Create form
   const [createEmail, setCreateEmail] = useState('');
   const [createPassword, setCreatePassword] = useState('');
   const [createRole, setCreateRole] = useState<'user' | 'admin'>('user');
@@ -45,7 +44,6 @@ export default function AdminPage() {
   const [createLoading, setCreateLoading] = useState(false);
   const [createMsg, setCreateMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
-  // Change password inline state: userId → new password input value
   const [changePwdUserId, setChangePwdUserId] = useState<string | null>(null);
   const [changePwdValue, setChangePwdValue] = useState('');
   const [changePwdLoading, setChangePwdLoading] = useState(false);
@@ -179,7 +177,6 @@ export default function AdminPage() {
         <span className="bg-lavender text-lavender-dark text-xs font-semibold px-3 py-1 rounded-full">Admin</span>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-6 w-fit">
         {([['pending', `ממתינים לאישור (${pending.length})`], ['all', 'כל המשתמשים'], ['create', 'צור חשבון']] as [Tab, string][]).map(([t, label]) => (
           <button
@@ -192,7 +189,6 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* Users list */}
       {tab !== 'create' && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="h-1 w-full bg-lavender-dark" />
@@ -298,7 +294,6 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Create account form */}
       {tab === 'create' && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="h-1 w-full bg-sage-dark" />
@@ -327,7 +322,6 @@ export default function AdminPage() {
               </select>
             </div>
 
-            {/* Approved toggle */}
             <label className="flex items-center gap-3 cursor-pointer" onClick={() => setCreateApproved((v) => !v)}>
               <div className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${createApproved ? 'bg-sage-dark' : 'bg-gray-200'}`}>
                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${createApproved ? 'translate-x-4' : 'translate-x-0'}`} />
