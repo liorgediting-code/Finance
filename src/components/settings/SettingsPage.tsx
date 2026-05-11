@@ -208,6 +208,11 @@ export default function SettingsPage() {
     const codeVerifier = sessionStorage.getItem('gmail_code_verifier');
     if (!code || !codeVerifier) return;
 
+    const returnedState = params.get('state');
+    const savedState = sessionStorage.getItem('gmail_oauth_state');
+    if (!returnedState || returnedState !== savedState) return;
+    sessionStorage.removeItem('gmail_oauth_state');
+
     window.history.replaceState({}, '', '/settings');
     setGmailLoading(true);
 
@@ -244,7 +249,9 @@ export default function SettingsPage() {
   async function connectGmail() {
     const verifier = generateCodeVerifier();
     const challenge = await generateCodeChallenge(verifier);
+    const state = crypto.randomUUID();
     sessionStorage.setItem('gmail_code_verifier', verifier);
+    sessionStorage.setItem('gmail_oauth_state', state);
 
     const params = new URLSearchParams({
       client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID as string,
@@ -255,6 +262,7 @@ export default function SettingsPage() {
       code_challenge_method: 'S256',
       access_type: 'offline',
       prompt: 'consent',
+      state,
     });
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
   }
