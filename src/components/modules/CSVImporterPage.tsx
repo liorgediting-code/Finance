@@ -37,12 +37,12 @@ interface BankFormatConfig {
 
 const BANK_FORMATS: Record<BankFormat, BankFormatConfig> = {
   hapoalim: {
-    name: 'פועלים – חשבון עו"ש',
+    name: 'פועלים – חשבון עו&quot;ש',
     dateCol: 0, descCol: 1, amountCol: 3, skipRows: 1, positiveIsExpense: true,
   },
   // כרטיסי אשראי הפועלים / כאל – exported from the bank site as XLSX
-  // Row structure: כרטיס | בית עסק | תאריך עסקה | סכום העסקה | מנפיק | סוג | פירוט |
-  //                תאריך חיוב | סכום חיוב (ILS) | הוצג? | מטבע העסקה | שער | ...
+  // Row structure: כרטיס | בית עסק | תאריך עסקאה | סכום העסקאה | מנפיק | סוג | פירוט |
+  //                תאריך חיוב | סכום חיוב (ILS) | הוצג? | מטבע העסקאה | שער | ...
   hapoalim_credit: {
     name: 'פועלים – כרטיסי אשראי (כאל)',
     dateCol: 2, descCol: 1, amountCol: 3, skipRows: 8,
@@ -117,8 +117,8 @@ function detectExtraColumns(header: (string | number)[]): { currencyCol?: number
 function autoDetectFormat(matrix: (string | number)[][]): BankFormat | null {
   const flat = matrix.slice(0, 15).map((r) => r.map((c) => String(c ?? '').trim()).join('|'));
   const joined = flat.join('\n');
-  // Hapoalim credit card export contains "כרטיסי אשראי" header and "מטבע העסקה" column
-  if (/כרטיסי אשראי/i.test(joined) || /מטבע העסקה/i.test(joined)) return 'hapoalim_credit';
+  // Hapoalim credit card export contains "כרטיסי אשראי" header and "מטבע העסקאה" column
+  if (/כרטיסי אשראי/i.test(joined) || /מטבע העסקאה/i.test(joined)) return 'hapoalim_credit';
   return null;
 }
 
@@ -332,7 +332,7 @@ export default function CSVImporterPage() {
 
         {fileName && rows.length === 0 && !autoDetected && (
           <p className="text-sm text-amber-600 bg-amber-50 rounded-lg px-3 py-2 mt-3">
-            לא נמצאו שורות תקינות ב-"{fileName}". ודא שבחרת את הפורמט הנכון.
+            לא נמצאו שורות תקינות ב-&quot;{fileName}&quot;. ודא שבחרת את הפורמט הנכון.
           </p>
         )}
       </div>
@@ -348,7 +348,7 @@ export default function CSVImporterPage() {
         <>
           {foreignCount > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 mb-3 text-xs text-blue-700">
-              <strong>{foreignCount} עסקאות במטבע זר</strong> — הסכום המוצג הוא הסכום שחויב בשקלים.
+              <strong>{foreignCount} עסקאות במטבע זר</strong> — הסכום המוצג הוא הסכום שחוייב בשקלים.
               הסכום המקורי מוצג מתחת לכל שורה.
             </div>
           )}
@@ -370,7 +370,7 @@ export default function CSVImporterPage() {
               </div>
             </div>
             <p className="px-4 py-2 text-[10px] text-[#9090A8] bg-amber-50 border-b border-amber-100">
-              לחץ על <strong>הוצאה / הכנסה</strong> כדי להחליף סוג עסקה
+              לחץ על <strong>הוצאה / הכנסה</strong> כדי להחליף סוג עסקאה
             </p>
 
             <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
@@ -386,7 +386,7 @@ export default function CSVImporterPage() {
                     </div>
                     {row.currency !== 'ILS' && row.originalAmount !== undefined && (
                       <span className="text-[10px] text-blue-500 block mt-0.5">
-                        {currSymbol(row.currency)}{row.originalAmount.toLocaleString()} {row.currency} → חויב {formatCurrency(row.amount)}
+                        {currSymbol(row.currency)}{row.originalAmount.toLocaleString()} {row.currency} → חוייב {formatCurrency(row.amount)}
                       </span>
                     )}
                   </div>
@@ -444,7 +444,7 @@ export default function CSVImporterPage() {
           <p className="text-xs">הורד את הקובץ מאתר הבנק או האפליקציה שלך</p>
           <div className="mt-4 text-right text-xs bg-gray-50 rounded-lg p-3 space-y-1">
             <p className="font-semibold text-[#6B6B8A] mb-2">איך מורידים קובץ:</p>
-            <p>• <strong>פועלים – עו"ש:</strong> תנועות בחשבון → ייצוא</p>
+            <p>• <strong>פועלים – עו&quot;ש:</strong> תנועות בחשבון → ייצוא</p>
             <p>• <strong>פועלים – כרטיסי אשראי:</strong> כרטיסי אשראי → פירוט עסקאות → הורדה לאקסל</p>
             <p>• <strong>לאומי:</strong> שירותי אינטרנט → תנועות בחשבון → ייצוא</p>
             <p>• <strong>Max:</strong> פירוט עסקאות → הורדה כ-CSV או Excel</p>

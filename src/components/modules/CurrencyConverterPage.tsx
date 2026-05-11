@@ -199,7 +199,7 @@ export default function CurrencyConverterPage() {
       </div>
 
       <div className="bg-amber-50 rounded-xl p-3 text-xs text-amber-800 text-center">
-        שערים משוערים בלבד · בדוק שער עדכני בבנק או בבורסה לפני ביצוע עסקה
+        שערים משוערים בלבד · בדוק שער עדכני בבנק או בבורסה לפני ביצוע עסקא
       </div>
     </div>
   );
