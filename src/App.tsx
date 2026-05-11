@@ -46,6 +46,8 @@ const FIRECalculatorPage      = lazy(() => import('./components/modules/FIRECalc
 const AnnualBudgetPlanPage    = lazy(() => import('./components/modules/AnnualBudgetPlanPage'))
 const SpendingDNAPage         = lazy(() => import('./components/modules/SpendingDNAPage'))
 const CurrencyConverterPage   = lazy(() => import('./components/modules/CurrencyConverterPage'))
+const GmailImportPage         = lazy(() => import('./components/gmail/GmailImportPage'))
+const VatReportPage           = lazy(() => import('./components/vat/VatReportPage'))
 
 function PageLoader() {
   return (
@@ -105,6 +107,8 @@ export default function App() {
                 <Route path="/annual-budget-plan" element={<AnnualBudgetPlanPage />} />
                 <Route path="/spending-dna" element={<SpendingDNAPage />} />
                 <Route path="/currency-converter" element={<CurrencyConverterPage />} />
+                <Route path="/import-gmail" element={<GmailImportPage />} />
+                <Route path="/vat-report" element={<VatReportPage />} />
               </Routes>
             </Suspense>
           </AppShell>
