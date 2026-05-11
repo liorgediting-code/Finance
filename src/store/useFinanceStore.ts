@@ -55,6 +55,12 @@ interface CloudData {
   dismissedAlertIds: string[];
   // Investment portfolio
   portfolioItems: PortfolioItem[];
+  // Business mode
+  businessMode?: boolean;
+  accountantName?: string;
+  accountantEmail?: string;
+  accountantPhone?: string;
+  gmailConnected?: boolean;
 }
 
 const ALL_MODULES = [
@@ -105,6 +111,11 @@ const DEFAULT_DATA: CloudData = {
   wishlist: [],
   dismissedAlertIds: [],
   portfolioItems: [],
+  businessMode: false,
+  accountantName: '',
+  accountantEmail: '',
+  accountantPhone: '',
+  gmailConnected: false,
 };
 
 // ── Debounced save ─────────────────────────────────────────────────────────────────────

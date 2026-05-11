@@ -40,6 +40,11 @@ export interface ExpenseEntry {
   splits?: ExpenseSplit[];
   linkedSourceId?: string;
   linkedSourceType?: 'installment' | 'mortgage-track' | 'debt' | 'savings-vehicle' | 'life-goal';
+  invoiceNumber?: string;
+  supplierVatId?: string;
+  amountBeforeVat?: number;
+  vatAmount?: number;
+  importedFromGmail?: boolean;
 }
 
 export interface MonthBudget {
