@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useActiveBoardData } from '../../store/useActiveBoardData';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 import { CATEGORIES, PAYMENT_METHODS } from '../../config/categories';
 import { computeBudgetSuggestions } from '../../utils/budgetSuggestions';
 import type { ExpenseEntry } from '../../types';
@@ -339,7 +339,7 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
           <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">בן משפחה (אופציונלי)</label>
           <select value={form.memberId ?? ''} onChange={(e) => setForm({ ...form, memberId: e.target.value || undefined })} className={`${inputCls} cursor-pointer`}>
             <option value="">ללא שיוך</option>
-            {familyMembers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            {useFinanceStore.getState().familyMembers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
         </div>
 
@@ -431,11 +431,11 @@ function SplitPanel({ entry, onSave, onClose }: SplitPanelProps) {
   const customCategories = useFinanceStore(useShallow((s) => s.settings.customCategories ?? []));
   const [splits, setSplits] = useState(() => {
     if (entry.splits && entry.splits.length > 0) {
-      return entry.splits.map((s) => ({ description: s.description, amount: s.amount, categoryId: s.categoryId }));
+      return entry.splits.map((s, i) => ({ key: String(i), description: s.description, amount: s.amount, categoryId: s.categoryId }));
     }
     return [
-      { description: entry.description, amount: Math.round(entry.amount / 2), categoryId: entry.categoryId },
-      { description: '', amount: entry.amount - Math.round(entry.amount / 2), categoryId: entry.categoryId },
+      { key: '0', description: entry.description, amount: Math.round(entry.amount / 2), categoryId: entry.categoryId },
+      { key: '1', description: '', amount: entry.amount - Math.round(entry.amount / 2), categoryId: entry.categoryId },
     ];
   });
 
@@ -447,7 +447,7 @@ function SplitPanel({ entry, onSave, onClose }: SplitPanelProps) {
     setSplits((prev) => prev.map((s, i) => i === idx ? { ...s, [field]: val } : s));
   };
 
-  const addSplit = () => setSplits((prev) => [...prev, { description: '', amount: 0, categoryId: entry.categoryId }]);
+  const addSplit = () => setSplits((prev) => [...prev, { key: String(Date.now()), description: '', amount: 0, categoryId: entry.categoryId }]);
   const removeSplit = (idx: number) => setSplits((prev) => prev.filter((_, i) => i !== idx));
 
   return (
@@ -464,7 +464,7 @@ function SplitPanel({ entry, onSave, onClose }: SplitPanelProps) {
 
       <div className="space-y-2 mb-3">
         {splits.map((sp, idx) => (
-          <div key={idx} className="flex items-center gap-2">
+          <div key={sp.key} className="flex items-center gap-2">
             <input
               type="text"
               value={sp.description}
@@ -498,7 +498,7 @@ function SplitPanel({ entry, onSave, onClose }: SplitPanelProps) {
       <div className="flex gap-2 justify-end">
         <button onClick={onClose} className="text-xs text-[#6B6B8A] px-3 py-1.5 rounded-lg hover:bg-gray-100 cursor-pointer">ביטול</button>
         <button
-          onClick={() => isBalanced && onSave(splits)}
+          onClick={() => isBalanced && onSave(splits.map(({ key: _k, ...rest }) => rest))}
           disabled={!isBalanced}
           className="bg-[#5B52A0] text-white text-xs px-4 py-1.5 rounded-lg cursor-pointer disabled:opacity-50 hover:bg-lavender-dark transition-colors"
         >
@@ -634,18 +634,18 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
     return { cat, catExpenses, actual, pending, future, budgetAmt, overBudget, pct, nearBudget };
   };
 
-  const rows: RowData[] = [
+  const rows: RowData[] = useMemo(() => [
     ...CATEGORIES.map(buildRow),
     ...customCategories.map((cc) => buildRow({ ...cc, subcategories: [] })),
-  ];
+  ], [filteredExpenses, budget, monthIndex, rolloverCategories, customCategories]);
 
-  const totalActual = rows.reduce((s, r) => s + r.actual, 0);
-  const totalPending = rows.reduce((s, r) => s + r.pending, 0);
-  const totalFuture = rows.reduce((s, r) => s + r.future, 0);
+  const totalActual = useMemo(() => rows.reduce((s, r) => s + r.actual, 0), [rows]);
+  const totalPending = useMemo(() => rows.reduce((s, r) => s + r.pending, 0), [rows]);
+  const totalFuture = useMemo(() => rows.reduce((s, r) => s + r.future, 0), [rows]);
 
-  const visibleRows = rows.filter((r) => r.actual > 0 || r.pending > 0 || r.future > 0);
-  const overBudgetCount = rows.filter((r) => r.overBudget).length;
-  const nearBudgetCount = rows.filter((r) => r.nearBudget).length;
+  const visibleRows = useMemo(() => rows.filter((r) => r.actual > 0 || r.pending > 0 || r.future > 0), [rows]);
+  const overBudgetCount = useMemo(() => rows.filter((r) => r.overBudget).length, [rows]);
+  const nearBudgetCount = useMemo(() => rows.filter((r) => r.nearBudget).length, [rows]);
 
   const getMemberName = (id?: string) => id ? (familyMembers.find((m) => m.id === id)?.name ?? '') : '';
 
@@ -979,7 +979,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
                               <tr className={`border-b border-gray-100 transition-colors ${
                                 isEntryFuture(entry) ? 'bg-amber-50/60' : entry.isPending ? 'bg-amber-50/60' : 'hover:bg-white'
                               }`}>
-                                <td className="px-10 py-2 text-[#6B6B8A]">{entry.date}</td>
+                                <td className="px-10 py-2 text-[#6B6B8A]">{formatDate(entry.date)}</td>
                                 <td className="px-3 py-2 text-[#6B6B8A]">{getSubName(entry)}</td>
                                 <td className="px-3 py-2 text-[#1E1E2E]">
                                   <div className="flex items-center gap-1.5 flex-wrap">
