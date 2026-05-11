@@ -34,6 +34,7 @@ import OverviewHeatmapCard from '../components/overview/OverviewHeatmapCard';
 import OverviewInvestmentCard from '../components/overview/OverviewInvestmentCard';
 import OverviewFIRECard from '../components/overview/OverviewFIRECard';
 import OverviewSpendingDNACard from '../components/overview/OverviewSpendingDNACard';
+import OverviewRecentExpensesCard from '../components/overview/OverviewRecentExpensesCard';
 
 function SavingsChallengeCard() {
   return (
@@ -143,6 +144,7 @@ export default function OverviewDashboard() {
   const showSpendingDNA = enabledModules.includes('spending-dna');
   const showAnnualBudgetPlan = enabledModules.includes('annual-budget-plan');
   const showCurrencyConverter = enabledModules.includes('currency-converter');
+  const showRecentExpenses = enabledModules.includes('recent-expenses');
 
   const middleGridClass = showNetWorth
     ? 'grid grid-cols-1 md:grid-cols-4 gap-4'
@@ -153,6 +155,9 @@ export default function OverviewDashboard() {
       <HealthScoreHero />
       <OverviewKPIRow />
       <OverviewAnnualChart />
+
+      {/* Recent expenses card — quick view of latest transactions */}
+      {showRecentExpenses && <OverviewRecentExpensesCard />}
 
       {/* Middle row: savings + debt + goals + optional net worth */}
       <div className={middleGridClass}>

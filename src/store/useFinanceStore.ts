@@ -72,6 +72,10 @@ const ALL_MODULES = [
   'spending-benchmarks', 'budget-streak', 'share-summary',
   // New value features (batch 3)
   'health-score-history', 'smart-autocomplete', 'budget-rings', 'spending-heatmap',
+  // Investment & advanced tools (batch 4) — previously missing, causing overview cards to never appear
+  'investment-portfolio', 'fire-calculator', 'annual-budget-plan', 'spending-dna', 'currency-converter',
+  // Recent activity card
+  'recent-expenses',
 ];
 
 const DEFAULT_DATA: CloudData = {
