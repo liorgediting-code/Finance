@@ -339,7 +339,7 @@ function AddExpenseForm({ initialCategoryId, monthIndex, onClose }: AddFormProps
           <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">בן משפחה (אופציונלי)</label>
           <select value={form.memberId ?? ''} onChange={(e) => setForm({ ...form, memberId: e.target.value || undefined })} className={`${inputCls} cursor-pointer`}>
             <option value="">ללא שיוך</option>
-            {useFinanceStore.getState().familyMembers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            {familyMembers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
         </div>
 
