@@ -8,3 +8,6 @@ dist/
 !.env.example
 
 .superpowers/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
