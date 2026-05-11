@@ -637,7 +637,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
   const rows: RowData[] = useMemo(() => [
     ...CATEGORIES.map(buildRow),
     ...customCategories.map((cc) => buildRow({ ...cc, subcategories: [] })),
-  ], [filteredExpenses, budget, monthIndex, rolloverCategories, customCategories]);
+  ], [filteredExpenses, budget, monthIndex, rolloverCategories, customCategories]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalActual = useMemo(() => rows.reduce((s, r) => s + r.actual, 0), [rows]);
   const totalPending = useMemo(() => rows.reduce((s, r) => s + r.pending, 0), [rows]);
@@ -849,7 +849,7 @@ export default function ExpenseBudgetSection({ monthIndex }: Props) {
           <div className="text-center text-[#9090A8] py-12 bg-white text-sm">
             {q || memberFilter
               ? 'לא נמצאו הוצאות התואמות לחיפוש'
-              : 'אין הוצאות עדיין — לחץ על "הוסף הוצאה" כדי להתחיל'}
+              : 'אין הוצאות עדיין — לחץ על “הוסף הוצאה” כדי להתחיל'}
           </div>
         )}
 
