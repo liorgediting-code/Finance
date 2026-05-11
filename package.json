@@ -11,11 +11,15 @@
   "dependencies": {
     "@headlessui/react": "^2.2.9",
     "@supabase/supabase-js": "^2.103.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "pdfjs-dist": "^5.7.284",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-is": "^19.2.5",
     "react-router-dom": "^7.13.2",
     "recharts": "^3.8.1",
+    "resend": "^6.12.3",
     "uuid": "^13.0.0",
     "xlsx": "^0.18.5",
     "zustand": "^5.0.12"
