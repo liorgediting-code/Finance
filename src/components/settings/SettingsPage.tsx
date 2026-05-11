@@ -103,25 +103,21 @@ const ALL_TOGGLEABLE_MODULES: Array<{ id: string; label: string; desc: string }>
   { id: 'monthly-report', label: 'כרטיס ציון פיננסי', desc: 'ציונים A–F לכל מדד פיננסי — חיסכון, חובות, מטרות ועוד' },
   { id: 'data-export', label: 'ייצוא נתונים', desc: 'הורדת הנתונים שלך כקבצי CSV — הוצאות, הכנסות, חסכונות וחובות' },
   { id: 'quick-add', label: 'הוספה מהירה', desc: 'כפתור + צף בפינת המסך להוספת הוצאה מהירה ללא ניווט' },
-  // New value-adding modules (batch 1)
   { id: 'emergency-fund', label: 'קרן חירום 🛡️', desc: 'מעקב אחר קרן החירום שלך — כמה חודשי הוצאות מכוסים? המלצות לחיסכון' },
   { id: 'member-analysis', label: 'הוצאות לפי אדם 👨‍👩‍👧', desc: 'ניתוח מי מוציא כמה בבית — עוגיות, גרפים ופירוט קטגוריות לכל חבר משפחה' },
   { id: 'goal-simulator', label: 'סימולטור יעדים 🧲', desc: 'חשב מתי תגיע ליעד החיסכון שלך — ומה ישנה אם תחסוך קצת יותר כל חודש' },
   { id: 'net-worth-tracker', label: 'מעקב שווי נטו 📈', desc: 'תיעוד שווי נטו לאורך זמן עם גרף מגמה — עקוב אחר הצמיחה הפיננסית שלך' },
-  // New premium features
   { id: 'month-journal', label: 'יומן חודשי 📓', desc: 'הוסף הערות אישיות לכל חודש — מה קרה, הוצאות מיוחדות, אירועים ותובנות' },
   { id: 'wishlist', label: 'רשימת רצונות 🛍️', desc: 'תכנן רכישות גדולות עם מחשבון זמן חיסכון — מתי תוכל להרשות לעצמך?' },
   { id: 'recurring-detector', label: 'גלאי הוצאות קבועות 🔁', desc: 'מזהה אוטומטית הוצאות שחוזרות 3+ חודשים ומציע להפוך אותן לקבועות' },
   { id: 'budget-envelopes', label: 'תצוגת מעטפות תקציב 📦', desc: 'תצוגת כרטיסים ויזואלית לתקציב — ראה כמה נותר בכל קטגוריה במבט אחד' },
   { id: 'smart-alerts', label: 'מרכז התראות 🔔', desc: 'התראות חכמות על חריגות תקציב, יעדים שהושגו, חודשים ירוקים ואבני דרך' },
-  // Value features (batch 2)
-  { id: 'spending-benchmarks', label: 'בנצ\'מארק ישראלי 📊', desc: 'השווה את ההוצאות שלך לממוצע משק הבית הישראלי לפי נתוני הלמ&quot;ס — ראה היכן אתה מעל או מתחת לממוצע' },
+  { id: 'spending-benchmarks', label: 'בנצ\'מארק ישראלי 📊', desc: 'השווה את ההוצאות שלך לממוצע משק הבית הישראלי לפי נתוני הלמ"ס — ראה היכן אתה מעל או מתחת לממוצע' },
   { id: 'budget-streak', label: 'סטריק חסכוני 🔥', desc: 'מעקב גיימיפיקציה — כמה חודשים ירוקים רצופים השגת? (הכנסות ≥ הוצאות)' },
   { id: 'share-summary', label: 'שיתוף חודשי 📤', desc: 'צור סיכום חודשי בפורמט וואטסאפ עם לחיצה אחת — שתף עם בן/בת הזוג או שמור לעצמך' },
-  // New features (batch 3)
   { id: 'health-score-history', label: 'מגמת ציון בריאות 📉', desc: 'גרף ספארקליין של ציון הבריאות הפיננסית לכל חודש בשנה — ראה כיצד אתה משתפר לאורך זמן' },
   { id: 'smart-autocomplete', label: 'השלמה חכמה להוצאות ⚡', desc: 'בעת הוספת הוצאה — הצעות אוטומטיות מהיסטוריית ההוצאות שלך עם מילוי אוטומטי של קטגוריה וסכום' },
-  { id: 'budget-rings', label: 'טבעות תקציב ⭕', desc: 'תצוגת גרפי עיגול חזותיים לכל קטגוריה בתקציב — לחץ &quot;טבעות&quot; בלוח החודשי לצפייה' },
+  { id: 'budget-rings', label: 'טבעות תקציב ⭕', desc: 'תצוגת גרפי עיגול חזותיים לכל קטגוריה בתקציב — לחץ "טבעות" בלוח החודשי לצפייה' },
   { id: 'spending-heatmap', label: 'מפת חום הוצאות 🌡️', desc: 'ניתוח שנתי ויזואלי — ראה את עוצמת ההוצאות שלך לכל חודש בצבעים, עם גרף השוואה בין הכנסות להוצאות' },
 ];
 
@@ -350,7 +346,7 @@ export default function SettingsPage() {
         </SettingsSection>
       )}
 
-      {/* Dashboard Customization (#29) */}
+      {/* Dashboard Customization */}
       <SettingsSection title="התאמת לוח הבקרה" accentColor="#7B6DC8">
         <p className="text-xs text-[#9090A8] mb-4">בחר אילו חלקים יוצגו בלוח הבקרה הראשי.</p>
         <div className="space-y-2">
@@ -398,11 +394,10 @@ export default function SettingsPage() {
         </div>
       </SettingsSection>
 
-      {/* Custom Categories (#18) */}
+      {/* Custom Categories */}
       <SettingsSection title="קטגוריות מותאמות אישית" accentColor="#4AACAC">
         <p className="text-xs text-[#9090A8] mb-4">הוסף קטגוריות הוצאה מותאמות בנוסף לקטגוריות הקיימות.</p>
 
-        {/* Existing categories preview */}
         <div className="flex flex-wrap gap-1.5 mb-4">
           {CATEGORIES.slice(0, 8).map((cat) => (
             <span key={cat.id} className="flex items-center gap-1 text-[10px] bg-gray-50 border border-gray-100 rounded-full px-2 py-0.5">
@@ -413,7 +408,6 @@ export default function SettingsPage() {
           <span className="text-[10px] text-[#9090A8] self-center">+{CATEGORIES.length - 8} נוספות</span>
         </div>
 
-        {/* Custom categories list */}
         {customCategories.length > 0 && (
           <div className="space-y-2 mb-4">
             {customCategories.map((cat) => (
@@ -431,7 +425,6 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Add new custom category */}
         <div className="flex flex-wrap gap-2 items-end">
           <div className="flex-1 min-w-40">
             <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">שם קטגוריה</label>
