@@ -90,7 +90,7 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
             }}
             className="text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-3 py-1.5 rounded-lg border border-blush-dark/30 transition-colors cursor-pointer"
           >
-            מחק הכל
+            מחק הכלל
           </button>
         )}
       </div>
@@ -251,7 +251,6 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
               </tr>
             ))}
 
-            {/* Add new row */}
             <tr className="bg-almond-light/30">
               <td className="px-3 py-2">
                 <input
@@ -347,7 +346,7 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
           <tfoot>
             <tr className="bg-blush-light/40 font-semibold">
               <td className="px-3 py-2" colSpan={3}>
-                סה&quot;כ הוצאות
+                סה&quot;ך הוצאות
               </td>
               <td className="px-3 py-2">{formatCurrency(totalExpenses)}</td>
               <td className="px-3 py-2" colSpan={3} />

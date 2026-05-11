@@ -21,7 +21,6 @@ export default function BudgetEnvelopeView({ monthIndex }: Props) {
   const budget = md?.budget ?? {};
   const allExpenses = [...(md?.expenses ?? []), ...recurringExpenses.filter((e) => e.isRecurring)];
 
-  // Collect categories with a budget
   const budgetedCats = CATEGORIES.filter((cat) => (budget[cat.id] ?? 0) > 0 || getRolled(monthIndex, cat.id) > 0);
 
   if (budgetedCats.length === 0) {
@@ -58,7 +57,6 @@ export default function BudgetEnvelopeView({ monthIndex }: Props) {
               <span className="text-xs font-semibold text-[#1E1E2E] truncate">{cat.nameHe}</span>
             </div>
 
-            {/* Progress bar */}
             <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all ${bar}`}

@@ -32,19 +32,16 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
   const futureIncomeTotal = sumAmounts(incomeEntries.filter((e) => isEntryFuture(e)));
   const futureExpenseTotal = sumAmounts(expenseEntries.filter((e) => isEntryFuture(e)));
 
-  // Pending transactions
   const pendingExpenses = expenseEntries.filter((e) => e.isPending);
   const pendingTotal = sumAmounts(pendingExpenses);
   const confirmedExpenses = expenseEntries.filter((e) => !e.isPending && !isEntryFuture(e));
   const confirmedTotal = sumAmounts(confirmedExpenses) + sumAmounts(recurringExpenses);
 
   const { totalIncome } = computeMonthTotals(monthData, recurringIncomes, recurringExpenses);
-  // remaining uses confirmed expenses only (pending shown separately)
   const remaining = totalIncome - confirmedTotal;
 
   const overspending = confirmedTotal > totalIncome && totalIncome > 0;
 
-  // vs last month
   const { totalIncome: prevIncome, totalExpenses: prevExpenses } = computeMonthTotals(
     prevMonthData,
     recurringIncomes,
@@ -98,7 +95,7 @@ export default function MonthSummary({ monthIndex }: MonthSummaryProps) {
           }
         />
         <StatCard
-          title='סה"כ הוצאות'
+          title='סה"ך הוצאות'
           value={formatCurrency(confirmedTotal)}
           colorClass="bg-blush-light"
           accentColor="#9B72C0"

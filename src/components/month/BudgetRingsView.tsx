@@ -26,7 +26,6 @@ function Ring({ row }: { row: RingRow }) {
   return (
     <div className="flex flex-col items-center gap-1.5 p-2">
       <div className="relative" style={{ width: 72, height: 72 }}>
-        {/* Background ring */}
         <svg width="72" height="72" viewBox="0 0 72 72" className="rotate-[-90deg]">
           <circle cx="36" cy="36" r={R} fill={bgColor} stroke="#E5E7EB" strokeWidth="7" />
           {row.budgetAmt > 0 && (
@@ -44,7 +43,6 @@ function Ring({ row }: { row: RingRow }) {
             />
           )}
         </svg>
-        {/* Center label */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {row.budgetAmt > 0 ? (
             <span className={`text-[11px] font-bold leading-none ${isOver ? 'text-red-600' : isNear ? 'text-amber-600' : 'text-[#1E1E2E]'}`}>
@@ -54,7 +52,6 @@ function Ring({ row }: { row: RingRow }) {
             <span className="text-[10px] text-[#9090A8]">אין</span>
           )}
         </div>
-        {/* Color dot */}
         <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: row.color }} />
       </div>
       <div className="text-center w-full max-w-[88px]">

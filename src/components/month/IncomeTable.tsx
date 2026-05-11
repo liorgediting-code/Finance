@@ -168,7 +168,7 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
               }}
               className="text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-3 py-1.5 rounded-lg border border-blush-dark/30 transition-colors cursor-pointer"
             >
-              מחק הכל
+              מחק הכלל
             </button>
           )}
           <button
@@ -181,7 +181,6 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
         </div>
       </div>
 
-      {/* Add form */}
       {showForm && (
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
           {errors.length > 0 && (
@@ -218,7 +217,6 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
             </div>
           </div>
 
-          {/* Recurring toggle */}
           <label className="flex items-center gap-2 mt-3 cursor-pointer w-fit" onClick={() => {
             const next = !newEntry.isRecurring;
             setNewEntry({ ...newEntry, isRecurring: next, isFuture: next ? false : newEntry.isFuture });
@@ -232,7 +230,6 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
             </span>
           </label>
 
-          {/* Future toggle */}
           <label className="flex items-center gap-2 mt-2 cursor-pointer w-fit" onClick={() => {
             const next = !newEntry.isFuture;
             setNewEntry({
@@ -262,7 +259,6 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
         </div>
       )}
 
-      {/* Table */}
       <div className="overflow-x-auto rounded-xl shadow-sm border border-gray-100">
         <table className="w-full text-sm border-collapse">
           <thead>
