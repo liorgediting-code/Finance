@@ -109,9 +109,56 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
   const [editForm, setEditForm] = useState<Omit<IncomeEntry, 'id'>>({
     date: today(), source: '', memberId: defaultMemberId, amount: 0, notes: '',
   });
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const getMemberName = (id: string) =>
     familyMembers.find((m) => m.id === id)?.name ?? id;
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === allEntries.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allEntries.map((e) => e.id)));
+    }
+  };
+
+  const toggleSelectId = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const enterSelectionMode = () => {
+    setSelectionMode(true);
+    setSelectedIds(new Set());
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    const hasRecurring = allEntries
+      .filter((e) => selectedIds.has(e.id))
+      .some((e) => e.isRecurring);
+    const msg = hasRecurring
+      ? `למחוק ${selectedIds.size} הכנסות נבחרות? (הכנסות קבועות יוסרו מכל החודשים)`
+      : `למחוק ${selectedIds.size} הכנסות נבחרות?`;
+    if (!window.confirm(msg)) return;
+    allEntries
+      .filter((e) => selectedIds.has(e.id))
+      .forEach((e) => {
+        e.isRecurring
+          ? deleteRecurringIncome(e.id)
+          : deleteIncome(monthIndex, e.id);
+      });
+    exitSelectionMode();
+  };
 
   const handleAdd = () => {
     const errs: string[] = [];
@@ -159,29 +206,61 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-base font-semibold text-[#1E1E2E]">הכנסות</h3>
         <div className="flex items-center gap-2">
-          {monthlyEntries.length > 0 && (
+          {selectionMode ? (
             <button
-              onClick={() => {
-                if (window.confirm(`למחוק את כל ${monthlyEntries.length} הכנסות החודש?`)) {
-                  clearIncome(monthIndex);
-                }
-              }}
-              className="text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-3 py-1.5 rounded-lg border border-blush-dark/30 transition-colors cursor-pointer"
+              onClick={exitSelectionMode}
+              className="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-300 transition-colors cursor-pointer"
             >
-              מחק הכלל
+              ביטול
             </button>
+          ) : (
+            <>
+              {monthlyEntries.length > 0 && (
+                <button
+                  onClick={() => {
+                    if (window.confirm(`למחוק את כל ${monthlyEntries.length} הכנסות החודש?`)) {
+                      clearIncome(monthIndex);
+                    }
+                  }}
+                  className="text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-3 py-1.5 rounded-lg border border-blush-dark/30 transition-colors cursor-pointer"
+                >
+                  מחק הכלל
+                </button>
+              )}
+              {allEntries.length > 0 && (
+                <button
+                  onClick={enterSelectionMode}
+                  className="text-xs text-lavender-dark hover:text-[#5B52A0] hover:bg-lavender-light px-3 py-1.5 rounded-lg border border-lavender-dark/30 transition-colors cursor-pointer"
+                >
+                  בחר
+                </button>
+              )}
+              <button
+                onClick={() => { setShowForm(!showForm); setErrors([]); }}
+                className="flex items-center gap-1.5 bg-sage-dark text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#8AAA7A] transition-colors cursor-pointer shadow-sm"
+              >
+                <PlusIcon />
+                הוסף הכנסה
+              </button>
+            </>
           )}
-          <button
-            onClick={() => { setShowForm(!showForm); setErrors([]); }}
-            className="flex items-center gap-1.5 bg-sage-dark text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-[#8AAA7A] transition-colors cursor-pointer shadow-sm"
-          >
-            <PlusIcon />
-            הוסף הכנסה
-          </button>
         </div>
       </div>
 
-      {showForm && (
+      {selectionMode && (
+        <div className="flex items-center justify-between mb-2 px-3 py-2 bg-lavender-light/50 rounded-lg border border-lavender-dark/20">
+          <span className="text-xs text-[#4A4A60]">נבחרו {selectedIds.size} פריטים</span>
+          <button
+            onClick={handleDeleteSelected}
+            disabled={selectedIds.size === 0}
+            className="text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-3 py-1.5 rounded-lg border border-blush-dark/30 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            מחק נבחרים
+          </button>
+        </div>
+      )}
+
+      {showForm && !selectionMode && (
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
           {errors.length > 0 && (
             <p className="text-red-500 text-xs mb-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -263,6 +342,16 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-lavender-light text-[#4A4A60]">
+              {selectionMode && (
+                <th className="px-4 py-2.5 text-center w-8">
+                  <input
+                    type="checkbox"
+                    checked={allEntries.length > 0 && selectedIds.size === allEntries.length}
+                    onChange={toggleSelectAll}
+                    className="cursor-pointer"
+                  />
+                </th>
+              )}
               <th className="px-4 py-2.5 text-right font-semibold text-xs">תאריך</th>
               <th className="px-4 py-2.5 text-right font-semibold text-xs">מקור הכנסה</th>
               <th className="px-4 py-2.5 text-right font-semibold text-xs">בן משפחה</th>
@@ -274,7 +363,7 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
           <tbody>
             {allEntries.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center text-[#9090A8] py-10 bg-white text-sm">
+                <td colSpan={selectionMode ? 7 : 6} className="text-center text-[#9090A8] py-10 bg-white text-sm">
                   אין הכנסות — לחץ על &quot;הוסף הכנסה&quot; כדי להתחיל
                 </td>
               </tr>
@@ -287,6 +376,16 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
                     ? 'bg-amber-50'
                     : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
                 } hover:bg-lavender-light/30`}>
+                  {selectionMode && (
+                    <td className="px-4 py-2.5 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(entry.id)}
+                        onChange={() => toggleSelectId(entry.id)}
+                        className="cursor-pointer"
+                      />
+                    </td>
+                  )}
                   {editingId === entry.id ? (
                     <>
                       <td className="px-4 py-2"><input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} className={inputCls} /></td>
@@ -365,7 +464,7 @@ export default function IncomeTable({ monthIndex }: IncomeTableProps) {
           </tbody>
           <tfoot>
             <tr className="bg-sage-light/50 font-semibold border-t border-gray-200">
-              <td className="px-4 py-2.5 text-[#4A4A60] text-sm" colSpan={3}>
+              <td className="px-4 py-2.5 text-[#4A4A60] text-sm" colSpan={selectionMode ? 4 : 3}>
                 סה&quot;כ הכנסות
                 {(() => {
                   const futureSum = sumAmounts(allEntries.filter((e) => isEntryFuture(e)));
