@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { formatCurrency } from '../../utils/formatters';
 import type { SavingsVehicle, SavingsVehicleType } from '../../types';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const TYPE_NAMES: Record<SavingsVehicleType, string> = {
   keren_hishtalmut: 'קרן השתלמות',
@@ -222,6 +222,127 @@ const emptyForm = (): Omit<SavingsVehicle, 'id'> => ({
   childName: '',
   annualRate: 0,
 });
+
+function CompoundCalculator() {
+  const [principal, setPrincipal] = useState(50000);
+  const [monthly, setMonthly] = useState(1000);
+  const [rate, setRate] = useState(6);
+  const [years, setYears] = useState(10);
+
+  const calcData = useMemo(() => {
+    const r = rate / 100 / 12;
+    let bal = principal;
+    const data: Array<{ year: number; הופקד: number; ריבית: number }> = [
+      { year: 0, הופקד: principal, ריבית: 0 },
+    ];
+    for (let y = 1; y <= years; y++) {
+      for (let m = 0; m < 12; m++) {
+        bal = bal * (1 + r) + monthly;
+      }
+      const totalDeposited = principal + monthly * 12 * y;
+      const interest = Math.round(bal) - totalDeposited;
+      data.push({ year: y, הופקד: totalDeposited, ריבית: Math.max(0, interest) });
+    }
+    return data;
+  }, [principal, monthly, rate, years]);
+
+  const last = calcData[calcData.length - 1];
+  const totalDeposited = principal + monthly * 12 * years;
+  const totalInterest = (last?.הופקד ?? 0) + (last?.ריבית ?? 0) - totalDeposited;
+
+  const INPUT_C = 'border border-gray-200 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white';
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="h-1 bg-lavender-dark" />
+      <div className="p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-xl">🧮</span>
+          <div>
+            <h3 className="text-sm font-semibold text-[#1E1E2E]">מחשבון ריבית דריבית</h3>
+            <p className="text-xs text-[#9090A8]">חשב צמיחת השקעה עצמאית</p>
+          </div>
+        </div>
+
+        {/* Inputs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div>
+            <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">קרן התחלתית (₪)</label>
+            <input type="number" value={principal || ''} onChange={(e) => setPrincipal(Number(e.target.value))} min={0} placeholder="50,000" className={INPUT_C} />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הפקדה חודשית (₪)</label>
+            <input type="number" value={monthly || ''} onChange={(e) => setMonthly(Number(e.target.value))} min={0} placeholder="1,000" className={INPUT_C} />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">ריבית שנתית (%)</label>
+            <input type="number" value={rate || ''} onChange={(e) => setRate(Number(e.target.value))} min={0} max={30} step={0.1} placeholder="6" className={INPUT_C} />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">מספר שנים</label>
+            <input type="number" value={years || ''} onChange={(e) => setYears(Math.max(1, Math.min(40, Number(e.target.value))))} min={1} max={40} placeholder="10" className={INPUT_C} />
+          </div>
+        </div>
+
+        {/* KPI row */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="bg-lavender-light rounded-xl p-3 text-center">
+            <p className="text-[10px] text-[#6B6B8A] mb-0.5">סכום סופי</p>
+            <p className="text-base font-bold text-lavender-dark">{formatCurrency((last?.הופקד ?? 0) + (last?.ריבית ?? 0))}</p>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-3 text-center">
+            <p className="text-[10px] text-[#6B6B8A] mb-0.5">סה&quot;כ הופקד</p>
+            <p className="text-base font-bold text-[#1E1E2E]">{formatCurrency(totalDeposited)}</p>
+          </div>
+          <div className="bg-green-50 rounded-xl p-3 text-center">
+            <p className="text-[10px] text-[#6B6B8A] mb-0.5">ריבית שנצברה</p>
+            <p className="text-base font-bold text-green-600">{formatCurrency(Math.max(0, totalInterest))}</p>
+          </div>
+        </div>
+
+        {/* Area chart */}
+        <ResponsiveContainer width="100%" height={200}>
+          <AreaChart data={calcData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+            <XAxis dataKey="year" tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} width={40} />
+            <Tooltip
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(value: any, name: any) => [formatCurrency(value), name]}
+              labelFormatter={(label) => `שנה ${label}`}
+            />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
+            <Area type="monotone" dataKey="הופקד" stackId="1" name="סה״כ הופקד" stroke="#7B6DC8" fill="#E8E4F8" strokeWidth={1.5} />
+            <Area type="monotone" dataKey="ריבית" stackId="1" name="ריבית" stroke="#5A9A42" fill="#EBF5E6" strokeWidth={1.5} />
+          </AreaChart>
+        </ResponsiveContainer>
+
+        {/* Annual table */}
+        <div className="mt-4 overflow-x-auto max-h-48 overflow-y-auto">
+          <table className="w-full text-xs">
+            <thead className="sticky top-0 bg-white">
+              <tr className="border-b border-gray-100">
+                <th className="text-right py-1.5 font-semibold text-[#6B6B8A] pr-1">שנה</th>
+                <th className="text-right py-1.5 font-semibold text-[#6B6B8A]">יתרה</th>
+                <th className="text-right py-1.5 font-semibold text-[#6B6B8A]">סה&quot;כ הופקד</th>
+                <th className="text-right py-1.5 font-semibold text-[#6B6B8A]">ריבית מצטברת</th>
+              </tr>
+            </thead>
+            <tbody>
+              {calcData.slice(1).map((row) => (
+                <tr key={row.year} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="py-1 pr-1 text-[#6B6B8A]">{row.year}</td>
+                  <td className="py-1 font-semibold text-[#1E1E2E]">{formatCurrency(row.הופקד + row.ריבית)}</td>
+                  <td className="py-1 text-[#4A4A60]">{formatCurrency(row.הופקד)}</td>
+                  <td className="py-1 text-green-600 font-medium">{formatCurrency(row.ריבית)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface VehicleFormProps { f: Omit<SavingsVehicle, 'id'>; setF: (v: Omit<SavingsVehicle, 'id'>) => void; }
 
@@ -489,7 +610,8 @@ export default function SavingsVehiclesPage() {
             </div>
           )}
 
-          {/* Compound interest calculator placeholder — Task 5 will add it here */}
+          {/* Compound interest calculator */}
+          <CompoundCalculator />
         </div>
       )}
     </div>
