@@ -26,7 +26,6 @@ const TYPE_DESCRIPTIONS: Record<SavingsVehicleType, string> = {
 };
 
 const INPUT_CLS = 'border border-gray-200 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white';
-const INPUT_C = INPUT_CLS;
 
 interface ForecastRow {
   year: number;
@@ -97,12 +96,12 @@ interface ForecastCardProps {
   color: string;
 }
 
-export function ForecastCard({ vehicle, globalYears, color }: ForecastCardProps) {
+function ForecastCard({ vehicle, globalYears, color }: ForecastCardProps) {
   const [yearsInput, setYearsInput] = useState('');
   const parsed = Number(yearsInput);
   const years = yearsInput && !isNaN(parsed) ? Math.max(1, Math.min(40, parsed)) : globalYears;
   const monthly = vehicle.employeeMonthlyDeposit + vehicle.employerMonthlyDeposit;
-  const rate = vehicle.annualRate ?? 0;
+  const rate = Math.min(Math.max(vehicle.annualRate ?? 0, 0), 100);
 
   const chartData = useMemo(
     () => buildChartData(vehicle.balance, monthly, rate, years),
@@ -141,6 +140,7 @@ export function ForecastCard({ vehicle, globalYears, color }: ForecastCardProps)
               placeholder={String(globalYears)}
               min={1}
               max={40}
+              step={1}
               className="w-14 border border-gray-200 rounded-lg px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-lavender-dark bg-white"
             />
           </div>
@@ -267,19 +267,19 @@ function CompoundCalculator() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <div>
             <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">קרן התחלתית (₪)</label>
-            <input type="number" value={principal || ''} onChange={(e) => setPrincipal(Number(e.target.value))} min={0} placeholder="50,000" className={INPUT_C} />
+            <input type="number" value={principal || ''} onChange={(e) => setPrincipal(Number(e.target.value))} min={0} placeholder="50,000" className={INPUT_CLS} />
           </div>
           <div>
             <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">הפקדה חודשית (₪)</label>
-            <input type="number" value={monthly || ''} onChange={(e) => setMonthly(Number(e.target.value))} min={0} placeholder="1,000" className={INPUT_C} />
+            <input type="number" value={monthly || ''} onChange={(e) => setMonthly(Number(e.target.value))} min={0} placeholder="1,000" className={INPUT_CLS} />
           </div>
           <div>
             <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">ריבית שנתית (%)</label>
-            <input type="number" value={rate || ''} onChange={(e) => setRate(Number(e.target.value))} min={0} max={30} step={0.1} placeholder="6" className={INPUT_C} />
+            <input type="number" value={rate || ''} onChange={(e) => setRate(Number(e.target.value))} min={0} max={30} step={0.1} placeholder="6" className={INPUT_CLS} />
           </div>
           <div>
             <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">מספר שנים</label>
-            <input type="number" value={years || ''} onChange={(e) => setYears(Math.max(1, Math.min(40, Number(e.target.value))))} min={1} max={40} placeholder="10" className={INPUT_C} />
+            <input type="number" value={years || ''} onChange={(e) => setYears(Math.max(1, Math.min(40, Number(e.target.value))))} min={1} max={40} placeholder="10" className={INPUT_CLS} />
           </div>
         </div>
 
@@ -372,7 +372,7 @@ function VehicleForm({ f, setF }: VehicleFormProps) {
       </div>
       <div>
         <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">תשואה שנתית (%)</label>
-        <input type="number" value={f.annualRate ?? 0} onChange={(e) => setF({ ...f, annualRate: Number(e.target.value) })} placeholder="0" min={0} max={30} step={0.1} className={INPUT_CLS} />
+        <input type="number" value={f.annualRate || ''} onChange={(e) => setF({ ...f, annualRate: Number(e.target.value) })} placeholder="0" min={0} max={30} step={0.1} className={INPUT_CLS} />
       </div>
       {f.type === 'keren_hishtalmut' && (
         <div>
@@ -544,6 +544,9 @@ export default function SavingsVehiclesPage() {
                                         {vehicle.employerMonthlyDeposit > 0 && ` + ${formatCurrency(vehicle.employerMonthlyDeposit)} מעסיק`}
                                         /חודש
                                       </p>
+                                    )}
+                                    {(vehicle.annualRate ?? 0) > 0 && (
+                                      <p className="text-xs text-[#9090A8] mt-0.5">{vehicle.annualRate}% תשואה שנתית</p>
                                     )}
                                   </div>
                                 </div>
