@@ -48,6 +48,41 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
   const [newEntry, setNewEntry] = useState<Omit<ExpenseEntry, 'id'>>({ ...emptyForm });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Omit<ExpenseEntry, 'id'>>({ ...emptyForm });
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === expenseEntries.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(expenseEntries.map((e) => e.id)));
+    }
+  };
+
+  const toggleSelectId = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const enterSelectionMode = () => {
+    setSelectionMode(true);
+    setSelectedIds(new Set());
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`למחוק ${selectedIds.size} הוצאות נבחרות?`)) return;
+    selectedIds.forEach((id) => deleteExpense(monthIndex, id));
+    exitSelectionMode();
+  };
 
   const handleAdd = () => {
     if (!newEntry.date || !newEntry.categoryId || newEntry.amount <= 0) return;
@@ -81,23 +116,68 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
     <section className="mb-8">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold text-gray-700">הוצאות</h3>
-        {expenseEntries.length > 0 && (
-          <button
-            onClick={() => {
-              if (window.confirm(`למחוק את כל ${expenseEntries.length} ההוצאות של החודש?`)) {
-                clearExpenses(monthIndex);
-              }
-            }}
-            className="text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-3 py-1.5 rounded-lg border border-blush-dark/30 transition-colors cursor-pointer"
-          >
-            מחק הכלל
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {selectionMode ? (
+            <button
+              onClick={exitSelectionMode}
+              className="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-300 transition-colors cursor-pointer"
+            >
+              ביטול
+            </button>
+          ) : (
+            <>
+              {expenseEntries.length > 0 && (
+                <button
+                  onClick={() => {
+                    if (window.confirm(`למחוק את כל ${expenseEntries.length} ההוצאות של החודש?`)) {
+                      clearExpenses(monthIndex);
+                    }
+                  }}
+                  className="text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-3 py-1.5 rounded-lg border border-blush-dark/30 transition-colors cursor-pointer"
+                >
+                  מחק הכלל
+                </button>
+              )}
+              {expenseEntries.length > 0 && (
+                <button
+                  onClick={enterSelectionMode}
+                  className="text-xs text-lavender-dark hover:text-[#5B52A0] hover:bg-lavender-light px-3 py-1.5 rounded-lg border border-lavender-dark/30 transition-colors cursor-pointer"
+                >
+                  בחר
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
+
+      {selectionMode && (
+        <div className="flex items-center justify-between mb-2 px-3 py-2 bg-lavender-light/50 rounded-lg border border-lavender-dark/20">
+          <span className="text-xs text-[#4A4A60]">נבחרו {selectedIds.size} פריטים</span>
+          <button
+            onClick={handleDeleteSelected}
+            disabled={selectedIds.size === 0}
+            className="text-xs text-blush-dark hover:text-red-600 hover:bg-blush-light px-3 py-1.5 rounded-lg border border-blush-dark/30 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            מחק נבחרים
+          </button>
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-lg shadow-sm">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-lavender text-gray-700">
+              {selectionMode && (
+                <th className="px-3 py-2 text-center w-8">
+                  <input
+                    type="checkbox"
+                    checked={expenseEntries.length > 0 && selectedIds.size === expenseEntries.length}
+                    onChange={toggleSelectAll}
+                    className="cursor-pointer"
+                  />
+                </th>
+              )}
               <th className="px-3 py-2 text-right">תאריך</th>
               <th className="px-3 py-2 text-right">קטגוריה</th>
               <th className="px-3 py-2 text-right">תיאור</th>
@@ -113,6 +193,16 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
                 key={entry.id}
                 className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
               >
+                {selectionMode && (
+                  <td className="px-3 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(entry.id)}
+                      onChange={() => toggleSelectId(entry.id)}
+                      className="cursor-pointer"
+                    />
+                  </td>
+                )}
                 {editingId === entry.id ? (
                   <>
                     <td className="px-3 py-2">
@@ -252,6 +342,7 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
             ))}
 
             <tr className="bg-almond-light/30">
+              {selectionMode && <td className="px-3 py-2" />}
               <td className="px-3 py-2">
                 <input
                   type="date"
@@ -345,7 +436,7 @@ export default function ExpenseTable({ monthIndex }: ExpenseTableProps) {
           </tbody>
           <tfoot>
             <tr className="bg-blush-light/40 font-semibold">
-              <td className="px-3 py-2" colSpan={3}>
+              <td className="px-3 py-2" colSpan={selectionMode ? 4 : 3}>
                 סה&quot;ך הוצאות
               </td>
               <td className="px-3 py-2">{formatCurrency(totalExpenses)}</td>
