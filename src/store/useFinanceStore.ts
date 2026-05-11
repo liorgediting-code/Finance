@@ -110,7 +110,12 @@ const DEFAULT_DATA: CloudData = {
 // ── Debounced save ─────────────────────────────────────────────────────────────────────
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
-function scheduleSync(getUserId: () => string | null, getState: () => CloudData) {
+function scheduleSync(
+  getUserId: () => string | null,
+  getState: () => CloudData,
+  onSuccess: () => void,
+  onError: () => void,
+) {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     const userId = getUserId();
@@ -118,8 +123,9 @@ function scheduleSync(getUserId: () => string | null, getState: () => CloudData)
     const data = getState();
     try {
       await supabase.from('user_data').upsert({ user_id: userId, data, updated_at: new Date().toISOString() });
+      onSuccess();
     } catch {
-      // Network failure — data will sync on next successful operation
+      onError();
     }
   }, 1000);
 }
@@ -203,6 +209,7 @@ function makeActivityEntry(
 // ── Store interface ──────────────────────────────────────────────────────────────────────────────
 interface FinanceStore extends CloudData {
   _userId: string | null;
+  _syncStatus: 'idle' | 'error';
 
   // Cloud sync
   loadFromCloud: (userId: string) => Promise<void>;
@@ -373,7 +380,9 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         dismissedAlertIds: s.dismissedAlertIds,
         portfolioItems: s.portfolioItems,
       };
-    }
+    },
+    () => set({ _syncStatus: 'idle' }),
+    () => set({ _syncStatus: 'error' }),
   );
 
   const logActivity = (
@@ -390,6 +399,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
   return {
     ...DEFAULT_DATA,
     _userId: null,
+    _syncStatus: 'idle' as const,
     activeBoardId: 'personal',
 
     setActiveBoard: (id) => { set({ activeBoardId: id }); },
@@ -480,6 +490,7 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       };
       try {
         await supabase.from('user_data').upsert({ user_id: s._userId, data, updated_at: new Date().toISOString() });
+        set({ _syncStatus: 'idle' });
       } catch {
         // Network failure — data will sync on next successful operation
       }

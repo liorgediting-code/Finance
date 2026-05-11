@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePWAInstall, useOnlineStatus } from '../../hooks/usePWAInstall';
+import { useFinanceStore } from '../../store/useFinanceStore';
 
 export function OfflineBanner() {
   const isOnline = useOnlineStatus();
@@ -19,7 +20,54 @@ export function OfflineBanner() {
         <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
         <line x1="12" y1="20" x2="12.01" y2="20" />
       </svg>
-      אין חיבור לאינטרנט — השינויים יישמרו ברגע החיבור יחזור
+      אין חיבור לאינטרנט — הנתונים לא יישמרו עד שהחיבור יחזור
+    </div>
+  );
+}
+
+export function SyncErrorBanner() {
+  const syncStatus = useFinanceStore((s) => s._syncStatus);
+  const saveToCloud = useFinanceStore((s) => s.saveToCloud);
+  const isOnline = useOnlineStatus();
+  const [retrying, setRetrying] = useState(false);
+
+  // Auto-retry when coming back online
+  useEffect(() => {
+    if (isOnline && syncStatus === 'error') {
+      handleRetry();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline]);
+
+  if (syncStatus !== 'error') return null;
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    try {
+      await saveToCloud();
+    } finally {
+      setRetrying(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed top-0 inset-x-0 z-[199] bg-red-500 text-white text-xs font-medium py-2 px-4 flex items-center justify-center gap-3"
+      dir="rtl"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <span>שגיאה בשמירה — הנתונים לא נשמרו לענן</span>
+      <button
+        onClick={handleRetry}
+        disabled={retrying}
+        className="bg-white text-red-600 text-xs font-semibold px-2.5 py-1 rounded-md cursor-pointer hover:bg-red-50 disabled:opacity-60 transition-colors"
+      >
+        {retrying ? 'שומר...' : 'נסה שוב'}
+      </button>
     </div>
   );
 }

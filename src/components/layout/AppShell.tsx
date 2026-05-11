@@ -1,9 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import BottomNav from './BottomNav';
 import OnboardingWizard from '../onboarding/OnboardingWizard';
-import { OfflineBanner, InstallBanner } from '../pwa/PWABanners';
+import { OfflineBanner, InstallBanner, SyncErrorBanner } from '../pwa/PWABanners';
 import QuickAddModal from '../shared/QuickAddModal';
 import { useFinanceStore } from '../../store/useFinanceStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -28,10 +28,19 @@ export default function AppShell({ children }: Props) {
 
   const enabledModules = useFinanceStore(useShallow((s) => s.settings.enabledModules ?? []));
   const showQuickAdd = enabledModules.includes('quick-add');
+  const saveToCloud = useFinanceStore((s) => s.saveToCloud);
+
+  // Flush pending debounced save when the user closes/refreshes the page
+  useEffect(() => {
+    const handleUnload = () => { saveToCloud(); };
+    window.addEventListener('pagehide', handleUnload);
+    return () => window.removeEventListener('pagehide', handleUnload);
+  }, [saveToCloud]);
 
   return (
     <div className="flex h-screen overflow-hidden">
       <OfflineBanner />
+      <SyncErrorBanner />
       <InstallBanner />
       <OnboardingWizard />
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
