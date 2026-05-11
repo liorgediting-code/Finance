@@ -63,7 +63,6 @@ export default function YearInReviewPage() {
     ? activeMonths.reduce((worst, m) => (m.saved < worst.saved ? m : worst), activeMonths[0])
     : null;
 
-  // Top expense categories across all months
   const categoryTotals: Record<string, number> = {};
   Object.values(months).forEach((md) => {
     (md?.expenses ?? []).forEach((e) => {
@@ -102,7 +101,6 @@ export default function YearInReviewPage() {
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6 print:p-4" dir="rtl">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#1E1E2E] tracking-tight">סיכום שנת {year}</h1>
@@ -121,10 +119,9 @@ export default function YearInReviewPage() {
         </button>
       </div>
 
-      {/* Key stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="סה״כ הכנסה" value={formatCurrency(totalIncome)} color="#22C55E" />
-        <StatCard label="סה״כ הוצאות" value={formatCurrency(totalExpenses)} color="#EF4444" />
+        <StatCard label="סה׳׳ך הכנסה" value={formatCurrency(totalIncome)} color="#22C55E" />
+        <StatCard label="סה׳׳ך הוצאות" value={formatCurrency(totalExpenses)} color="#EF4444" />
         <StatCard
           label="נחסך השנה"
           value={formatCurrency(Math.abs(totalSaved))}
@@ -138,7 +135,6 @@ export default function YearInReviewPage() {
         />
       </div>
 
-      {/* Monthly chart */}
       <div className="bg-white rounded-xl shadow-sm p-5">
         <h2 className="text-sm font-semibold text-[#6B6B8A] uppercase tracking-wider mb-4">הכנסות מול הוצאות — לפי חודש</h2>
         <ResponsiveContainer width="100%" height={220}>
@@ -156,7 +152,6 @@ export default function YearInReviewPage() {
         </ResponsiveContainer>
       </div>
 
-      {/* Highlights row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {bestMonth && bestMonth.saved > 0 && (
           <div className="bg-green-50 border border-green-100 rounded-xl p-4">
@@ -183,7 +178,6 @@ export default function YearInReviewPage() {
         </div>
       </div>
 
-      {/* Top categories */}
       {topCategories.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm p-5">
           <h2 className="text-sm font-semibold text-[#6B6B8A] uppercase tracking-wider mb-4">קטגוריות הוצאה מובילות</h2>

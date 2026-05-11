@@ -37,7 +37,6 @@ function ChallengeGrid({ challenge }: { challenge: SavingsChallenge }) {
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="h-1 w-full bg-lavender-dark" />
       <div className="p-5">
-        {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
             <h3 className="font-semibold text-[#1E1E2E] text-base">{challenge.name}</h3>
@@ -50,7 +49,6 @@ function ChallengeGrid({ challenge }: { challenge: SavingsChallenge }) {
           )}
         </div>
 
-        {/* Progress */}
         <div className="mb-4">
           <div className="flex justify-between text-xs text-[#6B6B8A] mb-1.5">
             <span>{challenge.completedWeeks.length} / 52 שבועות</span>
@@ -68,7 +66,6 @@ function ChallengeGrid({ challenge }: { challenge: SavingsChallenge }) {
           <p className="text-[11px] text-[#9090A8] mt-1 text-left" dir="ltr">{pct}%</p>
         </div>
 
-        {/* 52-week grid */}
         <div className="grid grid-cols-13 gap-1" style={{ gridTemplateColumns: 'repeat(13, 1fr)' }}>
           {WEEKS.map((week) => {
             const done = challenge.completedWeeks.includes(week);
@@ -90,7 +87,6 @@ function ChallengeGrid({ challenge }: { challenge: SavingsChallenge }) {
           })}
         </div>
 
-        {/* Legend */}
         <p className="text-[10px] text-[#9090A8] mt-3 text-center">
           לחץ על שבוע לסימון כבוצע. שבוע 1 = {formatCurrency(challenge.weeklyBase)}, שבוע 52 = {formatCurrency(52 * challenge.weeklyBase)}
         </p>
@@ -126,7 +122,6 @@ export default function SavingsChallengePage() {
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6" dir="rtl">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#1E1E2E] tracking-tight">אתגר חיסכון</h1>
@@ -143,7 +138,6 @@ export default function SavingsChallengePage() {
         </button>
       </div>
 
-      {/* Explainer */}
       {savingsChallenges.length === 0 && !showNew && (
         <div className="bg-lavender-light/40 border border-lavender rounded-xl p-6 text-center">
           <p className="text-4xl mb-3">🏆</p>
@@ -163,7 +157,6 @@ export default function SavingsChallengePage() {
         </div>
       )}
 
-      {/* New challenge form */}
       {showNew && (
         <div className="bg-white rounded-xl shadow-sm p-5 border-2 border-lavender">
           <h3 className="font-semibold text-[#1E1E2E] mb-4">אתגר חדש</h3>
@@ -209,7 +202,6 @@ export default function SavingsChallengePage() {
         </div>
       )}
 
-      {/* Challenges list */}
       {savingsChallenges.map((challenge) => (
         <div key={challenge.id}>
           <ChallengeGrid challenge={challenge} />

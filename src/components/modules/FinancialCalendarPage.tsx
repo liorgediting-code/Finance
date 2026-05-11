@@ -38,7 +38,6 @@ export default function FinancialCalendarPage() {
 
   const events: CalendarEvent[] = [];
 
-  // Recurring expenses
   for (const exp of recurringExpenses) {
     const day = extractDay(exp.date);
     const cat = CATEGORIES.find((c) => c.id === exp.categoryId);
@@ -51,7 +50,6 @@ export default function FinancialCalendarPage() {
     });
   }
 
-  // Installments active this month
   for (const inst of installments) {
     const instStartAbs = inst.startYear * 12 + inst.startMonth - 1;
     const viewAbs = viewYear * 12 + viewMonth;
@@ -108,15 +106,13 @@ export default function FinancialCalendarPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-6 flex flex-col gap-6" dir="rtl">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-[#1E1E2E]">לוח שנה פיננסי</h1>
         <div className="text-xs text-[#9090A8] bg-white rounded-xl shadow-sm px-3 py-1.5">
-          סה"כ: <span className="font-bold text-blush-dark">{formatCurrency(totalMonth)}</span>
+          סה"ך: <span className="font-bold text-blush-dark">{formatCurrency(totalMonth)}</span>
         </div>
       </div>
 
-      {/* Month navigator */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
         <div className="h-0.5 w-full bg-lavender-dark" />
         <div className="px-4 py-3 flex items-center justify-between">
@@ -129,14 +125,12 @@ export default function FinancialCalendarPage() {
           </button>
         </div>
 
-        {/* Weekday headers */}
         <div className="grid grid-cols-7 border-t border-gray-100" dir="ltr">
           {WEEKDAY_LABELS.map((d) => (
             <div key={d} className="text-center text-[10px] font-semibold text-[#9090A8] py-2">{d}</div>
           ))}
         </div>
 
-        {/* Calendar grid */}
         <div className="grid grid-cols-7 border-t border-gray-100" dir="ltr">
           {cells.map((cell, i) => {
             const dayEvents = cell.day ? (eventsByDay[cell.day] ?? []) : [];
@@ -174,7 +168,6 @@ export default function FinancialCalendarPage() {
         </div>
       </div>
 
-      {/* Event list */}
       {events.length > 0 && (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="h-0.5 w-full bg-sage" />

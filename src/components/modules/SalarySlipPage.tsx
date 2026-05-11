@@ -157,7 +157,6 @@ export default function SalarySlipPage() {
             </div>
           </div>
 
-          {/* Summary */}
           {slip.grossSalary > 0 && (
             <div className="bg-lavender-light rounded-xl border border-lavender p-4 mb-4">
               <h3 className="text-sm font-semibold text-[#5B52A0] mb-3">סיכום</h3>
