@@ -36,14 +36,12 @@ export default function OverviewDailyBudgetCard() {
 
   const pct = totalBudget > 0 ? Math.min(100, (totalSpent / totalBudget) * 100) : 0;
 
-  const unusedYear = settings.year;
-
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden" aria-label="תקציב יומי">
       <div className="h-1 w-full" style={{ backgroundColor: accentColor }} />
       <div className="p-4">
         <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider mb-3">
-          📆 תקציב יומי — {unusedYear}
+          📆 תקציב יומי — {settings.year}
         </p>
 
         <div

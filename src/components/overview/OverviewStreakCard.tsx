@@ -11,7 +11,6 @@ function computeStreaks(
   upToMonth: number,
 ) {
   // A "green month" = income >= expenses (both > 0)
-  let current = 0;
   let best = 0;
   let temp = 0;
   for (let mi = 0; mi <= upToMonth; mi++) {
@@ -23,8 +22,7 @@ function computeStreaks(
       temp = 0;
     }
   }
-  current = temp;
-  return { current, best };
+  return { current: temp, best };
 }
 
 const STREAK_EMOJI: Record<number, string> = {
