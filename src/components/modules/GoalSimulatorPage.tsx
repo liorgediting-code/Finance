@@ -11,8 +11,6 @@ function calcMonthsToGoal(target: number, current: number, monthly: number, annu
   if (monthly <= 0) return Infinity;
   if (annualRate === 0) return Math.ceil(remaining / monthly);
   const r = annualRate / 100 / 12;
-  // FV of annuity: FV = PMT * ((1+r)^n - 1) / r + PV*(1+r)^n
-  // Solve numerically
   let bal = current;
   let months = 0;
   while (bal < target && months < 600) {
@@ -68,7 +66,6 @@ export default function GoalSimulatorPage() {
   const [annualRate, setAnnualRate] = useState(4);
   const [linkedGoalId, setLinkedGoalId] = useState('');
 
-  // When a life goal is selected, pre-fill the values
   const handleSelectGoal = (goalId: string) => {
     setLinkedGoalId(goalId);
     if (!goalId) return;
@@ -108,7 +105,7 @@ export default function GoalSimulatorPage() {
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto" dir="rtl">
       <div className="flex items-center gap-3 mb-6">
-        <div className="text-3xl">🧮</div>
+        <div className="text-3xl">🧲</div>
         <div>
           <h1 className="text-xl font-bold text-[#1E1E2E]">סימולטור יעדי חיסכון</h1>
           <p className="text-xs text-[#9090A8] mt-0.5">גלה מתי תגיע למטרה — ומה ישנה אם תחסוך קצת יותר</p>
@@ -116,9 +113,7 @@ export default function GoalSimulatorPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Inputs */}
         <div className="space-y-4">
-          {/* Preset goals */}
           <div className="bg-white rounded-xl shadow-sm p-4">
             <p className="text-xs font-semibold text-[#6B6B8A] mb-3 uppercase tracking-wider">בחר מטרה מוכנה</p>
             <div className="flex flex-wrap gap-2 mb-3">
@@ -153,7 +148,6 @@ export default function GoalSimulatorPage() {
             )}
           </div>
 
-          {/* Parameters */}
           <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
             <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider">פרמטרים</p>
             <div>
@@ -201,7 +195,6 @@ export default function GoalSimulatorPage() {
             </div>
           </div>
 
-          {/* Extra savings slider */}
           <div className="bg-white rounded-xl shadow-sm p-4">
             <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider mb-3">מה אם אוסיף עוד...</p>
             <div className="flex justify-between mb-1">
@@ -222,9 +215,7 @@ export default function GoalSimulatorPage() {
           </div>
         </div>
 
-        {/* Results */}
         <div className="space-y-4">
-          {/* Base scenario */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="h-1 bg-[#7B6DC8]" />
             <div className="p-4">
@@ -252,7 +243,6 @@ export default function GoalSimulatorPage() {
                 )}
               </div>
 
-              {/* Visual progress */}
               {isFinite(baseMonths) && target > 0 && (
                 <div className="mt-4">
                   <div className="flex justify-between text-[10px] text-[#9090A8] mb-1">
@@ -273,7 +263,6 @@ export default function GoalSimulatorPage() {
             </div>
           </div>
 
-          {/* Extra scenario */}
           {extraMonthly > 0 && (
             <div className="bg-white rounded-xl shadow-sm overflow-hidden border-2 border-[#5A9A42]/30">
               <div className="h-1 bg-[#5A9A42]" />
@@ -315,7 +304,6 @@ export default function GoalSimulatorPage() {
             </div>
           )}
 
-          {/* Tips */}
           <div className="bg-lavender-light rounded-xl p-4">
             <p className="text-xs font-semibold text-[#5B52A0] mb-2">💡 איך להאיץ את החיסכון</p>
             <ul className="space-y-1.5 text-xs text-[#6B6B8A]">
