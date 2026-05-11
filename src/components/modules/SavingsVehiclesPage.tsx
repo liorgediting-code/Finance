@@ -26,6 +26,7 @@ const TYPE_DESCRIPTIONS: Record<SavingsVehicleType, string> = {
 };
 
 const INPUT_CLS = 'border border-gray-200 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white';
+const INPUT_C = INPUT_CLS;
 
 interface ForecastRow {
   year: number;
@@ -248,9 +249,7 @@ function CompoundCalculator() {
 
   const last = calcData[calcData.length - 1];
   const totalDeposited = principal + monthly * 12 * years;
-  const totalInterest = (last?.הופקד ?? 0) + (last?.ריבית ?? 0) - totalDeposited;
-
-  const INPUT_C = 'border border-gray-200 rounded-lg px-3 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-lavender-dark bg-white';
+  const totalInterest = last?.ריבית ?? 0;
 
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
