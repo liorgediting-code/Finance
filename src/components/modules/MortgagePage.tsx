@@ -152,7 +152,6 @@ export default function MortgagePage() {
                 </div>
               )}
 
-              {/* Add track form */}
               {showTrackForm === mortgage.id && (
                 <div className="bg-gray-50 rounded-lg p-3 mb-3">
                   <p className="text-xs font-medium text-[#6B6B8A] mb-2">הוסף מסלול</p>
@@ -187,7 +186,6 @@ export default function MortgagePage() {
                 </div>
               )}
 
-              {/* Tracks */}
               {mortgage.tracks.map((track) => (
                 <div key={track.id} className="border border-gray-100 rounded-lg p-3 mb-2">
                   {editTrack?.trackId === track.id ? (
@@ -229,7 +227,6 @@ export default function MortgagePage() {
                 </div>
               ))}
 
-              {/* Early payoff calculator */}
               {mortgage.tracks.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <div className="flex items-center gap-3">

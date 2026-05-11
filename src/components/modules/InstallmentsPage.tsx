@@ -94,7 +94,6 @@ export default function InstallmentsPage() {
         </button>
       </div>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 mb-5">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="h-1 bg-lavender-dark" />
@@ -114,7 +113,6 @@ export default function InstallmentsPage() {
         </div>
       </div>
 
-      {/* Add form */}
       {showAdd && (
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-5 shadow-sm">
           <h3 className="text-sm font-semibold text-[#1E1E2E] mb-3">רכישה חדשה בתשלומים</h3>
@@ -170,7 +168,6 @@ export default function InstallmentsPage() {
         </div>
       )}
 
-      {/* List */}
       {installments.length === 0 && !showAdd ? (
         <div className="text-center py-16 text-[#9090A8] bg-white rounded-xl border border-gray-100">
           <p className="text-sm">אין רכישות בתשלומים — לחץ על &quot;הוסף&quot; כדי להתחיל</p>
