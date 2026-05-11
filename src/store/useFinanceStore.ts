@@ -349,6 +349,11 @@ interface FinanceStore extends CloudData {
   updatePortfolioItem: (id: string, partial: Partial<Omit<PortfolioItem, 'id'>>) => void;
   deletePortfolioItem: (id: string) => void;
 
+  // Business mode & Gmail
+  setBusinessMode: (val: boolean) => void;
+  setAccountantDetails: (details: { name: string; email: string; phone: string }) => void;
+  setGmailConnected: (val: boolean) => void;
+
   // Demo data
   loadDemoData: () => void;
 
@@ -390,6 +395,11 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
         wishlist: s.wishlist,
         dismissedAlertIds: s.dismissedAlertIds,
         portfolioItems: s.portfolioItems,
+        businessMode: s.businessMode,
+        accountantName: s.accountantName,
+        accountantEmail: s.accountantEmail,
+        accountantPhone: s.accountantPhone,
+        gmailConnected: s.gmailConnected,
       };
     },
     () => set({ _syncStatus: 'idle' }),
@@ -1149,6 +1159,13 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
     addPortfolioItem: (item) => { set((s) => ({ portfolioItems: [...s.portfolioItems, { ...item, id: uuidv4() }] })); sync(); },
     updatePortfolioItem: (id, partial) => { set((s) => ({ portfolioItems: s.portfolioItems.map((p) => p.id === id ? { ...p, ...partial } : p) })); sync(); },
     deletePortfolioItem: (id) => { set((s) => ({ portfolioItems: s.portfolioItems.filter((p) => p.id !== id) })); sync(); },
+
+    setBusinessMode: (val) => { set(() => ({ businessMode: val })); sync(); },
+    setAccountantDetails: (details) => {
+      set(() => ({ accountantName: details.name, accountantEmail: details.email, accountantPhone: details.phone }));
+      sync();
+    },
+    setGmailConnected: (val) => { set(() => ({ gmailConnected: val })); sync(); },
 
     resetStore: () => {
       if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
