@@ -485,13 +485,11 @@ export const useFinanceStore = create<FinanceStore>()((set, get) => {
       }
     },
 
-    // ── Family members ─────────────────────────────────────────────────────────────────────────────────────────────
-addFamilyMember: (name) => { set((s) => ({ familyMembers: [...s.familyMembers, { id: uuidv4(), name }] })); sync(); },
+    addFamilyMember: (name) => { set((s) => ({ familyMembers: [...s.familyMembers, { id: uuidv4(), name }] })); sync(); },
     updateFamilyMember: (id, name) => { set((s) => ({ familyMembers: s.familyMembers.map((m) => m.id === id ? { ...m, name } : m) })); sync(); },
     deleteFamilyMember: (id) => { set((s) => ({ familyMembers: s.familyMembers.filter((m) => m.id !== id) })); sync(); },
 
-    // ── Income ──────────────────────────────────────────────────────────────────────────────────────────
-addIncome: (monthIndex, entry) => {
+    addIncome: (monthIndex, entry) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
         set((s) => {
@@ -594,8 +592,7 @@ addIncome: (monthIndex, entry) => {
       sync();
     },
 
-    // ── Recurring expenses ─────────────────────────────────────────────────────────────────────────────────────────────
-addRecurringExpense: (entry) => {
+    addRecurringExpense: (entry) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
         set((s) => ({ recurringExpenses: [...s.recurringExpenses, { ...entry, id: uuidv4(), isRecurring: true }] }));
@@ -632,8 +629,7 @@ addRecurringExpense: (entry) => {
       sync();
     },
 
-    // ── Expenses ──────────────────────────────────────────────────────────────────────────────────────────────
-addExpense: (monthIndex, entry) => {
+    addExpense: (monthIndex, entry) => {
       const { activeBoardId } = get();
       if (activeBoardId === 'personal') {
         set((s) => {
@@ -775,8 +771,7 @@ addExpense: (monthIndex, entry) => {
       sync();
     },
 
-    // ── Savings ──────────────────────────────────────────────────────────────────────────────────────────────
-addSavingsFund: (fund) => { set((s) => ({ savingsFunds: [...s.savingsFunds, { ...fund, id: uuidv4() }] })); sync(); },
+    addSavingsFund: (fund) => { set((s) => ({ savingsFunds: [...s.savingsFunds, { ...fund, id: uuidv4() }] })); sync(); },
     updateSavingsFund: (id, updates) => { set((s) => ({ savingsFunds: s.savingsFunds.map((f) => f.id === id ? { ...f, ...updates } : f) })); sync(); },
     deleteSavingsFund: (id) => { set((s) => ({ savingsFunds: s.savingsFunds.filter((f) => f.id !== id) })); sync(); },
 
@@ -874,7 +869,6 @@ addSavingsFund: (fund) => { set((s) => ({ savingsFunds: [...s.savingsFunds, { ..
     getRolledBudget: (monthIndex, categoryId) => {
       const s = get();
       if (!s.rolloverCategories.includes(categoryId) || monthIndex === 0) return 0;
-      // Read from whichever board is currently active
       let boardMonths: Record<number, MonthData>;
       let boardRecurring: ExpenseEntry[];
       if (s.activeBoardId === 'personal' || s.activeBoardId === 'overall') {
@@ -898,8 +892,7 @@ addSavingsFund: (fund) => { set((s) => ({ savingsFunds: [...s.savingsFunds, { ..
       return Math.max(0, prevBudget - prevSpent);
     },
 
-    // ── Installments ──────────────────────────────────────────────────────────────────────────────────────────────
-addInstallment: (entry) => {
+    addInstallment: (entry) => {
       const newId = uuidv4();
       const monthly = entry.numPayments > 0 ? entry.totalAmount / entry.numPayments : 0;
       set((s) => ({
@@ -943,8 +936,7 @@ addInstallment: (entry) => {
       sync();
     },
 
-    // ── Mortgage ──────────────────────────────────────────────────────────────────────────────────────────────
-addMortgage: (mortgage) => { set((s) => ({ mortgages: [...s.mortgages, { ...mortgage, id: uuidv4() }] })); sync(); },
+    addMortgage: (mortgage) => { set((s) => ({ mortgages: [...s.mortgages, { ...mortgage, id: uuidv4() }] })); sync(); },
     updateMortgage: (id, partial) => { set((s) => ({ mortgages: s.mortgages.map((m) => m.id === id ? { ...m, ...partial } : m) })); sync(); },
     deleteMortgage: (id) => { set((s) => ({ mortgages: s.mortgages.filter((m) => m.id !== id) })); sync(); },
     addMortgageTrack: (mortgageId, track) => {
@@ -978,8 +970,7 @@ addMortgage: (mortgage) => { set((s) => ({ mortgages: [...s.mortgages, { ...mort
       sync();
     },
 
-    // ── Savings Vehicles ────────────────────────────────────────────────────────────────────────────────────────────────────────
-addSavingsVehicle: (vehicle) => {
+    addSavingsVehicle: (vehicle) => {
       const newId = uuidv4();
       set((s) => ({
         savingsVehicles: [...s.savingsVehicles, { ...vehicle, id: newId }],
@@ -1006,8 +997,7 @@ addSavingsVehicle: (vehicle) => {
       sync();
     },
 
-    // ── Debts ───────────────────────────────────────────────────────────────────────────────────────────────────────
-addDebt: (debt) => {
+    addDebt: (debt) => {
       const newId = uuidv4();
       set((s) => ({
         debts: [...s.debts, { ...debt, id: newId }],
@@ -1034,8 +1024,7 @@ addDebt: (debt) => {
       sync();
     },
 
-    // ── Life Goals ──────────────────────────────────────────────────────────────────────────────────────────────
-addLifeGoal: (goal) => {
+    addLifeGoal: (goal) => {
       const newId = uuidv4();
       const monthly = goal.monthlyContribution ?? 0;
       set((s) => ({
@@ -1069,13 +1058,11 @@ addLifeGoal: (goal) => {
       sync();
     },
 
-    // ── Chag Budgets ──────────────────────────────────────────────────────────────────────────────────────────────
-addChagBudget: (budget) => { set((s) => ({ chagBudgets: [...s.chagBudgets, { ...budget, id: uuidv4() }] })); sync(); },
+    addChagBudget: (budget) => { set((s) => ({ chagBudgets: [...s.chagBudgets, { ...budget, id: uuidv4() }] })); sync(); },
     updateChagBudget: (id, partial) => { set((s) => ({ chagBudgets: s.chagBudgets.map((b) => b.id === id ? { ...b, ...partial } : b) })); sync(); },
     deleteChagBudget: (id) => { set((s) => ({ chagBudgets: s.chagBudgets.filter((b) => b.id !== id) })); sync(); },
 
-    // ── Savings Challenges ────────────────────────────────────────────────────────────────────────────────────────────────────────────
-addSavingsChallenge: (challenge) => { set((s) => ({ savingsChallenges: [...s.savingsChallenges, { ...challenge, id: uuidv4() }] })); sync(); },
+    addSavingsChallenge: (challenge) => { set((s) => ({ savingsChallenges: [...s.savingsChallenges, { ...challenge, id: uuidv4() }] })); sync(); },
     updateSavingsChallenge: (id, partial) => { set((s) => ({ savingsChallenges: s.savingsChallenges.map((c) => c.id === id ? { ...c, ...partial } : c) })); sync(); },
     deleteSavingsChallenge: (id) => { set((s) => ({ savingsChallenges: s.savingsChallenges.filter((c) => c.id !== id) })); sync(); },
     toggleChallengeWeek: (id, weekNumber) => {
@@ -1102,8 +1089,6 @@ addSavingsChallenge: (challenge) => { set((s) => ({ savingsChallenges: [...s.sav
       sync();
     },
 
-    // ── Month Journal ──────────────────────────────────────────────────────────────────────────────────────────────────────
-addMonthNote: undefined as unknown as FinanceStore['updateMonthNote'],
     updateMonthNote: (monthIndex, note) => {
       set((s) => {
         const md = ensureMonth(s.months, monthIndex);
@@ -1112,8 +1097,7 @@ addMonthNote: undefined as unknown as FinanceStore['updateMonthNote'],
       sync();
     },
 
-    // ── Wishlist ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
-addWishlistItem: (item) => {
+    addWishlistItem: (item) => {
       set((s) => ({ wishlist: [...s.wishlist, { ...item, id: uuidv4() }] }));
       sync();
     },
@@ -1131,8 +1115,7 @@ addWishlistItem: (item) => {
       sync();
     },
 
-    // ── Notification Center ───────────────────────────────────────────────────────────────────────────────────────────────────────────
-dismissAlert: (alertId) => {
+    dismissAlert: (alertId) => {
       set((s) => ({ dismissedAlertIds: [...new Set([...s.dismissedAlertIds, alertId])] }));
       sync();
     },
@@ -1141,8 +1124,7 @@ dismissAlert: (alertId) => {
       sync();
     },
 
-    // ── Investment Portfolio ────────────────────────────────────────────────────────────────────────────────────────────
-addPortfolioItem: (item) => { set((s) => ({ portfolioItems: [...s.portfolioItems, { ...item, id: uuidv4() }] })); sync(); },
+    addPortfolioItem: (item) => { set((s) => ({ portfolioItems: [...s.portfolioItems, { ...item, id: uuidv4() }] })); sync(); },
     updatePortfolioItem: (id, partial) => { set((s) => ({ portfolioItems: s.portfolioItems.map((p) => p.id === id ? { ...p, ...partial } : p) })); sync(); },
     deletePortfolioItem: (id) => { set((s) => ({ portfolioItems: s.portfolioItems.filter((p) => p.id !== id) })); sync(); },
 
@@ -1195,7 +1177,6 @@ addPortfolioItem: (item) => { set((s) => ({ portfolioItems: [...s.portfolioItems
             budget: { home: 7000, food: 3000 },
           },
         },
-        // Preserve existing module/section/category settings; only override data-related settings
         settings: {
           ...settings,
           year: new Date().getFullYear(),
