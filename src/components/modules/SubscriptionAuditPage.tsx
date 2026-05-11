@@ -46,7 +46,6 @@ export default function SubscriptionAuditPage() {
   const year = settings.year;
   const currentMonthIndex = new Date().getMonth();
 
-  // Gather subscriptions from recurring expenses
   const fromRecurring: SubscriptionItem[] = recurringExpenses
     .filter((e) => e.categoryId === 'subscriptions')
     .map((e) => ({
@@ -59,7 +58,6 @@ export default function SubscriptionAuditPage() {
       subcategoryId: e.subcategoryId,
     }));
 
-  // Gather non-recurring subscription expenses from current + past months
   const seenDescriptions = new Set(fromRecurring.map((s) => s.description.toLowerCase()));
   const fromMonthly: SubscriptionItem[] = [];
 
@@ -109,7 +107,6 @@ export default function SubscriptionAuditPage() {
         <p className="text-sm text-[#9090A8] mt-1">סקירת כל המנויים החודשיים שלך וחשיפת עלויות מיותרות</p>
       </div>
 
-      {/* Summary strip */}
       {hasSubs && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
@@ -129,7 +126,6 @@ export default function SubscriptionAuditPage() {
         </div>
       )}
 
-      {/* Insight banner */}
       {expensiveCount > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex gap-3 items-start">
           <span className="text-xl flex-shrink-0">⚠️</span>
@@ -144,7 +140,6 @@ export default function SubscriptionAuditPage() {
         </div>
       )}
 
-      {/* Subscriptions list */}
       <section className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="h-1 w-full" style={{ backgroundColor: '#7B6DC8' }} />
         <div className="p-5">
@@ -195,7 +190,6 @@ export default function SubscriptionAuditPage() {
         </div>
       </section>
 
-      {/* Tips */}
       {hasSubs && (
         <section className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="h-1 w-full" style={{ backgroundColor: '#C5CDB6' }} />

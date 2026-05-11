@@ -55,7 +55,6 @@ export default function SpendingTrendsPage() {
   const [view, setView] = useState<'bar' | 'line'>('bar');
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
 
-  // Compute per-category totals per month
   const monthlyData = Array.from({ length: 12 }, (_, mi) => {
     const monthData = months[mi];
     const expenses = [...recurringExpenses, ...(monthData?.expenses ?? [])];
@@ -69,7 +68,6 @@ export default function SpendingTrendsPage() {
     return { month: HEBREW_MONTHS[mi], total, ...catTotals };
   });
 
-  // Find top N categories by annual total
   const annualCatTotals: Record<string, number> = {};
   monthlyData.forEach((md) => {
     CATEGORIES.forEach((cat) => {
@@ -82,7 +80,6 @@ export default function SpendingTrendsPage() {
     ? CATEGORIES.filter((c) => c.id === selectedCatId)
     : topCats;
 
-  // Monthly average and max
   const nonZeroMonths = monthlyData.filter((m) => m.total > 0);
   const avgMonthly = nonZeroMonths.length > 0
     ? nonZeroMonths.reduce((s, m) => s + m.total, 0) / nonZeroMonths.length
@@ -92,7 +89,6 @@ export default function SpendingTrendsPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6" dir="rtl">
-      {/* Header */}
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-1">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-lavender text-[#5B52A0]">
@@ -103,7 +99,6 @@ export default function SpendingTrendsPage() {
         <p className="text-sm text-[#6B6B8A]">מעקב אחר שינויים בהוצאות לאורך שנת {year}</p>
       </div>
 
-      {/* KPI strip */}
       <div className="grid grid-cols-3 gap-3 mb-4">
         {[
           { label: 'סה"כ שנתי', value: formatCurrency(annualTotal), sub: `שנת ${year}` },
@@ -118,7 +113,6 @@ export default function SpendingTrendsPage() {
         ))}
       </div>
 
-      {/* Category filter + view toggle */}
       <div className="bg-white rounded-xl shadow-sm p-4 mb-4 border border-gray-100">
         <div className="flex items-center justify-between mb-3">
           <p className="text-[10px] font-semibold text-[#9090A8] uppercase tracking-wider">הצג קטגוריות</p>
@@ -162,7 +156,6 @@ export default function SpendingTrendsPage() {
         </div>
       </div>
 
-      {/* Chart */}
       <div className="bg-white rounded-xl shadow-sm p-4 mb-4 border border-gray-100">
         <ResponsiveContainer width="100%" height={280}>
           {view === 'bar' ? (
@@ -200,7 +193,6 @@ export default function SpendingTrendsPage() {
         </ResponsiveContainer>
       </div>
 
-      {/* Monthly summary grid */}
       <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
         <p className="text-xs font-semibold text-[#6B6B8A] mb-3">סיכום חודשי</p>
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
@@ -222,7 +214,6 @@ export default function SpendingTrendsPage() {
         </div>
       </div>
 
-      {/* Top categories table */}
       {sortedCats.filter((c) => (annualCatTotals[c.id] ?? 0) > 0).length > 0 && (
         <div className="bg-white rounded-xl shadow-sm p-4 mt-4 border border-gray-100">
           <p className="text-xs font-semibold text-[#6B6B8A] mb-3">קטגוריות מובילות שנתית</p>

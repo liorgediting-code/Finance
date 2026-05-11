@@ -97,7 +97,6 @@ export default function UpcomingPaymentsPage() {
         <p className="text-xs text-[#9090A8] mt-0.5">סקירת תשלומים קבועים ועתידיים לפי חודש</p>
       </div>
 
-      {/* Summary strip */}
       <div className="grid grid-cols-2 gap-4 mb-5">
         <div className="bg-lavender-light/50 border border-lavender rounded-xl p-3">
           <p className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider mb-1">החודש</p>

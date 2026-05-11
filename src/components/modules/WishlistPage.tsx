@@ -54,7 +54,7 @@ function AffordabilityBadge({ months, monthlySurplus }: { months: number | null;
   }
   return (
     <span className="text-xs text-lavender-dark bg-lavender-light px-2 py-0.5 rounded-full">
-      כ-{months} חודשים
+      כא-{months} חודשים
     </span>
   );
 }
@@ -66,7 +66,6 @@ export default function WishlistPage() {
   const markWishlistPurchased = useFinanceStore((s) => s.markWishlistPurchased);
   const { months, recurringIncomes, recurringExpenses } = useActiveBoardData();
 
-  // Compute average monthly surplus from last 3 months
   const currentMonth = new Date().getMonth();
   const surplusSamples: number[] = [];
   for (let i = 1; i <= 3; i++) {
@@ -141,12 +140,10 @@ export default function WishlistPage() {
         </button>
       </div>
 
-      {/* Add Form */}
       {showForm && (
         <div className="bg-white rounded-xl shadow-sm border border-lavender p-5 space-y-4">
           <h2 className="text-sm font-semibold text-[#1E1E2E]">פריט חדש ברשימת הרצונות</h2>
 
-          {/* Emoji picker */}
           <div>
             <label className="block text-xs font-medium text-[#6B6B8A] mb-1.5">סמל</label>
             <div className="flex flex-wrap gap-1.5">
@@ -221,7 +218,6 @@ export default function WishlistPage() {
             />
           </div>
 
-          {/* Preview affordability */}
           {form.cost && parseFloat(form.cost) > 0 && (
             <div className="bg-lavender-light rounded-lg p-3 text-sm text-lavender-dark">
               זמן חיסכון משוער:{' '}
@@ -251,7 +247,6 @@ export default function WishlistPage() {
         </div>
       )}
 
-      {/* Pending items */}
       {pending.length === 0 && !showForm && (
         <div className="text-center py-16 text-[#9090A8]">
           <p className="text-4xl mb-3">🛍️</p>
@@ -308,7 +303,6 @@ export default function WishlistPage() {
         </div>
       )}
 
-      {/* Purchased */}
       {purchased.length > 0 && (
         <div>
           <button

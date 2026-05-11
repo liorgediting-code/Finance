@@ -3,7 +3,6 @@ import { useFinanceStore } from '../../store/useFinanceStore';
 import { useShallow } from 'zustand/react/shallow';
 import { formatCurrency } from '../../utils/formatters';
 
-// Israeli tax brackets 2025 (approximate annual amounts in ILS)
 const TAX_BRACKETS: { upTo: number; rate: number }[] = [
   { upTo: 84480, rate: 0.10 },
   { upTo: 120960, rate: 0.14 },
@@ -13,7 +12,6 @@ const TAX_BRACKETS: { upTo: number; rate: number }[] = [
   { upTo: Infinity, rate: 0.47 },
 ];
 
-// Value of one credit point per year (2025 approximation)
 const CREDIT_POINT_ANNUAL = 2676;
 
 function calcTax(annualIncome: number): number {
@@ -49,7 +47,6 @@ export default function TaxRefundPage() {
     }))
   );
 
-  // Auto-calculate annual gross income from monthly income entries
   const autoAnnualIncome = Object.values(months).reduce(
     (sum, m) => sum + (m?.income ?? []).reduce((s, i) => s + i.amount, 0),
     0
@@ -62,13 +59,11 @@ export default function TaxRefundPage() {
 
   const effectiveIncome = customIncome ? parseFloat(customIncome) || 0 : autoAnnualIncome;
 
-  // Pension employee contributions (deductible up to 7% of income, max ₪12,000/year)
   const pensionAnnual = savingsVehicles
     .filter((v) => v.type === 'pension')
     .reduce((s, v) => s + v.employeeMonthlyDeposit * 12, 0);
   const pensionDeduction = Math.min(pensionAnnual, effectiveIncome * 0.07, 12000);
 
-  // Keren Hishtalmut employee contributions (deductible up to 2.5% of income)
   const khtAnnual = savingsVehicles
     .filter((v) => v.type === 'keren_hishtalmut')
     .reduce((s, v) => s + v.employeeMonthlyDeposit * 12, 0);
@@ -91,7 +86,6 @@ export default function TaxRefundPage() {
         <p className="text-xs text-[#9090A8] mt-0.5">הערכת החזר מס שנתי לשנת {year} — אינו תחליף לייעוץ מקצועי</p>
       </div>
 
-      {/* Income + credit points */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
         <h2 className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider mb-3">הכנסה ונקודות זיכוי</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -122,7 +116,6 @@ export default function TaxRefundPage() {
         </div>
       </div>
 
-      {/* Deductions */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
         <h2 className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider mb-3">ניכויים מהכנסה החייבת</h2>
         <InfoRow
@@ -136,7 +129,7 @@ export default function TaxRefundPage() {
           value={formatCurrency(khtDeduction)}
         />
         <div className="pt-2.5">
-          <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">ניכויים נוספים (תרומות, ביטוח חיים, וכו׳) (₪)</label>
+          <label className="text-xs font-medium text-[#6B6B8A] mb-1 block">ניכויים נוספים (תרומות, ביטוח חיים, וכו־) (₪)</label>
           <input
             type="number"
             value={extraDeductions || ''}
@@ -146,12 +139,11 @@ export default function TaxRefundPage() {
           />
         </div>
         <div className="flex justify-between items-center border-t border-gray-100 mt-3 pt-3">
-          <span className="text-sm font-semibold text-[#1E1E2E]">סה״כ ניכויים</span>
+          <span className="text-sm font-semibold text-[#1E1E2E]">סה־כ ניכויים</span>
           <span className="text-sm font-bold text-sage-dark">{formatCurrency(totalDeductions)}</span>
         </div>
       </div>
 
-      {/* Tax calculation */}
       <div className="bg-lavender-light/50 border border-lavender rounded-xl p-4 mb-4">
         <h2 className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider mb-3">חישוב מס</h2>
         <div className="space-y-2 text-sm">
@@ -178,7 +170,6 @@ export default function TaxRefundPage() {
         </div>
       </div>
 
-      {/* Refund calculation */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
         <h2 className="text-xs font-semibold text-[#6B6B8A] uppercase tracking-wider mb-3">חישוב החזר מס</h2>
         <div>
@@ -209,7 +200,7 @@ export default function TaxRefundPage() {
       </div>
 
       <div className="bg-honey-light border border-honey rounded-xl p-3 text-xs text-[#6B6B8A] leading-relaxed">
-        ⚠️ חישוב זה הוא הערכה גסה בלבד לצורך אינדיקציה כללית. הוא אינו מחליף ייעוץ מס מוסמך ואינו מתחשב בכל המשתנים האפשריים (הכנסות נוספות, זיכויים מיוחדים, תיאומי מס, מעסיקים מרובים וכד׳). מדרגות המס הן קירוב לשנת 2025.
+        ⚠️ חישוב זה הוא הערכה גסה בלבד לצורך אינדיקציה כללית. הוא אינו מחליף ייעוץ מס מוסמך ואינו מתחשב בכל המשתנים האפשריים (הכנסות נוספות, זיכויים מיוחדים, תיאומי מס, מעסיקים מרובים וכד־). מדרגות המס הן קירוב לשנת 2025.
       </div>
     </div>
   );

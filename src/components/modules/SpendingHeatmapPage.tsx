@@ -73,7 +73,6 @@ export default function SpendingHeatmapPage() {
         <span className="text-sm text-[#6B6B8A]">{year}</span>
       </div>
 
-      {/* Year summary KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
           <p className="text-xs text-[#6B6B8A] mb-1">סה&quot;כ הוצאות</p>
@@ -99,7 +98,6 @@ export default function SpendingHeatmapPage() {
         </div>
       </div>
 
-      {/* Heatmap grid */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-[#6B6B8A] uppercase tracking-wider">עוצמת הוצאות — לחץ חודש לפרטים</h2>
@@ -155,7 +153,6 @@ export default function SpendingHeatmapPage() {
         </div>
       </div>
 
-      {/* Monthly bar chart */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <h2 className="text-sm font-semibold text-[#6B6B8A] uppercase tracking-wider mb-4">השוואה חודשית — הוצאות מול הכנסות</h2>
         <div className="flex items-end gap-1.5 h-32">
@@ -194,7 +191,6 @@ export default function SpendingHeatmapPage() {
         </div>
       </div>
 
-      {/* Members breakdown (if members exist) */}
       {familyMembers.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <h2 className="text-sm font-semibold text-[#6B6B8A] uppercase tracking-wider mb-3">הוצאות לפי חבר משפחה</h2>
