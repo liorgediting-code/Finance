@@ -39,7 +39,7 @@ export default function OverviewInsightsCard() {
       ) : (
         <>
           <div className="flex gap-2">
-            {danger  > 0 && <span className="text-[10px] font-bold bg-blush-light text-blush-dark px-2 py-0.5 rounded-full">{danger} דורש טיפול</span>}
+            {danger  > 0 && <span className="text-[10px] font-bold bg-blish-light text-blush-dark px-2 py-0.5 rounded-full">{danger} דורש טיפול</span>}
             {warning > 0 && <span className="text-[10px] font-bold bg-honey-light text-honey-dark px-2 py-0.5 rounded-full">{warning} שים לב</span>}
             {success > 0 && <span className="text-[10px] font-bold bg-sage-light text-sage-dark px-2 py-0.5 rounded-full">{success} חיובי</span>}
           </div>
