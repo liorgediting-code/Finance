@@ -36,14 +36,12 @@ export default function MemberAnalysisPage() {
   const monthData = months[selectedMonth] ?? { income: [], expenses: [], budget: {} };
   const allExpenses = [...monthData.expenses, ...recurringExpenses];
 
-  // Build member map: include "לא שויך" for unassigned
   const UNASSIGNED_ID = '__unassigned__';
   const members = [
     ...familyMembers,
     { id: UNASSIGNED_ID, name: 'לא שויך' },
   ];
 
-  // Group expenses by member
   const byMember = members.map((member, idx) => {
     const expenses = allExpenses.filter((e) =>
       member.id === UNASSIGNED_ID
@@ -52,7 +50,6 @@ export default function MemberAnalysisPage() {
     );
     const total = expenses.reduce((s, e) => s + e.amount, 0);
 
-    // Top categories
     const catTotals: Record<string, number> = {};
     expenses.forEach((e) => { catTotals[e.categoryId] = (catTotals[e.categoryId] ?? 0) + e.amount; });
     const topCats = Object.entries(catTotals)
@@ -104,7 +101,6 @@ export default function MemberAnalysisPage() {
         </div>
       ) : (
         <>
-          {/* Summary row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
             {byMember.filter((m) => m.total > 0).map((m) => (
               <div key={m.member.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -120,7 +116,6 @@ export default function MemberAnalysisPage() {
             ))}
           </div>
 
-          {/* Stacked bar */}
           {grandTotal > 0 && (
             <div className="bg-white rounded-xl shadow-sm p-4 mb-5">
               <p className="text-xs font-semibold text-[#6B6B8A] mb-3">פיזור הוצאות</p>
@@ -145,7 +140,6 @@ export default function MemberAnalysisPage() {
             </div>
           )}
 
-          {/* Per-member breakdown */}
           <div className="space-y-4">
             {byMember.filter((m) => m.total > 0).map((m) => (
               <div key={m.member.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -162,7 +156,6 @@ export default function MemberAnalysisPage() {
                     </div>
                   </div>
 
-                  {/* Category bar for this member */}
                   <div className="mb-3">
                     <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
                       {m.topCats.map((cat, i) => (
@@ -180,7 +173,6 @@ export default function MemberAnalysisPage() {
                     </div>
                   </div>
 
-                  {/* Top categories */}
                   {m.topCats.length > 0 && (
                     <div className="grid grid-cols-3 gap-2">
                       {m.topCats.map((cat, i) => (
@@ -195,7 +187,6 @@ export default function MemberAnalysisPage() {
                     </div>
                   )}
 
-                  {/* Budget progress for member */}
                   <div className="mt-3 pt-2 border-t border-gray-100">
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -214,7 +205,6 @@ export default function MemberAnalysisPage() {
             ))}
           </div>
 
-          {/* Tip about assigning */}
           {byMember.find((m) => m.member.id === UNASSIGNED_ID && m.total > 0) && (
             <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200">
               <p className="text-xs text-amber-700">

@@ -79,12 +79,12 @@ export default function AnnualBudgetPlanPage() {
       {monthsWithData > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl shadow-sm p-4">
-            <p className="text-xs text-[#9090A8] mb-1">סה"כ הכנסות</p>
+            <p className="text-xs text-[#9090A8] mb-1">סה&quot;כ הכנסות</p>
             <p className="text-xl font-bold text-[#1E1E2E]">{formatCurrency(totalIncome)}</p>
             <p className="text-xs text-[#9090A8] mt-0.5">ב-{monthsWithData} חודשים</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4">
-            <p className="text-xs text-[#9090A8] mb-1">סה"כ הוצאות</p>
+            <p className="text-xs text-[#9090A8] mb-1">סה&quot;כ הוצאות</p>
             <p className="text-xl font-bold text-[#1E1E2E]">{formatCurrency(totalExpenses)}</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4">
@@ -180,7 +180,7 @@ export default function AnnualBudgetPlanPage() {
             {monthsWithData > 0 && (
               <tfoot>
                 <tr className="bg-gray-50 border-t-2 border-gray-200">
-                  <td className="px-4 py-3 font-bold text-[#1E1E2E]">סה"כ</td>
+                  <td className="px-4 py-3 font-bold text-[#1E1E2E]">סה&quot;כ</td>
                   <td className="px-4 py-3 font-bold text-green-700">{formatCurrency(totalIncome)}</td>
                   <td className="px-4 py-3 font-bold text-[#1E1E2E]">{formatCurrency(totalExpenses)}</td>
                   <td className="px-4 py-3 font-bold text-[#6B6B8A]">{totalBudget > 0 ? formatCurrency(totalBudget) : '—'}</td>

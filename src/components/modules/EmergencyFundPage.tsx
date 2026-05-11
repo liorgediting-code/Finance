@@ -69,7 +69,6 @@ export default function EmergencyFundPage() {
         </div>
       </div>
 
-      {/* Status banner */}
       <div className="rounded-xl p-4 mb-5 flex items-center gap-3" style={{ backgroundColor: status.bg }}>
         <div className="text-3xl">
           {monthsCovered >= 6 ? '🛡️' : monthsCovered >= 3 ? '⚠️' : '🚨'}
@@ -89,7 +88,6 @@ export default function EmergencyFundPage() {
         </div>
       </div>
 
-      {/* Fund selector */}
       <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
         <p className="text-sm font-semibold text-[#1E1E2E] mb-3">בחר קרן חיסכון כקרן חירום</p>
         {savingsFunds.length === 0 ? (
@@ -133,12 +131,10 @@ export default function EmergencyFundPage() {
         )}
       </div>
 
-      {/* Progress bars */}
       {avgMonthlyExpenses > 0 && (
         <div className="bg-white rounded-xl shadow-sm p-5 mb-4">
           <p className="text-sm font-semibold text-[#1E1E2E] mb-4">התקדמות לעבר היעד</p>
           <div className="space-y-5">
-            {/* 3-month target */}
             <div>
               <div className="flex justify-between text-xs mb-1">
                 <span className="font-medium text-[#6B6B8A]">יעד מינימלי — 3 חודשים</span>
@@ -156,7 +152,6 @@ export default function EmergencyFundPage() {
               </div>
             </div>
 
-            {/* 6-month target */}
             <div>
               <div className="flex justify-between text-xs mb-1">
                 <span className="font-medium text-[#6B6B8A]">יעד מומלץ — 6 חודשים</span>
@@ -194,7 +189,6 @@ export default function EmergencyFundPage() {
         </div>
       )}
 
-      {/* Tips */}
       <div className="bg-white rounded-xl shadow-sm p-5">
         <p className="text-sm font-semibold text-[#1E1E2E] mb-3">טיפים לקרן חירום בריאה</p>
         <ul className="space-y-2">
